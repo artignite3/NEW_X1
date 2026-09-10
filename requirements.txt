@@ -1,0 +1,42 @@
+# ============================================================
+# NEW_X1 — Cricket Performance Intelligence Platform
+# Requirements (Python 3.10 / 3.11 recommended)
+# ============================================================
+
+# --- Core ML ---
+xgboost==2.1.3
+catboost==1.2.7
+lightgbm==4.5.0
+scikit-learn==1.5.2
+joblib==1.4.2
+shap==0.46.0
+
+# --- Data ---
+pandas==2.2.3
+numpy==1.26.4
+scipy==1.14.1
+pyarrow==17.0.0
+cricketstats==0.1.6
+
+# --- Optimization ---
+PuLP==2.9.0
+cvxpy==1.6.0
+
+# --- FastAPI Backend ---
+fastapi==0.115.5
+uvicorn==0.32.0
+pydantic==2.9.2
+python-multipart==0.0.12
+
+# --- Streamlit Frontend ---
+streamlit==1.40.1
+plotly==5.24.1
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# --- Intelligence Layer ---
+requests==2.32.3
+feedparser==6.0.11
+ollama==0.4.4
+python-dotenv==1.0.1
+tqdm==4.67.0

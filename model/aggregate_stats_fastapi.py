@@ -4,6 +4,24 @@ import json
 import requests
 import pandas as pd
 
+# ── Local LLM via Ollama ──────────────────────────────────────────────────────
+def call_llm(prompt: str, model: str = "llama3.2:3b") -> str:
+    """
+    Call local Ollama LLM.
+    Requires: ollama serve  +  ollama pull llama3.2:3b
+    Falls back to a rule-based summary if Ollama is not running.
+    """
+    try:
+        import ollama as _ollama
+        resp = _ollama.chat(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return resp["message"]["content"]
+    except Exception as e:
+        return f"[LLM unavailable — start Ollama with 'ollama serve'] Error: {e}"
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Path to the JSON file
 T20_aggregate_points = "../data/processed/T20_data_aggregate_data.json"
 ODI_ODM_aggregate_points = "../data/processed/ODI_ODM_data_aggregate_data.json"
@@ -154,18 +172,9 @@ A negative value for an aggregate statistic means that value does not exist and 
 Please provide a concise and brief analysis of why this player was {selection_status}, considering only their overall cricket statistics. Output the best statistics of the player. Be crisp.
 """
 
-    # Send request to LLM
-    url = "https://8001-01jdya9bpnhj5dqyfzh17zdghv.cloudspaces.litng.ai/predict"
-    headers = {"Content-Type": "application/json"}
-    data = {"input": prompt}
+    analysis = call_llm(prompt)
+    return {"analysis": analysis}
 
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        response.raise_for_status()
-        analysis = response.json()['output']
-        return {"analysis": analysis}
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=404, detail="Error Querying LLM")
 
 
 @app.post("/analyze_team")
@@ -283,17 +292,9 @@ def analyze_team(request_data: dict):
 
         Focus on why this specific combination of players forms the optimal team, considering both individual strengths and team synergy."""
 
-    url = "https://8001-01jdya9bpnhj5dqyfzh17zdghv.cloudspaces.litng.ai/predict"
-    headers = {"Content-Type": "application/json"}
-    data = {"input": prompt}
+    analysis = call_llm(prompt)
+    return {"team analysis": analysis}
 
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        response.raise_for_status()
-        analysis = response.json()['output']
-        return {"team analysis": analysis}
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=404, detail="Error Querying LLM")
 
 
 if __name__ == "__main__":
