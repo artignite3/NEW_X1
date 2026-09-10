@@ -75,7 +75,6 @@ def fetch_completed_matches(target_date: date) -> list:
 def process_and_append(matches: list, target_date: date):
     """
     Parses scorecard payload and appends to player_fantasy_points.
-    This simulates the extraction of player stats into JSON structure.
     """
     if not matches:
         logger.info("No matches to process.")
@@ -93,8 +92,7 @@ def process_and_append(matches: list, target_date: date):
         team1 = match.get("t1")
         team2 = match.get("t2")
         match_key = f"{team1}-{team2}-{target_date.strftime('%Y-%m-%d')}-male-{fmt.upper()}"
-        
-        # We would loop over players here and calculate points
+        # Process players and calculate points here
         pass
 
 def main():

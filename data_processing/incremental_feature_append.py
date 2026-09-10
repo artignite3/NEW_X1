@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Cutoff is now dynamic: everything up to yesterday is Train/Eval, future is not mixed.
 DYNAMIC_TEST_CUTOFF = str(date.today() - timedelta(days=1))
 STRICT_TRAIN_CUTOFF = "2025-06-30"
 

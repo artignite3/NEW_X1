@@ -74,10 +74,6 @@ def safe(v) -> float:
     except (TypeError, ValueError):
         return 0.0
 
-
-# ─────────────────────────────────────────────
-# Step 1 — Flatten JSON -> flat DataFrame
-# ─────────────────────────────────────────────
 def flatten_json(json_path: Path, fmt: str) -> pd.DataFrame:
     print(f"  Loading {json_path.name} ...", flush=True)
     with open(json_path) as f:
@@ -110,10 +106,6 @@ def flatten_json(json_path: Path, fmt: str) -> pd.DataFrame:
     print(f"  Flattened: {len(df):,} rows x {len(df.columns)} cols")
     return df
 
-
-# ─────────────────────────────────────────────
-# Step 2 — Time-series features (vectorized)
-# ─────────────────────────────────────────────
 def add_ts_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     For each player group add lag / rolling / EMA / diff / cumulative features.
@@ -154,10 +146,6 @@ def add_ts_features(df: pd.DataFrame) -> pd.DataFrame:
     feat_df = pd.DataFrame(new_cols, index=df.index)
     return pd.concat([df, feat_df], axis=1)
 
-
-# ─────────────────────────────────────────────
-# Step 3 — Context features
-# ─────────────────────────────────────────────
 def add_context_features(df: pd.DataFrame) -> pd.DataFrame:
     """Historical venue and opponent averages (no leakage — expanding shifted)."""
     df["venue_avg_pts"] = (
@@ -175,10 +163,6 @@ def add_context_features(df: pd.DataFrame) -> pd.DataFrame:
     df["opp_avg_pts"]   = df["opp_avg_pts"].fillna(global_mean).fillna(0)
     return df
 
-
-# ─────────────────────────────────────────────
-# Main
-# ─────────────────────────────────────────────
 def process_format(fmt: str, json_path: Path):
     print(f"\n{'='*60}\nFormat: {fmt.upper()}\n{'='*60}")
     parquet_path = DATA_PROCESSED / f"features_{fmt}.parquet"
