@@ -1,0 +1,614 @@
+{
+  "analyzed_at": "2026-06-16T19:04:10.478061",
+  "total_players_analyzed": 100,
+  "injury_status_distribution": {
+    "FIT": 2,
+    "DOUBTFUL": 94,
+    "INJURED": 2,
+    "RESTED": 1,
+    "SUSPENDED": 1,
+    "UNKNOWN": 0
+  },
+  "non_unknown_players": [
+    {
+      "player_name": "AAA Amsterdam",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Adeoye",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Alleyne",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAA Patel",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAA White",
+      "injury_status": "FIT",
+      "multiplier": 1.0,
+      "playing_prob_adjust": 1.1
+    },
+    {
+      "player_name": "AA Baig",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Bamal",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Banner",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Barot",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Bevilaqua",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Bilakhia",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Chakraborty",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Chavan",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Choudhury",
+      "injury_status": "INJURED",
+      "multiplier": 0.05,
+      "playing_prob_adjust": 0.0
+    },
+    {
+      "player_name": "A Adams",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Darlow",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Adekunle",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Deshpande",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Adetoro",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Adey",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaditya Varadarajan",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Donald",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaftab Alam Khan",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Gajic",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Gordon",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAhan Achar",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAH Bhikari",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Herwadkar",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Ahmadhel",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Hussein",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Aikenhead",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Inham",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAIP Bastari",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Aitken",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Jangoo",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Jasani",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Jhunjhunwala",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Jimoh",
+      "injury_status": "RESTED",
+      "multiplier": 0.0,
+      "playing_prob_adjust": 0.0
+    },
+    {
+      "player_name": "AA Jones",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Kargave",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aakarshit Gomel",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aakash Chand",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aakash Verma",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Kazi",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Akhigbe",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Kulkarni",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Akurut",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Alexander",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaley Haider",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Alfonso",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Amado",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Mailey",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Mallett",
+      "injury_status": "SUSPENDED",
+      "multiplier": 0.0,
+      "playing_prob_adjust": 0.0
+    },
+    {
+      "player_name": "AAM Eliane",
+      "injury_status": "FIT",
+      "multiplier": 1.0,
+      "playing_prob_adjust": 1.1
+    },
+    {
+      "player_name": "Aamer Azmat",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamer Ikram",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamer Jamal",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamer Malik",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamer Nazir",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamer Sohail",
+      "injury_status": "INJURED",
+      "multiplier": 0.05,
+      "playing_prob_adjust": 0.0
+    },
+    {
+      "player_name": "Aamer Yamin",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamir Aziz",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamir Gani",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamir Javed",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamir Kaleem",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aamir Lal",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Moiane",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Mulla",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Amuzu",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Anandakumara",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aanand Pandey",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Navicha",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Andrew",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Andrews",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Andriani",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Anlezark",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Noffke",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aanshul Gupta",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Obanda",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Onikoyi",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Paradkar",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Patil",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAP Atkinson",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Pragasam",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Premji",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AAP Rivero",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaqib Javed",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaqib Khan",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Rahayu",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "AA Rao",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Aravinddaraj",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Argyropoulou",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aarif Sheikh",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aarnav Patel",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaron Beard",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaron Campbell",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aaron Jones",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "A Arroz",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aarsheya Sharma",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    },
+    {
+      "player_name": "Aarti Priya",
+      "injury_status": "DOUBTFUL",
+      "multiplier": 0.45,
+      "playing_prob_adjust": 0.4
+    }
+  ]
+}

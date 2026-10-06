@@ -1,0 +1,47 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environment (project-local venv)
+env/
+.venv/
+venv/
+
+# ── Node / Next.js ────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+npm-debug.log*
+
+# ── Environment secrets ───────────────────────────────────────────────────
+.env
+.env.local
+
+# ── Large / regenerable data artifacts ────────────────────────────────────
+# Raw Cricsheet archives & interim extracts (regenerable via run_daily_sync.py)
+data/raw/
+data/interim/
+data/registry/
+out_of_sample_data/
+
+# Massive processed datasets (regenerable via pipeline)
+data/processed/*.csv
+data/processed/*.parquet
+data/processed/player_fantasy_points_*.json
+data/processed/*aggregate_data.json
+
+# ── Model artifacts (large binaries) ──────────────────────────────────────
+model_artifacts/*.pkl
+model_artifacts/ProductUI_Model
+
+# ── Outputs / logs ────────────────────────────────────────────────────────
+outputs/
+*.log
+
+# ── OS / IDE ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
