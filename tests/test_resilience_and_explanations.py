@@ -25,6 +25,19 @@ def feed(matches):
     return {"source": "fixed-test-feed", "fetched_at": "2026-10-07T12:00:00+05:30", "matches": matches}
 
 
+def fitted_bundle():
+    from sklearn.dummy import DummyRegressor
+    from sklearn.linear_model import LinearRegression
+    from model.data_contract import FEATURE_SCHEMA_VERSION, TRAIN_CUTOFF
+    frame = pd.DataFrame({"fixed_feature": [0., 1.]})
+    learners = {name: DummyRegressor().fit(frame, [2., 4.])
+                for name in ("catboost", "xgboost", "lightgbm")}
+    return {"feature_schema_version": FEATURE_SCHEMA_VERSION, "cutoff": TRAIN_CUTOFF,
+            "feature_cols": list(frame), "base_models": learners,
+            "base_model_names": list(learners),
+            "meta_model": LinearRegression().fit(np.array([[1., 1., 1.], [2., 2., 2.]]), [3., 6.])}
+
+
 class FeedRecoveryTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -49,6 +62,28 @@ class FeedRecoveryTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             publish(feed([{"match_id": "bad"}]), self.primary, self.backup)
         self.assertEqual(before, self.primary.read_bytes())
+
+    def test_bad_metadata_and_ids_recover_from_healthy_backup(self):
+        good = feed([fixture()])
+        self.backup.write_text(json.dumps(good), encoding="utf-8")
+        cases = [{**good, field: value} for field in ("source", "fetched_at")
+                 for value in (None, 123, [], {}, "", " ")]
+        cases += [feed([{**fixture(), "match_id": value}]) for value in (None, True, [], {})]
+        cases += [{**good, "fetched_at": "not-a-date"}]
+        for broken in cases:
+            with self.subTest(broken=broken):
+                self.primary.write_text(json.dumps(broken), encoding="utf-8")
+                result = load(self.primary, self.backup, today=__import__("datetime").date(2026, 10, 7))
+                self.assertTrue(result["fallback_used"])
+                self.assertEqual(result["matches"], good["matches"])
+
+    def test_invalid_metadata_in_both_copies_is_unavailable(self):
+        broken = {**feed([fixture()]), "fetched_at": 123}
+        for path in (self.primary, self.backup):
+            path.write_text(json.dumps(broken), encoding="utf-8")
+        result = load(self.primary, self.backup)
+        self.assertEqual(result["matches"], [])
+        self.assertIn("No valid fixture feed", result["warning"])
 
     def test_empty_refresh_cannot_erase_future_fixture(self):
         publish(feed([fixture()]), self.primary, self.backup)
@@ -128,8 +163,7 @@ class FeedRecoveryTests(unittest.TestCase):
         primary = Path(self.temp.name) / "tribe_odi.pkl"
         primary.write_bytes(b"broken")
         backup = last_good(primary)
-        joblib.dump({"feature_schema_version": FEATURE_SCHEMA_VERSION, "cutoff": TRAIN_CUTOFF,
-                     "feature_cols": ["fixed_feature"]}, backup)
+        joblib.dump(fitted_bundle(), backup)
         with patch.object(predict_model, "MODEL_ARTIFACTS", Path(self.temp.name)):
             predict_model._MODEL_CACHE.pop("odi", None)
             self.assertEqual(predict_model.get_model("odi")[2], ["fixed_feature"])
@@ -140,6 +174,38 @@ class FeedRecoveryTests(unittest.TestCase):
                 predict_model.get_model("odi")
         predict_model._MODEL_CACHE.pop("odi", None)
         predict_model._MODEL_STAMPS.pop("odi", None)
+
+    def test_incomplete_or_unfitted_ensemble_uses_executable_backup(self):
+        import joblib
+        from model import predict_model
+        primary = Path(self.temp.name) / "tribe_odi.pkl"
+        joblib.dump(fitted_bundle(), last_good(primary))
+        incomplete = fitted_bundle()
+        incomplete.pop("base_model_names")
+        unfitted = fitted_bundle()
+        from sklearn.dummy import DummyRegressor
+        unfitted["base_models"]["catboost"] = DummyRegressor()
+        wrong_order = fitted_bundle()
+        wrong_order["feature_cols"] = ["other_feature"]
+        for broken in (incomplete, unfitted, wrong_order):
+            with self.subTest(keys=list(broken)), patch.object(predict_model, "MODEL_ARTIFACTS", Path(self.temp.name)):
+                joblib.dump(broken, primary)
+                _, bundle, columns = predict_model.load_model("odi")
+                self.assertEqual(predict_model._MODEL_SOURCES["odi"], "last_good")
+                result = predict_model.tribe_predict(bundle, pd.DataFrame([[0.]], columns=columns))
+                self.assertTrue(np.isfinite(result).all())
+
+    def test_two_incomplete_ensembles_are_rejected(self):
+        import joblib
+        from model import predict_model
+        primary = Path(self.temp.name) / "tribe_odi.pkl"
+        incomplete = fitted_bundle()
+        incomplete.pop("meta_model")
+        for path in (primary, last_good(primary)):
+            joblib.dump(incomplete, path)
+        with patch.object(predict_model, "MODEL_ARTIFACTS", Path(self.temp.name)):
+            with self.assertRaises(FileNotFoundError):
+                predict_model.load_model("odi")
 
     def test_feature_table_falls_back_to_schema_v2_snapshot(self):
         from model import predict_model

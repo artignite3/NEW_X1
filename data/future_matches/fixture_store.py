@@ -16,14 +16,18 @@ VALID_FORMATS = {"T20", "ODI", "TEST"}
 def validate_feed(payload: dict) -> dict:
     if not isinstance(payload, dict) or not isinstance(payload.get("matches"), list):
         raise ValueError("Fixture feed must contain a matches array")
-    if not payload.get("fetched_at") or not payload.get("source"):
+    if not all(isinstance(payload.get(k), str) and payload[k].strip()
+               for k in ("fetched_at", "source")):
         raise ValueError("Fixture feed requires fetched_at and source")
     datetime.fromisoformat(payload["fetched_at"].replace("Z", "+00:00"))
     ids = set()
     for match in payload["matches"]:
         if not isinstance(match, dict):
             raise ValueError("Fixture entry is not an object")
-        identity = str(match.get("match_id", "")).strip()
+        raw_id = match.get("match_id")
+        if isinstance(raw_id, bool) or not isinstance(raw_id, (str, int)):
+            raise ValueError("Fixture ID must be a string or integer")
+        identity = str(raw_id).strip()
         if not identity or identity in ids:
             raise ValueError("Fixture IDs must be present and unique")
         ids.add(identity)

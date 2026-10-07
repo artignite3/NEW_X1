@@ -107,6 +107,7 @@ def load_model(fmt: str):
             try:
                 bundle = joblib.load(path)
                 validate_model_metadata(bundle)
+                validate_tribe_bundle(bundle)
                 _MODEL_SOURCES[fmt] = source
                 return "tribe", bundle, bundle["feature_cols"]
             except Exception as error:
@@ -115,10 +116,56 @@ def load_model(fmt: str):
 
 
 def validate_model_metadata(meta):
+    if not isinstance(meta, dict):
+        raise FileNotFoundError("Model metadata must be an object")
+    cols = meta.get("feature_cols")
+    if (not isinstance(cols, list) or not cols
+        or not all(isinstance(c, str) and c.strip() for c in cols)
+        or len(set(cols)) != len(cols)):
+        raise FileNotFoundError("Model feature list must contain unique, nonempty names")
     if (meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION
         or meta.get("cutoff") != TRAIN_CUTOFF
-        or any(c.startswith("career_") for c in meta.get("feature_cols", []))):
+        or any(c.startswith("career_") for c in cols)):
         raise FileNotFoundError("Model uses obsolete/leaking features. Rebuild datasets and retrain all models.")
+
+
+def validate_tribe_bundle(bundle):
+    """Check the executable ensemble before selecting it over a healthy backup."""
+    names = bundle.get("base_model_names")
+    models = bundle.get("base_models")
+    cols = bundle["feature_cols"]
+    if (not isinstance(names, list) or len(names) != 3
+        or set(names) != {"catboost", "xgboost", "lightgbm"}
+        or not isinstance(models, dict)):
+        raise ValueError("TriBE requires three named base learners")
+    sample = pd.DataFrame(np.zeros((1, len(cols))), columns=cols)
+    predictions = []
+    for name in names:
+        learner = models.get(name)
+        if not callable(getattr(learner, "predict", None)):
+            raise ValueError(f"Missing predictor: {name}")
+        feature_names = getattr(learner, "feature_names_in_", None)
+        if feature_names is None:
+            feature_names = getattr(learner, "feature_names_", None)
+        if feature_names is not None and list(feature_names) != cols:
+            raise ValueError(f"Feature order mismatch: {name}")
+        count = getattr(learner, "n_features_in_", len(cols))
+        # Loaded CatBoost artifacts can report zero here; their stored names
+        # and the real prediction below still verify the input contract.
+        if count != len(cols) and not (count == 0 and feature_names is not None):
+            raise ValueError(f"Feature count mismatch: {name}")
+        values = np.asarray(learner.predict(sample), dtype=float)
+        if values.shape != (1,) or not np.isfinite(values).all():
+            raise ValueError(f"Invalid prediction: {name}")
+        predictions.append(values)
+    meta = bundle.get("meta_model")
+    if not callable(getattr(meta, "predict", None)):
+        raise ValueError("Missing fitted meta-model")
+    if getattr(meta, "n_features_in_", len(names)) != len(names):
+        raise ValueError("Meta-model feature count mismatch")
+    values = np.asarray(meta.predict(np.column_stack(predictions)), dtype=float)
+    if values.shape != (1,) or not np.isfinite(values).all():
+        raise ValueError("Invalid meta-model prediction")
 
 
 def tribe_predict(bundle: dict, X: pd.DataFrame) -> np.ndarray:
