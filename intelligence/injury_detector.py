@@ -11,6 +11,7 @@ Provides:
 """
 
 import json
+import requests
 import re
 from typing import Dict, Any, Optional
 
@@ -29,7 +30,7 @@ except ImportError:
 # ── Multiplier Tables ────────────────────────────────────────────────────────
 INJURY_MULTIPLIERS = {
     "FIT":       1.00,
-    "UNKNOWN":   0.90,
+    "UNKNOWN":   1.00,
     "DOUBTFUL":  0.45,
     "INJURED":   0.05,
     "RESTED":    0.00,
@@ -56,11 +57,24 @@ def fetch_injury_feed(limit: int = 20) -> list[str]:
     if not HAS_FEEDPARSER:
         return []
     try:
-        feed = feedparser.parse(RSS_URL)
+        response = requests.get(RSS_URL, timeout=5)
+        response.raise_for_status()
+        feed = feedparser.parse(response.content)
         return [entry.title for entry in feed.entries[:limit]]
     except Exception as e:
         print(f"[WARN] RSS fetch error: {e}")
         return []
+
+
+def keyword_status(headline):
+    text = headline.lower()
+    for status, words in (("FIT", ("passed fit", "fit to play", "cleared to play")),
+                          ("INJURED", ("ruled out", "fracture", "surgery", "torn", "injured")),
+                          ("DOUBTFUL", ("doubtful", "niggle", "fitness test")),
+                          ("RESTED", ("rested",)), ("SUSPENDED", ("suspended", "banned"))):
+        if any(word in text for word in words):
+            return status
+    return "UNKNOWN"
 
 
 def classify_headline_with_llm(headline: str, model: str = "llama3.2:3b") -> Dict[str, Any]:
@@ -110,7 +124,7 @@ If no player or status found:
     return {"player": None, "status": rule_status or "UNKNOWN"}
 
 
-def get_active_injury_reports() -> Dict[str, Dict[str, Any]]:
+def get_active_injury_reports(player_names: list[str] | None = None) -> Dict[str, Dict[str, Any]]:
     """
     Returns active injury status per player:
     {
@@ -126,7 +140,11 @@ def get_active_injury_reports() -> Dict[str, Dict[str, Any]]:
     reports = {}
 
     for h in headlines:
-        extracted = classify_headline_with_llm(h)
+        # Restrict to a named squad player before applying keyword status.
+        mentioned = [n for n in (player_names or []) if re.search(r"(?<!\w)" + re.escape(n) + r"(?!\w)", h, re.IGNORECASE)]
+        if player_names is not None and len(mentioned) != 1:
+            continue
+        extracted = classify_headline_with_llm(h) if player_names is None else {"player": mentioned[0], "status": keyword_status(h)}
         player = extracted.get("player")
         status = extracted.get("status", "UNKNOWN").upper()
 

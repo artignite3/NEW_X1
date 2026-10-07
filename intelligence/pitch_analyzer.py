@@ -95,6 +95,8 @@ def get_venue_profile(venue_name: str, format_type: str = "t20") -> Dict[str, An
     Looks up pitch profile for a venue, with fallbacks based on format.
     """
     v_clean = venue_name.lower().strip()
+    if not v_clean:
+        v_clean = "unknown venue"
     for key, profile in VENUE_PROFILES.items():
         if key in v_clean or v_clean in key:
             return profile
@@ -111,29 +113,24 @@ def get_venue_profile(venue_name: str, format_type: str = "t20") -> Dict[str, An
     }
 
 
-def adjust_player_score(
-    predicted_score: float,
-    player_role: str,
-    venue_profile: Dict[str, Any]
-) -> float:
-    """
-    Applies the venue PAF multiplier to a player's raw predicted performance score.
-    """
-    role = player_role.upper()
-    multiplier = 1.0
+def pitch_multiplier(role: str, bowling_style: str, profile: Dict[str, Any]) -> float:
+    """Unknown bowling types receive a neutral bowling multiplier."""
+    style = (bowling_style or "").lower()
+    bowling = 1.0
+    if any(word in style for word in ("spin", "break", "orthodox", "chinaman")):
+        bowling = profile.get("spinner_mult", 1.0)
+    elif any(word in style for word in ("fast", "medium", "pace")):
+        bowling = profile.get("pacer_mult", 1.0)
+    batting = profile.get("batter_mult", 1.0)
+    if role in ("BAT", "WK"):
+        return batting
+    if role == "AR":
+        return (batting + bowling) / 2
+    return bowling
 
-    if "BAT" in role or "WK" in role:
-        multiplier = venue_profile.get("batter_mult", 1.0)
-    elif "BOWL" in role:
-        # Check if spinner or pacer (default to pacer if unspecified)
-        multiplier = max(venue_profile.get("pacer_mult", 1.0), venue_profile.get("spinner_mult", 1.0))
-    elif "AR" in role:
-        # Allrounders get a blended factor
-        b_mult = venue_profile.get("batter_mult", 1.0)
-        bw_mult = max(venue_profile.get("pacer_mult", 1.0), venue_profile.get("spinner_mult", 1.0))
-        multiplier = (b_mult + bw_mult) / 2.0
 
-    return round(predicted_score * multiplier, 2)
+def adjust_player_score(predicted_score, player_role, venue_profile, bowling_style=""):
+    return round(predicted_score * pitch_multiplier(player_role.upper(), bowling_style, venue_profile), 2)
 
 
 if __name__ == "__main__":

@@ -16,7 +16,8 @@ import argparse
 import json
 import re
 import warnings
-from datetime import datetime
+from datetime import datetime, date, timedelta
+from model.data_contract import FEATURE_SCHEMA_VERSION, TRAIN_CUTOFF
 from pathlib import Path
 
 import joblib
@@ -51,13 +52,19 @@ NON_FEATURE_COLS = {
 # ─────────────────────────────────────────────
 _MODEL_CACHE: dict = {}
 _DF_CACHE: dict = {}
+_MODEL_STAMPS: dict = {}
+_DF_STAMPS: dict = {}
 
 
 def get_model(fmt: str):
     """Cached load_model — avoids re-deserializing heavy model bundles per request."""
     fmt = fmt.lower()
-    if fmt not in _MODEL_CACHE:
+    paths = ([MODEL_ARTIFACTS / "ProductUI_Model", MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"]
+             if fmt == "t20" else [MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"])
+    stamp = tuple(p.stat().st_mtime_ns if p.exists() else None for p in paths)
+    if fmt not in _MODEL_CACHE or _MODEL_STAMPS.get(fmt) != stamp:
         _MODEL_CACHE[fmt] = load_model(fmt)
+        _MODEL_STAMPS[fmt] = stamp
     return _MODEL_CACHE[fmt]
 
 
@@ -75,7 +82,8 @@ def load_model(fmt: str):
         model = CatBoostRegressor()
         model.load_model(str(model_path))
         meta = joblib.load(meta_path) if meta_path.exists() else {}
-        return "catboost", model, meta.get("feature_cols", [])
+        validate_model_metadata(meta)
+        return "catboost", model, meta["feature_cols"]
     else:
         bundle_path = MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"
         if not bundle_path.exists():
@@ -84,7 +92,15 @@ def load_model(fmt: str):
                 f"Run model/train_model.py first."
             )
         bundle = joblib.load(bundle_path)
+        validate_model_metadata(bundle)
         return "tribe", bundle, bundle["feature_cols"]
+
+
+def validate_model_metadata(meta):
+    if (meta.get("feature_schema_version") != FEATURE_SCHEMA_VERSION
+        or meta.get("cutoff") != TRAIN_CUTOFF
+        or any(c.startswith("career_") for c in meta.get("feature_cols", []))):
+        raise FileNotFoundError("Model uses obsolete/leaking features. Rebuild datasets and retrain all models.")
 
 
 def tribe_predict(bundle: dict, X: pd.DataFrame) -> np.ndarray:
@@ -111,42 +127,20 @@ def get_player_features(
     Load a player's pre-computed feature row as of cutoff_date.
     Returns a 1-row DataFrame ready for prediction.
     """
-    feat_path = DATA_PROCESSED / f"features_{fmt}.csv"
-    if not feat_path.exists():
-        return None
-
-    # Read only matching rows to save memory
-    df = pd.read_csv(feat_path, parse_dates=["match_date"])
-    cutoff = pd.Timestamp(cutoff_date)
-
-    player_df = df[
-        (df["player"] == player_name) &
-        (df["match_date"] <= cutoff)
-    ].sort_values("match_date")
-
-    if player_df.empty:
-        return None
-
-    # Use the most recent row (features already shifted, so this is correct)
-    row = player_df.iloc[[-1]].copy()
-
-    # Align to expected feature columns
-    missing = set(feature_cols) - set(row.columns)
-    for col in missing:
-        row[col] = 0.0
-    row = row[feature_cols].fillna(0).replace([np.inf, -np.inf], 0)
-    return row
+    rows = build_request_features([player_name], fmt, cutoff_date, feature_cols)
+    return rows.get(player_name)
 
 
 def _load_features_dataset(fmt: str) -> pd.DataFrame:
     """Cached feature dataset loader (parquet preferred, csv fallback)."""
     fmt = fmt.lower()
-    if fmt in _DF_CACHE:
-        return _DF_CACHE[fmt]
-
     parquet_path = DATA_PROCESSED / f"features_{fmt}.parquet"
     csv_path     = DATA_PROCESSED / f"features_{fmt}.csv"
 
+    selected_path = parquet_path if parquet_path.exists() else csv_path
+    stamp = selected_path.stat().st_mtime_ns if selected_path.exists() else None
+    if fmt in _DF_CACHE and _DF_STAMPS.get(fmt) == stamp:
+        return _DF_CACHE[fmt]
     if parquet_path.exists():
         df = pd.read_parquet(parquet_path)
         if not pd.api.types.is_datetime64_any_dtype(df["match_date"]):
@@ -156,8 +150,46 @@ def _load_features_dataset(fmt: str) -> pd.DataFrame:
     else:
         raise FileNotFoundError(f"Feature dataset not found for format {fmt}")
 
+    if "feature_schema_version" not in df or not df.feature_schema_version.eq(FEATURE_SCHEMA_VERSION).all():
+        raise FileNotFoundError("Obsolete feature dataset; rebuild feature engineering first")
+    df["available_date"] = pd.to_datetime(df["available_date"])
+    _DF_STAMPS[fmt] = stamp
     _DF_CACHE[fmt] = df
     return df
+
+
+def build_request_features(players, fmt, match_date, feature_cols, venue=None, opponents=None):
+    """Construct new pre-match rows, including the most recently completed game."""
+    from data_processing.feature_engineering import RAW_STATS, add_ts_features
+    dataset = _load_features_dataset(fmt)
+    cutoff = pd.Timestamp(match_date)
+    completed = dataset[(dataset.match_date < cutoff) & (dataset.available_date < cutoff)]
+    history = completed[completed.player.isin(players)]
+    columns = ["player", "match_key", "match_date", "available_date", "venue", "opponent", "total_points"] + RAW_STATS
+    rows = []
+    known = set(history.player)
+    for player in players:
+        if player not in known:
+            continue
+        latest = history[history.player.eq(player)].sort_values("match_date").iloc[-1]
+        rows.append({"player": player, "match_key": "__prediction__", "match_date": cutoff,
+                     "available_date": cutoff, "venue": venue or latest.venue,
+                     "opponent": (opponents or {}).get(player, latest.opponent),
+                     **{c: 0.0 for c in RAW_STATS + ["total_points"]}})
+    if not rows:
+        return {}
+    combined = pd.concat([history[columns], pd.DataFrame(rows)], ignore_index=True).sort_values(["player", "match_date", "match_key"]).reset_index(drop=True)
+    engineered = add_ts_features(combined)
+    result = {}
+    for player in known:
+        row = engineered[(engineered.player == player) & (engineered.match_key == "__prediction__")].copy()
+        if row.empty:
+            continue
+        for key, output in (("venue", "venue_avg_pts"), ("opponent", "opp_avg_pts")):
+            values = completed.loc[completed[key].eq(row.iloc[0][key]), "total_points"]
+            row[output] = float(values.mean()) if len(values) else float(row.iloc[0].total_points_cum_mean)
+        result[player] = row.reindex(columns=feature_cols, fill_value=0).fillna(0).replace([np.inf, -np.inf], 0)
+    return result
 
 
 def predict_squad(
@@ -165,6 +197,8 @@ def predict_squad(
     fmt: str,
     match_date: str,
     return_details: bool = False,
+    venue: str | None = None,
+    opponents: dict | None = None,
 ):
     """
     Predict performance scores for a list of players.
@@ -175,28 +209,13 @@ def predict_squad(
     the SHAP explainability layer.
     """
     model_type, model, feature_cols = get_model(fmt)
-    df = _load_features_dataset(fmt)
-
-    cutoff = pd.Timestamp(match_date)
-
     rows = []
-    features_by_player: dict[str, pd.DataFrame] = {}
-
+    features_by_player = build_request_features(players, fmt, match_date, feature_cols, venue, opponents)
     for player in players:
-        player_df = df[
-            (df["player"] == player) &
-            (df["match_date"] <= cutoff)
-        ].sort_values("match_date")
-
-        if player_df.empty:
+        feat_row = features_by_player.get(player)
+        if feat_row is None:
             rows.append({"player": player, "predicted_score": 25.0, "has_history": False})
             continue
-
-        row = player_df.iloc[[-1]].copy()
-        missing = set(feature_cols) - set(row.columns)
-        for col in missing:
-            row[col] = 0.0
-        feat_row = row[feature_cols].fillna(0).replace([np.inf, -np.inf], 0)
 
         if model_type == "catboost":
             pred = float(np.clip(model.predict(feat_row)[0], 0, None))
@@ -253,7 +272,9 @@ def evaluate_on_test(
     model_type, model, feature_cols = load_model(fmt)
 
     start = pd.Timestamp(test_start)
-    end   = pd.Timestamp(test_end)
+    end = pd.Timestamp(test_end)
+    if start <= pd.Timestamp(TRAIN_CUTOFF) or end >= pd.Timestamp(date.today()) or start > end:
+        raise ValueError("Evaluation must run after 2025-06-30 and end no later than yesterday")
     test_df = df[(df["match_date"] >= start) & (df["match_date"] <= end)].copy()
 
     if test_df.empty:

@@ -7,7 +7,7 @@ import PlayerCard from "./PlayerCard";
 import { PitchPanel, WeatherPanel } from "./IntelligencePanels";
 import { ROLE_LABELS } from "./RoleBadge";
 import { IconAlert, IconCalendar, IconPin, IconShield, IconTarget, IconTerminal, IconUsers } from "./icons";
-import { Button, Chip, Panel, Progress, Rivets, SectionLabel, Skeleton } from "./ui";
+import { Button, Chip, Panel, Progress, SectionLabel, Skeleton } from "./ui";
 
 // Count-up for the headline projection — restrained, respects reduced motion
 function useCountUp(target: number, duration = 700): number {

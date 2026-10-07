@@ -1,7 +1,7 @@
 // NEW_X1 — Shared API types
 
 export interface Match {
-  match_id: number;
+  match_id: number | string;
   series: string;
   team1: string;
   team2: string;
@@ -23,6 +23,8 @@ export interface PlayerEntry {
   engine: "ml" | "recent_form" | "league_prior";
   base_score: number;
   pitch_multiplier: number;
+  weather_multiplier?: number;
+  bowling_style?: string;
   injury_status: string;
   injury_multiplier: number;
   playing_probability: number;
@@ -37,6 +39,8 @@ export interface PlayerEntry {
 }
 
 export interface Weather {
+  available?: boolean;
+  date?: string;
   temperature_c: number;
   humidity_pct: number;
   cloud_cover_pct: number;
@@ -70,7 +74,7 @@ export interface GenerationSummary {
 
 export interface GenerateResponse {
   request: {
-    match_id: number | null;
+    match_id: number | string | null;
     team1: string | null;
     team2: string | null;
     format: string;

@@ -5,8 +5,8 @@ Transforms player_fantasy_points_*.json into ML-ready feature CSVs.
 Uses pandas groupby + transform instead of per-player loops.
 Output files in data/processed/:
   features_{fmt}.csv   — full feature matrix (all matches)
-  train_{fmt}.csv      — matches <= 2024-06-30
-  test_{fmt}.csv       — matches >  2024-06-30
+  train_{fmt}.csv      — matches <= 2025-06-30
+  test_{fmt}.csv       — matches >  2025-06-30
 """
 
 import sys
@@ -17,6 +17,7 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 import json
+from datetime import date, timedelta
 import re
 import warnings
 from pathlib import Path
@@ -39,6 +40,7 @@ FORMATS = {
 }
 
 TRAIN_CUTOFF = "2025-06-30"
+FEATURE_SCHEMA_VERSION = 2
 
 
 # Raw per-match numeric stats
@@ -89,6 +91,7 @@ def flatten_json(json_path: Path, fmt: str) -> pd.DataFrame:
                 "player":     player,
                 "match_key":  match_key,
                 "match_date": pd.Timestamp(m.group(1)),
+                "available_date": pd.Timestamp(s.get("available_date", m.group(1))),
                 "venue":      s.get("venue", "Unknown") or "Unknown",
                 "opponent":   s.get("opponent", "Unknown") or "Unknown",
                 "format":     fmt,
@@ -96,9 +99,6 @@ def flatten_json(json_path: Path, fmt: str) -> pd.DataFrame:
             }
             for col in RAW_STATS:
                 row[col] = safe(s.get(col, 0))
-            for col in CAREER_STATS:
-                key = f"career_{col.replace(' ','_').replace('/','_').replace('%','pct')}"
-                row[key] = safe(s.get(col, 0))
             rows.append(row)
 
     df = pd.DataFrame(rows)
@@ -113,55 +113,57 @@ def add_ts_features(df: pd.DataFrame) -> pd.DataFrame:
     only sees matches 1..N-1. No data leakage.
     """
     feature_cols = RAW_STATS + ["total_points"]
-    grp = df.groupby("player", sort=False)
-
+    df = df.sort_values(["player", "match_date", "match_key"]).reset_index(drop=True)
+    group = df["player"]
     new_cols = {}
-
-    for col in tqdm(feature_cols, desc="  TS features", ncols=80):
-        base = grp[col]
-        shifted = base.transform(lambda s: s.shift(1))
-
+    for col in feature_cols:
+        series = df[col].astype(float)
+        grouped = series.groupby(group, sort=False)
+        shifted = grouped.shift(1)
+        shifted_group = shifted.groupby(group, sort=False)
         for lag in LAG_WINDOWS:
-            new_cols[f"{col}_lag{lag}"] = grp[col].transform(lambda s: s.shift(lag))
-
-        for w in ROLL_WINDOWS:
-            roll = grp[col].transform(lambda s: s.shift(1).rolling(w, min_periods=1).mean())
-            new_cols[f"{col}_roll{w}_mean"] = roll
-            std = grp[col].transform(lambda s: s.shift(1).rolling(w, min_periods=1).std().fillna(0))
-            new_cols[f"{col}_roll{w}_std"] = std
-
+            new_cols[f"{col}_lag{lag}"] = grouped.shift(lag)
+        for window in ROLL_WINDOWS:
+            rolling = shifted_group.rolling(window, min_periods=1)
+            new_cols[f"{col}_roll{window}_mean"] = rolling.mean().reset_index(level=0, drop=True).reindex(df.index)
+            new_cols[f"{col}_roll{window}_std"] = rolling.std().reset_index(level=0, drop=True).reindex(df.index).fillna(0)
         for span in EMA_SPANS:
-            new_cols[f"{col}_ema{span}"] = grp[col].transform(
-                lambda s: s.shift(1).ewm(span=span, adjust=False).mean()
-            )
-
+            new_cols[f"{col}_ema{span}"] = shifted_group.ewm(span=span, adjust=False).mean().reset_index(level=0, drop=True).reindex(df.index)
         for period in DIFF_PERIODS:
-            new_cols[f"{col}_diff{period}"] = shifted.groupby(
-                df["player"]
-            ).transform(lambda s: s.diff(period).fillna(0))
+            new_cols[f"{col}_diff{period}"] = shifted_group.diff(period).fillna(0)
+        count = shifted.notna().groupby(group, sort=False).cumsum()
+        total = shifted.fillna(0).groupby(group, sort=False).cumsum()
+        squares = shifted.fillna(0).pow(2).groupby(group, sort=False).cumsum()
+        new_cols[f"{col}_cum_mean"] = total / count.replace(0, np.nan)
+        new_cols[f"{col}_cum_std"] = np.sqrt(((squares - total.pow(2) / count.replace(0, np.nan)) / (count - 1).where(count > 1)).clip(lower=0)).fillna(0)
+    features = pd.DataFrame(new_cols, index=df.index)
+    keys = pd.MultiIndex.from_frame(df[["player", "match_date"]])
+    first = ~keys.duplicated()
+    positions = pd.Series(np.flatnonzero(first), index=keys[first]).loc[keys].to_numpy()
+    features = features.iloc[positions].set_axis(df.index)
+    return pd.concat([df, features], axis=1)
 
-        new_cols[f"{col}_cum_mean"] = grp[col].transform(lambda s: s.shift(1).expanding().mean())
-        new_cols[f"{col}_cum_std"]  = grp[col].transform(lambda s: s.shift(1).expanding().std().fillna(0))
-
-    feat_df = pd.DataFrame(new_cols, index=df.index)
-    return pd.concat([df, feat_df], axis=1)
 
 def add_context_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Historical venue and opponent averages (no leakage — expanding shifted)."""
-    df["venue_avg_pts"] = (
-        df.groupby("venue")["total_points"]
-          .transform(lambda s: s.shift(1).expanding().mean())
-    )
-    df["opp_avg_pts"] = (
-        df.groupby("opponent")["total_points"]
-          .transform(lambda s: s.shift(1).expanding().mean())
-    )
-    global_mean = df.groupby("player")["total_points"].transform(
-        lambda s: s.shift(1).expanding().mean()
-    )
-    df["venue_avg_pts"] = df["venue_avg_pts"].fillna(global_mean).fillna(0)
-    df["opp_avg_pts"]   = df["opp_avg_pts"].fillna(global_mean).fillna(0)
+    """Use only completed earlier matches; same-day targets are excluded."""
+    df = df.drop(columns=["venue_avg_pts", "opp_avg_pts", "feature_schema_version"], errors="ignore").copy()
+    if "available_date" not in df:
+        df["available_date"] = df["match_date"]
+    df["available_date"] = pd.to_datetime(df["available_date"])
+    for column, output in (("venue", "venue_avg_pts"), ("opponent", "opp_avg_pts")):
+        daily = df.groupby([column, "available_date"])["total_points"].agg(["sum", "count"]).reset_index()
+        daily = daily.sort_values([column, "available_date"])
+        daily[output] = daily.groupby(column)["sum"].cumsum() / daily.groupby(column)["count"].cumsum()
+        left = df[[column, "match_date"]].copy()
+        left["_position"] = np.arange(len(df))
+        merged = pd.merge_asof(left.sort_values("match_date"), daily.sort_values("available_date"),
+                               left_on="match_date", right_on="available_date", by=column,
+                               direction="backward", allow_exact_matches=False)
+        df[output] = merged.sort_values("_position")[output].to_numpy()
+        df[output] = df[output].fillna(df["total_points_cum_mean"]).fillna(0)
+    df["feature_schema_version"] = FEATURE_SCHEMA_VERSION
     return df
+
 
 def process_format(fmt: str, json_path: Path):
     print(f"\n{'='*60}\nFormat: {fmt.upper()}\n{'='*60}")
@@ -170,31 +172,15 @@ def process_format(fmt: str, json_path: Path):
     train_out    = DATA_PROCESSED / f"train_{fmt}.csv"
     test_out     = DATA_PROCESSED / f"test_{fmt}.csv"
 
-    if parquet_path.exists():
-        print(f"  features_{fmt}.parquet exists. Loading for train/test split at {TRAIN_CUTOFF}...")
-        df = pd.read_parquet(parquet_path)
-        if not pd.api.types.is_datetime64_any_dtype(df["match_date"]):
-            df["match_date"] = pd.to_datetime(df["match_date"])
-    elif out.exists():
-        print(f"  features_{fmt}.csv exists. Loading for train/test split at {TRAIN_CUTOFF}...")
-        df = pd.read_csv(out, parse_dates=["match_date"])
-    else:
-        df = flatten_json(json_path, fmt)
-        df = add_ts_features(df)
-        df = add_context_features(df)
-
-        df = df.dropna(subset=["total_points_lag1"])
-        df = df.replace([np.inf, -np.inf], 0)
-
-        print(f"  Final shape: {df.shape}")
-        df.to_csv(out, index=False)
-        print(f"  [OK] Saved: {out.name}")
-        df.to_parquet(parquet_path, engine="pyarrow")
-        print(f"  [OK] Saved: {parquet_path.name}")
+    df = flatten_json(json_path, fmt)
+    df = add_context_features(add_ts_features(df))
+    df = df.replace([np.inf, -np.inf], 0)
+    df.to_csv(out, index=False)
+    df.to_parquet(parquet_path, engine="pyarrow")
 
     cutoff = pd.Timestamp(TRAIN_CUTOFF)
-    train = df[df["match_date"] <= cutoff]
-    test  = df[df["match_date"] >  cutoff]
+    train = df[(df["match_date"] <= cutoff) & (df["available_date"] <= cutoff)]
+    test = df[(df["match_date"] > cutoff) & (df["match_date"] <= pd.Timestamp(date.today() - timedelta(days=1)))]
     train.to_csv(train_out, index=False)
     test.to_csv(test_out,  index=False)
     print(f"  [OK] Train: {len(train):,} (<= {TRAIN_CUTOFF})  |  Test: {len(test):,} (> {TRAIN_CUTOFF})")

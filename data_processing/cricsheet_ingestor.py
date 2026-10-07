@@ -1,163 +1,172 @@
-import sys
-import os
-import pandas as pd
+"""Read Cricsheet ZIP members directly and incrementally score completed matches.
+
+No career aggregates are copied into match records. Per-innings batting,
+bowling and fielding statistics are counted directly from deliveries.
+"""
+import hashlib
 import json
-from datetime import datetime
+import sys
+import zipfile
+from datetime import date
 from pathlib import Path
 
-# Add paths to sys for legacy modules
 BASE_DIR = Path(__file__).resolve().parent.parent
-PREPROC_DIR = BASE_DIR / "data_preprocessing"
-if str(PREPROC_DIR) not in sys.path:
-    sys.path.insert(0, str(PREPROC_DIR))
-    sys.path.insert(0, str(BASE_DIR / "model"))
+sys.path.insert(0, str(BASE_DIR))
+from model.calculator_t20 import calculate_fantasy_points_t20
+from model.calculate_odi import calculate_fantasy_points_odi
+from model.calculator_test import calculate_fantasy_points_test
 
-import cricketstats as cks
-from Data_Extracter import data_extracter
-from Aggregate_Points import aggregate_points_json
-from Testing import process_match_data
+INGESTION_VERSION = 2
+CALCULATORS = {"t20": calculate_fantasy_points_t20, "odi": calculate_fantasy_points_odi, "test": calculate_fantasy_points_test}
+ARCHIVES = {"t20": "t20s", "odi": "odis", "test": "tests"}
 
-def format_csv_to_json(csv_path, json_out_path):
-    print(f"Formatting {csv_path} to JSON...")
-    if not os.path.exists(csv_path):
-        print(f"Skip: {csv_path} not found.")
-        return
-        
-    data = pd.read_csv(csv_path)
-    json_data = {}
 
-    for _, row in data.iterrows():
-        player_name = row['Player']
-        match_id = row['MatchID']
-        
-        if player_name not in json_data:
-            json_data[player_name] = {}
-        
-        if match_id not in json_data[player_name]:
-            json_data[player_name][match_id] = {
-                "Team Name": row.get("Team", None),
-                "Batting Innings": 0, "Bowling Innings": 0,
-                "Total Runs Scored": 0 if pd.isna(row.get("Score")) else row.get("Score"),
-                "Avg Runs Per Inning": 0,
-                "Boundaries": (0 if pd.isna(row.get("Fours")) else row.get("Fours")) + (0 if pd.isna(row.get("Sixes")) else row.get("Sixes")),
-                "Sixes": 0 if pd.isna(row.get("Sixes")) else row.get("Sixes"),
-                "Average Sixes Per Inning": 0,
-                "Fours": 0 if pd.isna(row.get("Fours")) else row.get("Fours"),
-                "Average Fours Per Inning": 0,
-                "Boundary% Per Inning": 0,
-                "Boundary Rate Per Inning": 0,
-                "Wickets": 0 if pd.isna(row.get("Wickets")) else row.get("Wickets"),
-                "Bowled": 0 if pd.isna(row.get("Bowled")) else row.get("Bowled"),
-                "LBW": 0 if pd.isna(row.get("LBW")) else row.get("LBW"),
-                "Avg Wickets Per Inning": 0,
-                "Opposition Team": row.get("Opposition", None),
-                "Catches Taken": 0, "Stumped Outs Made": 0, "Run Outs Made": 0,  
-                "Match Date": row.get("Date", None),
-                "Match ID": match_id,
-                "Match Type": row.get("Match Type", "ODI"),
-                "Venue": row.get("Venue", None),
-                "Overs Bowled": 0 if pd.isna(row.get("Overs")) else row.get("Overs"),
-                "Runs Given": 0 if pd.isna(row.get("Runs")) else row.get("Runs"),
-                "Maidens": 0 if pd.isna(row.get("Maidens")) else row.get("Maidens"),
-                "Bowls Bowled": 0, "Bowling Average": 0, "Avg Bowling S/R Per Inning": 0,
-                "RunsGiven/Ball Per Inning": 0, "Average Consecutive Dot Balls": 0,
-                "Average Bowls Bowled Per Inning": 0, "Avg Economy Rate per inning": 0,
-                "Dot Balls": 0 if pd.isna(row.get("Dots")) else row.get("Dots"),
-                "Balls Faced": 0 if pd.isna(row.get("Balls")) else row.get("Balls"),
-                "Avg Balls Faced Per Inning": 0, "Avg Batting S/R Per Inning": 0,
-                "Avg Runs/Ball Per Inning": 0,
-                "How Out": row.get("How Out", None),
-                "Fielder": row.get("Fielder", None)
-            }
-            
-        # Specific updates based on Innings Type
-        innings_type = row.get("Innings Type", "")
-        if pd.notna(innings_type):
-            if "Batting" in innings_type:
-                json_data[player_name][match_id]["Batting Innings"] += 1
-            if "Bowling" in innings_type:
-                json_data[player_name][match_id]["Bowling Innings"] += 1
+def atomic_json(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False), encoding="utf-8")
+    temporary.replace(path)
 
-    # Derived Stats
-    for player in json_data:
-        for match_id, stats in json_data[player].items():
-            b_inns = stats["Batting Innings"]
-            if b_inns > 0:
-                stats["Avg Runs Per Inning"] = stats["Total Runs Scored"] / b_inns
-                stats["Average Sixes Per Inning"] = stats["Sixes"] / b_inns
-                stats["Average Fours Per Inning"] = stats["Fours"] / b_inns
-                stats["Boundary% Per Inning"] = (stats["Boundaries"] * 100) / (stats["Balls Faced"] * b_inns) if stats["Balls Faced"] > 0 else 0
-                stats["Avg Batting S/R Per Inning"] = (stats["Total Runs Scored"] * 100) / (stats["Balls Faced"] * b_inns) if stats["Balls Faced"] > 0 else 0
-            
-            bow_inns = stats["Bowling Innings"]
-            if bow_inns > 0:
-                stats["Avg Wickets Per Inning"] = stats["Wickets"] / bow_inns
-                stats["Avg Economy Rate per inning"] = stats["Runs Given"] / (stats["Overs Bowled"] * bow_inns) if stats["Overs Bowled"] > 0 else 0
 
-    # Fielding stats
-    for _, row in data.iterrows():
-        fielder = row.get("Fielder", "")
-        match_id = row['MatchID']
-        how_out = str(row.get("How Out", ""))
-        if fielder and fielder in json_data and match_id in json_data[fielder]:
-            if "caught" in how_out.lower():
-                json_data[fielder][match_id]["Catches Taken"] += 1
-            elif "stumped" in how_out.lower():
-                json_data[fielder][match_id]["Stumped Outs Made"] += 1
-            elif "run out" in how_out.lower():
-                json_data[fielder][match_id]["Run Outs Made"] += 1
+def match_records(match, source_id, fmt):
+    info = match["info"]
+    start, end = min(info["dates"]), max(info["dates"])
+    teams = info["teams"]
+    match_key = f"{teams[0]}-{teams[1]}-{start}-{info.get('gender', 'unknown')}-{info['match_type']}-{source_id}"
+    stats = {}
+    for team, names in info["players"].items():
+        for name in names:
+            s = {"Total Runs Scored": 0, "Fours": 0, "Sixes": 0, "Balls Faced": 0,
+                 "Wickets": 0, "Bowled": 0, "LBW": 0, "Bowls Bowled": 0,
+                 "Runs Given": 0, "Catches Taken": 0, "Stumped Outs Made": 0,
+                 "Run Outs Made": 0, "Maiden Overs": 0, "Dot Balls": 0,
+                 "Team Name": team, "Opposition Team": next(t for t in teams if t != team)}
+            for i in range(1, 5):
+                s.update({f"Innings {i} Runs": 0, f"Innings {i} Wickets": 0,
+                          f"Innings {i} Balls Faced": 0, f"How Out Inning {i} (Not Played)": 1,
+                          f"How Out Inning {i} (not out)": 1})
+            stats[name] = s
 
-    with open(json_out_path, 'w') as f:
-        json.dump(json_data, f)
-    print(f"Saved {json_out_path}")
+    for i, innings in enumerate(match["innings"], 1):
+        if innings.get("super_over"):
+            continue
+        for over in innings.get("overs", []):
+            conceded, legal_by_bowler = {}, {}
+            for ball in over["deliveries"]:
+                batter, bowler = ball["batter"], ball["bowler"]
+                for n in (batter, bowler, ball.get("non_striker")):
+                    if n and n not in stats:
+                        raise ValueError(f"Player {n} absent from registered match squad")
+                bat, bowl = stats[batter], stats[bowler]
+                extras, runs = ball.get("extras", {}), ball["runs"]
+                bat[f"How Out Inning {i} (Not Played)"] = 0
+                if ball.get("non_striker"):
+                    stats[ball["non_striker"]][f"How Out Inning {i} (Not Played)"] = 0
+                bat["Total Runs Scored"] += runs["batter"]
+                bat[f"Innings {i} Runs"] += runs["batter"]
+                bat["Fours"] += int(runs["batter"] == 4 and not runs.get("non_boundary"))
+                bat["Sixes"] += int(runs["batter"] == 6 and not runs.get("non_boundary"))
+                if not extras.get("wides"):
+                    bat["Balls Faced"] += 1
+                    bat[f"Innings {i} Balls Faced"] += 1
+                legal = not extras.get("wides") and not extras.get("noballs")
+                bowl["Bowls Bowled"] += int(legal)
+                legal_by_bowler[bowler] = legal_by_bowler.get(bowler, 0) + int(legal)
+                charged = runs["total"] - extras.get("byes", 0) - extras.get("legbyes", 0) - extras.get("penalty", 0)
+                bowl["Runs Given"] += charged
+                conceded[bowler] = conceded.get(bowler, 0) + charged
+                bowl["Dot Balls"] += int(legal and runs["total"] == 0)
+                for wicket in ball.get("wickets", []):
+                    kind, out = wicket["kind"], wicket["player_out"]
+                    if kind not in ("retired hurt", "obstructing the field", "retired out", "run out"):
+                        bowl["Wickets"] += 1
+                        bowl[f"Innings {i} Wickets"] += 1
+                    bowl["Bowled"] += int(kind == "bowled")
+                    bowl["LBW"] += int(kind == "lbw")
+                    if out in stats and kind != "retired hurt":
+                        stats[out][f"How Out Inning {i} (not out)"] = 0
+                    if kind == "caught and bowled":
+                        bowl["Catches Taken"] += 1
+                    for fielder in wicket.get("fielders", []):
+                        name = fielder.get("name")
+                        if name not in stats:
+                            continue
+                        field = {"caught": "Catches Taken", "stumped": "Stumped Outs Made", "run out": "Run Outs Made"}.get(kind)
+                        if field:
+                            stats[name][field] += 1
+            for bowler, balls in legal_by_bowler.items():
+                if balls == info.get("balls_per_over", 6) and conceded.get(bowler, 0) == 0:
+                    stats[bowler]["Maiden Overs"] += 1
+
+    records = {}
+    for player, s in stats.items():
+        batting_innings = sum(not s[f"How Out Inning {i} (Not Played)"] for i in range(1, 5))
+        overs = s["Bowls Bowled"] / info.get("balls_per_over", 6)
+        sr = s["Total Runs Scored"] * 100 / s["Balls Faced"] if s["Balls Faced"] else 0
+        economy = s["Runs Given"] / overs if overs else 0
+        s.update({"Overs Bowled": overs, "Avg Batting S/R Per Inning": sr, "Avg Economy Rate per inning": economy})
+        points = CALCULATORS[fmt](s)
+        records[player] = {
+            **points, "team": s["Team Name"], "gender": info.get("gender"),
+            "venue": info.get("venue", "Unknown"), "opponent": s["Opposition Team"],
+            "match_date": start, "available_date": end, "source_id": source_id,
+            "total_runs": s["Total Runs Scored"], "avg_runs_per_inning": s["Total Runs Scored"] / max(1, batting_innings),
+            "boundaries": s["Fours"] + s["Sixes"], "fours": s["Fours"], "sixes": s["Sixes"],
+            "wickets": s["Wickets"], "catches_taken": s["Catches Taken"],
+            "stumped_outs_made": s["Stumped Outs Made"], "run_outs_made": s["Run Outs Made"],
+            "balls_faced": s["Balls Faced"], "avg_balls_faced_per_inning": s["Balls Faced"] / max(1, batting_innings),
+            "avg_batting_sr_per_inning": sr, "overs_bowled": overs, "bowls_bowled": s["Bowls Bowled"],
+            "avg_economy_rate_per_inning": economy, "runs_given": s["Runs Given"],
+            "runs_given_ball_per_inning": s["Runs Given"] / max(1, s["Bowls Bowled"]),
+            "average_consecutive_dot_balls": 0, "batting_sr_aa": 0,
+        }
+    return match_key, records
+
+
+def ingest_format(fmt):
+    processed = BASE_DIR / "data" / "processed"
+    output = processed / f"player_fantasy_points_{fmt}.json"
+    manifest_path = processed / f"ingestion_{fmt}.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    compatible = manifest.get("version") == INGESTION_VERSION and output.exists()
+    data = json.loads(output.read_text(encoding="utf-8")) if compatible else {}
+    previous = manifest.get("members", {}) if compatible else {}
+    members = {}
+    updated = 0
+    with zipfile.ZipFile(BASE_DIR / "data" / "raw" / f"{ARCHIVES[fmt]}_json.zip") as archive:
+        for item in archive.infolist():
+            if not item.filename.endswith(".json"):
+                continue
+            fingerprint = f"{item.CRC}:{item.file_size}"
+            if previous.get(item.filename) == fingerprint:
+                members[item.filename] = fingerprint
+                continue
+            match = json.loads(archive.read(item))
+            if min(match["info"]["dates"]) < "2010-01-01" or max(match["info"]["dates"]) >= date.today().isoformat():
+                continue
+            source_id = Path(item.filename).stem
+            key, records = match_records(match, source_id, fmt)
+            # A corrected archive member replaces every old player record for it.
+            if item.filename in previous:
+                for history in data.values():
+                    for old_key in list(history):
+                        if history[old_key].get("source_id") == source_id:
+                            del history[old_key]
+            for player, stats in records.items():
+                data.setdefault(player, {})[key] = stats
+            members[item.filename] = fingerprint
+            updated += 1
+    if updated or not compatible:
+        atomic_json(output, data)
+    atomic_json(manifest_path, {"version": INGESTION_VERSION, "members": members, "latest_available_date": max((s["available_date"] for h in data.values() for s in h.values()), default=None)})
+    print(f"{fmt}: {updated} added/changed matches; {len(data)} players", flush=True)
+
 
 def run_pipeline():
-    today = datetime.today()
-    from_date = (2010, 1, 1)
-    to_date = (today.year, today.month, today.day)
-    
-    formats = [
-        (["T20", "IT20"], "T20_IT20_data"),
-        (["ODI", "ODM"], "ODI_ODM_data"),
-        (["Test", "MDM"], "Test_MDM_data")
-    ]
-    
-    for matchtype, prefix in formats:
-        print(f"\n--- Extracting {prefix} ---")
-        try:
-            # Dynamically set database to format-specific zip
-            zip_name = "t20s_json.zip" if "T20" in prefix else "odis_json.zip" if "ODI" in prefix else "tests_json.zip"
-            zip_path = str(BASE_DIR / "data" / "raw" / zip_name)
-            
-            import Data_Extracter
-            Data_Extracter.database = zip_path
-            import Aggregate_Points
-            Aggregate_Points.database = zip_path
-            
-            import os
-            print(f"Setting database to {zip_path}, exists: {os.path.exists(zip_path)}")
-            
-            data_extracter(matchtype, from_date, to_date)
-            aggregate_points_json(matchtype, from_date, to_date)
-            
-            csv_in = str(BASE_DIR / "data" / "raw" / f"{prefix}.csv")
-            json_interim = str(BASE_DIR / "data" / "interim" / f"{prefix}.json")
-            agg_in = str(BASE_DIR / "data" / "processed" / f"{prefix}_aggregate_data.json")
-            
-            format_csv_to_json(csv_in, json_interim)
-            
-            # Map legacy prefix to model expected suffixes
-            if "T20" in prefix: out_name = "player_fantasy_points_t20.json"
-            elif "ODI" in prefix: out_name = "player_fantasy_points_odi.json"
-            else: out_name = "player_fantasy_points_test.json"
-            
-            out_path = str(BASE_DIR / "data" / "processed" / out_name)
-            
-            print(f"Calculating Fantasy Points for {prefix}...")
-            process_match_data(json_interim, agg_in, out_path)
-            
-        except Exception as e:
-            print(f"Error processing {prefix}: {e}")
+    for fmt in ARCHIVES:
+        ingest_format(fmt)
+
 
 if __name__ == "__main__":
     run_pipeline()

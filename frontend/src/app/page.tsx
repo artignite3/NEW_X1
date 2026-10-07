@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import fs from "fs";
 import path from "path";
 import AppNav from "@/components/AppNav";
@@ -15,7 +16,8 @@ function loadUpcomingMatches(): Match[] {
   }
 }
 
-export default function Home() {
+export default async function Home() {
+  await connection();
   const matches = loadUpcomingMatches();
 
   return (

@@ -61,16 +61,20 @@ def download_format_zip(fmt: str, url: str):
     # Removed early return so we always download the latest zip
 
     print(f"[DOWNLOADING] {fmt} matches from {url}...")
-    try:
-        r = requests.get(url, stream=True, timeout=120)
-        if r.status_code == 200:
-            zip_path = RAW_DIR / f"{fmt}_json.zip"
-            zip_path.write_bytes(r.content)
-            print(f"[OK] Saved ZIP to {zip_path}")
-        else:
-            print(f"[WARN] Failed to download {fmt}, status: {r.status_code}")
-    except Exception as e:
-        print(f"[ERROR] Error downloading {fmt}: {e}")
+    zip_path = RAW_DIR / f"{fmt}_json.zip"
+    temporary = zip_path.with_suffix(".zip.tmp")
+    with requests.get(url, stream=True, timeout=120) as response:
+        response.raise_for_status()
+        with temporary.open("wb") as output:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if chunk:
+                    output.write(chunk)
+    with zipfile.ZipFile(temporary) as archive:
+        corrupt = archive.testzip()
+        if corrupt:
+            raise ValueError(f"Corrupt ZIP member: {corrupt}")
+    temporary.replace(zip_path)
+    print(f"[OK] Saved validated ZIP to {zip_path}")
 
 
 def main():

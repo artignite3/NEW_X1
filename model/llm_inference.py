@@ -7,6 +7,9 @@ Configuration is read from .env (OLLAMA_BASE_URL, OLLAMA_MODEL).
 """
 
 import os
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 import time
 from typing import List, Tuple
 
@@ -44,7 +47,7 @@ def ollama_available() -> bool:
         try:
             models = _client.list()
             names = [m.get("model", "") for m in models.get("models", [])]
-            ok = any(OLLAMA_MODEL in n for n in names) or len(names) > 0
+            ok = any(OLLAMA_MODEL in n for n in names) 
         except Exception:
             ok = False
     _avail_cache = (now, ok)

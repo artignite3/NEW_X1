@@ -100,7 +100,7 @@ def fetch_imminent(days: int) -> list:
             if not mdate:
                 continue
             date = datetime.strptime(mdate, "%Y-%m-%d").date()
-            if not (today <= date <= end) or m.get("matchEnded"):
+            if not (today < date <= end) or m.get("matchEnded") or m.get("matchStarted"):
                 continue
             row = _map_match(m)
             if not row or row["match_id"] in seen:
@@ -177,12 +177,15 @@ def main():
     merged = matches + [
         m for m in old
         if str(m.get("match_id")) not in new_ids and not m.get("match_started")
+        and not m.get("match_ended") and (m.get("date") or "") > datetime.now(timezone.utc).date().isoformat()
     ]
 
     payload = {
         "fetched_at": datetime.now().isoformat(),
         "source": "cricketdata.org (cricapi free tier)",
         "match_count": len(merged),
+        "window": "tomorrow onward",
+        "imminent_count": len(matches),
         "matches": merged,
     }
     with open(MATCHES_FILE, "w", encoding="utf-8") as f:

@@ -14,7 +14,7 @@ type Format = (typeof FORMATS)[number];
 function tomorrowISO(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // Abstract field diagram — the empty-state graphic doubles as a product metaphor
@@ -48,6 +48,7 @@ export default function SimulatorPage() {
   const [venue, setVenue] = useState("");
   const [format, setFormat] = useState<Format>("T20");
   const [date, setDate] = useState(tomorrowISO);
+  const [scanNews, setScanNews] = useState(false);
   const [useMl, setUseMl] = useState(true);
   const [useIntelligence, setUseIntelligence] = useState(true);
   const [riskAversion, setRiskAversion] = useState(0.05);
@@ -70,7 +71,7 @@ export default function SimulatorPage() {
   const canSubmit =
     team1.trim().length > 0 &&
     team2.trim().length > 0 &&
-    team1.trim().toLowerCase() !== team2.trim().toLowerCase();
+    team1.trim().toLowerCase() !== team2.trim().toLowerCase() && date >= tomorrowISO();
 
   const run = async () => {
     if (!canSubmit) return;
@@ -87,6 +88,7 @@ export default function SimulatorPage() {
         use_ml: useMl,
         use_intelligence: useIntelligence,
         risk_aversion: riskAversion,
+        scan_news: scanNews,
       });
       setResult(res);
       setTimeout(() => document.getElementById("sim-analysis")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
@@ -138,7 +140,7 @@ export default function SimulatorPage() {
                   className="field w-full px-3 py-2.5 text-sm text-fg placeholder:text-fg-mute/60"
                 />
                 {team1 && team2 && !canSubmit && (
-                  <p className="text-xs text-warn mt-1.5">The two teams must differ.</p>
+                  <p className="text-xs text-warn mt-1.5">Choose different teams and a date from tomorrow onward.</p>
                 )}
               </div>
 
@@ -193,6 +195,7 @@ export default function SimulatorPage() {
                   <input
                     id="date"
                     type="date"
+                    min={tomorrowISO()}
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     className="field w-full px-3 py-[9px] text-sm text-fg mono-value [color-scheme:dark]"
@@ -221,7 +224,8 @@ export default function SimulatorPage() {
               </div>
 
               <div className="border-t border-line-soft pt-4 space-y-3.5">
-                <Toggle checked={useMl} onChange={setUseMl} label="TriBE ML" hint="CatBoost + XGBoost + LightGBM ensemble" />
+                <Toggle checked={useMl} onChange={setUseMl} label="ML predictions" hint="CatBoost for T20; TriBE ensemble for ODI and Test" />
+                <Toggle checked={scanNews} onChange={setScanNews} label="Scan injury news" hint="Check headlines mentioning the selected squad" />
                 <Toggle checked={useIntelligence} onChange={setUseIntelligence} label="Match intelligence" hint="Weather, pitch profile, injury status" />
               </div>
 
@@ -253,7 +257,7 @@ export default function SimulatorPage() {
                   <SectionLabel className="mb-2">Awaiting Parameters</SectionLabel>
                   <p className="text-sm text-fg-dim leading-relaxed">
                     Configure a hypothetical match on the left. The engine assembles each team&apos;s
-                    best-known squad, predicts every player with the TriBE ensemble, and solves for
+                    best-known squad, predicts every player with the format-specific model, and solves for
                     the risk-adjusted optimal XI.
                   </p>
                 </div>

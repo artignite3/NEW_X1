@@ -1,28 +1,38 @@
 import json
+import math
+
+def numeric(stats, key):
+    """Missing, null and nonfinite innings values represent zero."""
+    try:
+        value = float(stats.get(key) or 0)
+        return value if math.isfinite(value) else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
 
 # Function to calculate batting points for Test matches
 def calculate_batting_points_test(player_stats):
     points = 0
-    runs_scored = player_stats.get("Total Runs Scored", 0)
-    boundaries = player_stats.get("Fours", 0)
-    sixes = player_stats.get("Sixes", 0)
-    balls_faced = player_stats.get("Balls Faced", 0)
-    balls_faced_inning1 = player_stats.get("Balls Faced Inning 1", 0)
-    balls_faced_inning2 = player_stats.get("Balls Faced Inning 2", 0)
-    balls_faced_inning3 = player_stats.get("Balls Faced Inning 3", 0)
-    balls_faced_inning4 = player_stats.get("Balls Faced Inning 4", 0)
-    inning1_not_out = player_stats.get("How Out Inning 1 (not out)", 0)
-    inning2_not_out = player_stats.get("How Out Inning 2 (not out)", 0)
-    inning1_not_played = player_stats.get("How Out Inning 1 (Not Played)", 0)
-    inning2_not_played = player_stats.get("How Out Inning 2 (Not Played)", 0)
-    inning3_not_out = player_stats.get("How Out Inning 3 (not out)", 0)
-    inning4_not_out = player_stats.get("How Out Inning 4 (not out)", 0)
-    inning3_not_played = player_stats.get("How Out Inning 3 (Not Played)", 0)
-    inning4_not_played = player_stats.get("How Out Inning 4 (Not Played)", 0)
-    inning1_runs = player_stats.get("Innings 1 Runs", 0)
-    inning2_runs = player_stats.get("Innings 2 Runs", 0)
-    inning3_runs = player_stats.get("Innings 3 Runs", 0)
-    inning4_runs = player_stats.get("Innings 4 Runs", 0)
+    runs_scored = numeric(player_stats, "Total Runs Scored")
+    boundaries = numeric(player_stats, "Fours")
+    sixes = numeric(player_stats, "Sixes")
+    balls_faced = numeric(player_stats, "Balls Faced")
+    balls_faced_inning1 = numeric(player_stats, "Innings 1 Balls Faced") or numeric(player_stats, "Balls Faced Inning 1")
+    balls_faced_inning2 = numeric(player_stats, "Innings 2 Balls Faced") or numeric(player_stats, "Balls Faced Inning 2")
+    balls_faced_inning3 = numeric(player_stats, "Innings 3 Balls Faced") or numeric(player_stats, "Balls Faced Inning 3")
+    balls_faced_inning4 = numeric(player_stats, "Innings 4 Balls Faced") or numeric(player_stats, "Balls Faced Inning 4")
+    inning1_not_out = numeric(player_stats, "How Out Inning 1 (not out)")
+    inning2_not_out = numeric(player_stats, "How Out Inning 2 (not out)")
+    inning1_not_played = numeric(player_stats, "How Out Inning 1 (Not Played)")
+    inning2_not_played = numeric(player_stats, "How Out Inning 2 (Not Played)")
+    inning3_not_out = numeric(player_stats, "How Out Inning 3 (not out)")
+    inning4_not_out = numeric(player_stats, "How Out Inning 4 (not out)")
+    inning3_not_played = numeric(player_stats, "How Out Inning 3 (Not Played)")
+    inning4_not_played = numeric(player_stats, "How Out Inning 4 (Not Played)")
+    inning1_runs = numeric(player_stats, "Innings 1 Runs")
+    inning2_runs = numeric(player_stats, "Innings 2 Runs")
+    inning3_runs = numeric(player_stats, "Innings 3 Runs")
+    inning4_runs = numeric(player_stats, "Innings 4 Runs")
     
     
     
@@ -83,16 +93,16 @@ def calculate_batting_points_test(player_stats):
 # Function to calculate bowling points for Test matches
 def calculate_bowling_points_test(player_stats):
     points = 0
-    wickets = player_stats.get("Wickets", 0)
-    overs_bowled = player_stats.get("Overs Bowled", 0)
-    inning1_wickets = player_stats.get("Innings 1 Wickets", 0)
-    inning2_wickets = player_stats.get("Innings 2 Wickets", 0)
-    inning3_wickets = player_stats.get("Innings 3 Wickets", 0)
-    inning4_wickets = player_stats.get("Innings 4 Wickets", 0)
+    wickets = numeric(player_stats, "Wickets")
+    overs_bowled = numeric(player_stats, "Overs Bowled")
+    inning1_wickets = numeric(player_stats, "Innings 1 Wickets")
+    inning2_wickets = numeric(player_stats, "Innings 2 Wickets")
+    inning3_wickets = numeric(player_stats, "Innings 3 Wickets")
+    inning4_wickets = numeric(player_stats, "Innings 4 Wickets")
     
     
     # Bowled and LBW features to be made yet
-    bowled_or_lbw = player_stats.get("Bowled", 0) + player_stats.get("LBW", 0)
+    bowled_or_lbw = numeric(player_stats, "Bowled") + numeric(player_stats, "LBW")
 
     # +16 points per wicket, +8 for bowled/LBW dismissals
     points += wickets * 16
@@ -122,7 +132,7 @@ def calculate_bowling_points_test(player_stats):
 
     # # Economy Rate Bonus (Min 10 overs bowled in an innings)
     # if overs_bowled >= 10:
-    #     economy_rate = player_stats.get("Economy Rate", 0)
+    #     economy_rate = numeric(player_stats, "Economy Rate")
     #     if economy_rate < 2.5:
     #         points += 6
     #     elif 2.5 <= economy_rate <= 3.5:
@@ -139,11 +149,11 @@ def calculate_bowling_points_test(player_stats):
 # Function to calculate fielding points for Test matches
 def calculate_fielding_points_test(player_stats):
     points = 0
-    catches_taken = player_stats.get("Catches Taken", 0)
-    stumped_outs = player_stats.get("Stumped Outs Made", 0)
-    # run_outs_direct = player_stats.get("Direct Hit Run Outs Made", 0)
-    # run_outs_indirect = player_stats.get("Non-Direct Run Outs Made", 0)
-    run_outs = player_stats.get("Run Outs Made", 0)
+    catches_taken = numeric(player_stats, "Catches Taken")
+    stumped_outs = numeric(player_stats, "Stumped Outs Made")
+    # run_outs_direct = numeric(player_stats, "Direct Hit Run Outs Made")
+    # run_outs_indirect = numeric(player_stats, "Non-Direct Run Outs Made")
+    run_outs = numeric(player_stats, "Run Outs Made")
 
     # +8 points per catch, +12 for stumping, +12 for direct run-out, +6 for indirect
     points += catches_taken * 8

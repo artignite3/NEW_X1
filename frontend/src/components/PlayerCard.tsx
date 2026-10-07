@@ -1,7 +1,7 @@
 "use client";
 
 import type { PlayerEntry } from "@/lib/types";
-import { ENGINE_LABELS, ROLE_LABELS, ROLE_TONES } from "./RoleBadge";
+import { ENGINE_LABELS, ROLE_TONES } from "./RoleBadge";
 import { Rivets } from "./ui";
 
 interface Props {

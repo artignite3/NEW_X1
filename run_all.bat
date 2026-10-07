@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title NEW_X1 - Universal Services Launcher
 echo ======================================================================
 echo    Starting NEW_X1: FastAPI + Product UI + Model UI

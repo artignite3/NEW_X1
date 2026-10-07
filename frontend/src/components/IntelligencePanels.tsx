@@ -14,11 +14,12 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export function WeatherPanel({ weather }: { weather: Weather }) {
+  if (weather.available === false) return <div className="plate p-5"><SectionLabel>Match weather</SectionLabel><p className="text-xs text-fg-dim mt-3">{weather.summary}</p></div>;
   return (
     <div className="plate p-5">
       <Rivets />
       <div className="flex items-center justify-between mb-4">
-        <SectionLabel accent>Live Weather</SectionLabel>
+        <SectionLabel accent>Match Weather</SectionLabel>
         <span className="text-fg-mute">
           <IconCloud size={16} />
         </span>
@@ -88,6 +89,7 @@ export function PitchPanel({ pitch }: { pitch: PitchProfile }) {
 }
 
 export function WeatherInline({ weather }: { weather: Weather }) {
+  if (weather.available === false) return <span className="text-fg-mute">Weather unavailable</span>;
   return (
     <span className="inline-flex items-center gap-1.5 text-fg-mute">
       <IconWind size={12} />

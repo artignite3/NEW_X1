@@ -13,6 +13,7 @@ import sys
 import time
 import signal
 import subprocess
+from urllib.request import urlopen
 from pathlib import Path
 
 # Project root directory
@@ -88,7 +89,10 @@ def main():
         for p, s in processes:
             print(f"  Stopping {s['name']} (PID {p.pid})...", flush=True)
             try:
-                p.terminate()
+                if os.name == "nt":
+                    subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True)
+                else:
+                    p.terminate()
                 p.wait(timeout=3)
             except Exception:
                 try:
@@ -116,7 +120,25 @@ def main():
         except Exception as e:
             print(f"[ERROR] Failed to start {s['name']}: {e}", flush=True)
 
-    print("\n[READY] All 3 services are active and running!\n", flush=True)
+    deadline = time.monotonic() + 60
+    ready = set()
+    while time.monotonic() < deadline and len(ready) < len(SERVICES):
+        for process, service in processes:
+            if process.poll() is not None:
+                print(f"[ERROR] {service['name']} failed during startup", flush=True)
+                shutdown()
+            url = service["url"] + ("/_stcore/health" if service["port"] == 8502 else "/")
+            try:
+                with urlopen(url, timeout=0.5) as response:
+                    if response.status == 200:
+                        ready.add(service["name"])
+            except Exception:
+                pass
+        time.sleep(0.2)
+    if len(ready) != len(SERVICES):
+        print("[ERROR] Service readiness timeout", flush=True)
+        shutdown()
+    print("\n[READY] All 3 services passed HTTP readiness checks.\n", flush=True)
 
     # Monitor processes
     try:
@@ -124,7 +146,8 @@ def main():
             for p, s in processes:
                 ret = p.poll()
                 if ret is not None:
-                    print(f"[WARNING] {s['name']} exited unexpectedly with code {ret}")
+                    print(f"[ERROR] {s['name']} exited unexpectedly with code {ret}")
+                    shutdown()
             time.sleep(1)
     except KeyboardInterrupt:
         shutdown()

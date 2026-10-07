@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { GenerateResponse, Match } from "@/lib/types";
 import { generateBestTeam } from "@/lib/api";
 import AnalysisResult, { AnalysisSkeleton } from "./AnalysisResult";
@@ -13,6 +13,8 @@ interface Props {
 }
 
 export default function FixturesBoard({ matches }: Props) {
+  const router = useRouter();
+  const [scanNews, setScanNews] = useState(false);
   const [useMl, setUseMl] = useState(true);
   const [useIntelligence, setUseIntelligence] = useState(true);
   const [analyzing, setAnalyzing] = useState<string | null>(null);
@@ -20,19 +22,14 @@ export default function FixturesBoard({ matches }: Props) {
   const [result, setResult] = useState<GenerateResponse | null>(null);
 
   const { upcoming, todays, recentPast, feedStaleDays } = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const sorted = [...matches].sort((a, b) => a.date.localeCompare(b.date));
-    const upcoming = sorted.filter((m) => new Date(m.date) >= today);
-    const todays = sorted.filter((m) => new Date(m.date).getTime() === today.getTime());
-    const recentPast = sorted
-      .filter((m) => new Date(m.date) < today)
-      .slice(-8)
-      .reverse();
+    const upcoming = sorted.filter((m) => m.date > today);
+    const todays = sorted.filter((m) => m.date === today);
+    const recentPast = sorted.filter((m) => m.date < today && m.date > "2025-06-30").slice(-8).reverse();
     const newest = sorted[sorted.length - 1];
-    const feedStaleDays = newest
-      ? Math.max(0, Math.floor((today.getTime() - new Date(newest.date).getTime()) / 86_400_000))
-      : 0;
+    const feedStaleDays = newest ? Math.max(0, Math.floor((Date.parse(today) - Date.parse(newest.date)) / 86_400_000)) : 0;
     return { upcoming, todays, recentPast, feedStaleDays };
   }, [matches]);
 
@@ -43,6 +40,8 @@ export default function FixturesBoard({ matches }: Props) {
     try {
       const res = await generateBestTeam({
         match_id: match.match_id,
+        mode: recentPast.some((m) => m.match_id === match.match_id) ? "retrospective" : "prediction",
+        scan_news: scanNews,
         use_ml: useMl,
         use_intelligence: useIntelligence,
       });
@@ -65,7 +64,7 @@ export default function FixturesBoard({ matches }: Props) {
             TriBE ensemble predictions, risk-adjusted XI optimization, live match intelligence.
           </p>
         </div>
-        <Button onClick={() => (window.location.href = "/simulator")}>
+        <Button onClick={() => (router.push("/simulator"))}>
           Custom Simulator
           <IconArrowRight size={13} />
         </Button>
@@ -74,8 +73,9 @@ export default function FixturesBoard({ matches }: Props) {
       {/* ── Engine controls ──────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5">
         <span className="mono-label text-fg-mute">Analysis engine</span>
-        <CheckRow checked={useMl} onChange={setUseMl} label="TriBE ML" />
+        <CheckRow checked={useMl} onChange={setUseMl} label="ML predictions" />
         <CheckRow checked={useIntelligence} onChange={setUseIntelligence} label="Match intelligence" />
+        <CheckRow checked={scanNews} onChange={setScanNews} label="Scan injury news" />
       </div>
 
       {/* ── Banners ──────────────────────────────────────────────────── */}
@@ -232,7 +232,7 @@ function FixtureRow({
         <Button
           variant="outline"
           onClick={onAnalyze}
-          disabled={disabled}
+          disabled={disabled || !hasSquad}
           className="shrink-0 !px-3.5 !py-2"
         >
           {analyzing ? "Analyzing" : dim ? "Retrospective" : "Analyze"}

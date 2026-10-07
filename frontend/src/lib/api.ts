@@ -49,6 +49,8 @@ export interface GenerateRequest {
   use_ml?: boolean;
   use_intelligence?: boolean;
   risk_aversion?: number;
+  scan_news?: boolean;
+  mode?: "prediction" | "retrospective";
 }
 
 export async function generateBestTeam(req: GenerateRequest): Promise<GenerateResponse> {

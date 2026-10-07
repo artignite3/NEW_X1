@@ -17,10 +17,11 @@ filtered to dates BEFORE the requested match date.
 """
 
 import hashlib
+import uuid
 import json
 import re
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -30,8 +31,8 @@ import pulp
 
 from model.name_resolver import PlayerNameResolver
 from model.predict_model import predict_squad
-from intelligence.pitch_analyzer import get_venue_profile
-from intelligence.weather_fetcher import fetch_venue_weather
+from intelligence.pitch_analyzer import get_venue_profile, pitch_multiplier
+from intelligence.weather_fetcher import fetch_venue_weather, weather_multiplier
 
 BASE = Path(__file__).resolve().parent.parent
 DATA_PROCESSED = BASE / "data" / "processed"
@@ -39,6 +40,7 @@ FUTURE_MATCHES = BASE / "data" / "future_matches"
 
 # ── Caches (process-level, warmed on first use per format) ───────────────────
 _FANTASY_CACHE: Dict[str, dict] = {}
+_DATA_STAMPS: dict = {}
 _RESOLVER_CACHE: Dict[str, PlayerNameResolver] = {}
 _PRIOR_CACHE: Dict[str, dict] = {}          # fmt -> {"prior": float, "prior_var": float}
 _SQUADS_JSON: Optional[dict] = None
@@ -97,34 +99,31 @@ def validate_date(date: str) -> str:
 
 
 def get_fantasy(fmt: str) -> dict:
-    """Loads (and caches) the historical fantasy-points dictionary for a format."""
-    if fmt not in _FANTASY_CACHE:
-        path = DATA_PROCESSED / f"player_fantasy_points_{fmt}.json"
-        with open(path, "r", encoding="utf-8") as f:
-            _FANTASY_CACHE[fmt] = json.load(f)
+    path = DATA_PROCESSED / f"player_fantasy_points_{fmt}.json"
+    stamp = path.stat().st_mtime_ns
+    if _DATA_STAMPS.get(fmt) != stamp:
+        _FANTASY_CACHE[fmt] = json.loads(path.read_text(encoding="utf-8"))
+        _RESOLVER_CACHE.pop(fmt, None)
+        _PRIOR_CACHE.clear()
+        _DATA_STAMPS[fmt] = stamp
     return _FANTASY_CACHE[fmt]
 
 
 def get_resolver(fmt: str) -> PlayerNameResolver:
+    get_fantasy(fmt)
     if fmt not in _RESOLVER_CACHE:
         _RESOLVER_CACHE[fmt] = PlayerNameResolver(get_fantasy(fmt))
     return _RESOLVER_CACHE[fmt]
 
 
 def get_squads_json() -> dict:
-    global _SQUADS_JSON
-    if _SQUADS_JSON is None:
-        with open(FUTURE_MATCHES / "upcoming_squads.json", "r", encoding="utf-8") as f:
-            _SQUADS_JSON = json.load(f).get("squads", {})
-    return _SQUADS_JSON
+    path = FUTURE_MATCHES / "upcoming_squads.json"
+    return json.loads(path.read_text(encoding="utf-8")).get("squads", {}) if path.exists() else {}
 
 
 def get_matches_json() -> list:
-    global _MATCHES_JSON
-    if _MATCHES_JSON is None:
-        with open(FUTURE_MATCHES / "upcoming_matches.json", "r", encoding="utf-8") as f:
-            _MATCHES_JSON = json.load(f).get("matches", [])
-    return _MATCHES_JSON
+    path = FUTURE_MATCHES / "upcoming_matches.json"
+    return json.loads(path.read_text(encoding="utf-8")).get("matches", []) if path.exists() else []
 
 
 def get_datewise_json() -> dict:
@@ -135,22 +134,24 @@ def get_datewise_json() -> dict:
     return _DATEWISE_JSON
 
 
-def get_league_prior(fmt: str) -> Tuple[float, float]:
+def get_league_prior(fmt: str, match_date: str) -> Tuple[float, float]:
     """
     Empirical prior for players without history: the median player's recent
     mean points and the median variance across the format's population.
     """
-    if fmt in _PRIOR_CACHE:
-        return _PRIOR_CACHE[fmt]["prior"], _PRIOR_CACHE[fmt]["prior_var"]
+    cache_key = (fmt, match_date)
+    if cache_key in _PRIOR_CACHE:
+        return _PRIOR_CACHE[cache_key]["prior"], _PRIOR_CACHE[cache_key]["prior_var"]
 
     fantasy = get_fantasy(fmt)
     means, variances = [], []
-    for matches in fantasy.values():
+    for key in fantasy:
+        matches = player_history(fantasy, key, match_date, n=30)
         if len(matches) < 10:
             continue
         recent = [
             float(m.get("total_points") or 0)
-            for m in list(matches.values())[-30:]
+            for m in matches
         ]
         if recent:
             means.append(float(np.mean(recent)))
@@ -159,7 +160,7 @@ def get_league_prior(fmt: str) -> Tuple[float, float]:
 
     prior = float(np.median(means)) if means else 15.0
     prior_var = float(np.median(variances)) if variances else 400.0
-    _PRIOR_CACHE[fmt] = {"prior": prior, "prior_var": prior_var}
+    _PRIOR_CACHE[cache_key] = {"prior": prior, "prior_var": prior_var}
     return prior, prior_var
 
 
@@ -186,6 +187,8 @@ def _teams_match(a: str, b: str) -> bool:
     """Token-overlap team matching, robust to 'Hong Kong, China' vs 'Hong Kong Squad'."""
     ta, tb = _team_tokens(a), _team_tokens(b)
     if not ta or not tb:
+        return False
+    if ("women" in ta) != ("women" in tb):
         return False
     overlap = ta & tb
     if not overlap:
@@ -270,6 +273,7 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
                 "team": team_label,
                 "injury_status": (p.get("injury_status") or "UNKNOWN").upper() if isinstance(p, dict) else "UNKNOWN",
                 "source": "cricbuzz_squad",
+                "bowling_style": p.get("bowling_style", "") if isinstance(p, dict) else "",
             }
             pool.append(player)
             squads_out[key].append(player)
@@ -301,56 +305,36 @@ def _build_datewise_index() -> dict:
     return index
 
 
-def pool_from_custom_teams(team1: str, team2: str, fmt: str) -> List[dict]:
-    """
-    Builds a pool for the Custom Simulator: the most relevant known squad for
-    each team from the datewise squad dataset (names already Cricsheet-style).
-    Squad blocks are scored by how many of their players have MALE match
-    history — the dataset mixes men's and women's squads with no gender tag,
-    and Cricbuzz-style fixtures default to the men's game.
-    """
-    index = _build_datewise_index()
+def pool_from_custom_teams(team1: str, team2: str, fmt: str, match_date: str) -> List[dict]:
+    """Use each team's latest completed squad of the requested gender/format."""
     fantasy = get_fantasy(fmt)
-
-    def male_histories(name: str) -> int:
-        entry = fantasy.get(name)
-        if not entry:
-            return 0
-        return sum(1 for k in entry if "-male-" in k)
-
-    def block_score(players: List[str]) -> tuple:
-        resolved = sum(1 for n in players if fantasy.get(n))
-        male = sum(male_histories(n) for n in players)
-        return (male, resolved, len(players))
-
-    fmt = normalize_format(fmt)
     pool = []
-    for team_label in (team1, team2):
-        t_norm = _norm_team(team_label)
-        entries = index.get(t_norm) or [
-            (d, ps, f) for key, lst in index.items() for (d, ps, f) in lst if key in t_norm or t_norm in key
-        ]
-        if not entries:
-            raise ValueError(f"No known squad for team '{team_label}'. Try a team listed at GET /teams.")
-        fmt_filtered = [e for e in entries if e[2] == fmt] or entries
-        best = max(fmt_filtered, key=lambda e: block_score(e[1]))
-        _date, players, _f = best
-        for name in players:
-            pool.append({
-                "display_name": name.strip(),
-                "role": None,
-                "team": team_label,
-                "injury_status": "UNKNOWN",
-                "source": "datewise_squad",
-            })
-    # Dedupe (same player can appear in both squads)
-    seen = set()
-    unique = []
-    for p in pool:
-        if p["display_name"].lower() in seen:
-            continue
-        seen.add(p["display_name"].lower())
-        unique.append(p)
+    for label in (team1, team2):
+        gender = "female" if "women" in label.lower() else "male"
+        normalized = _norm_team(label).replace(" women", "")
+        latest_date, names = "", set()
+        for name, matches in fantasy.items():
+            for match_key, stats in matches.items():
+                actual_team = stats.get("team")
+                day = stats.get("match_date")
+                available = stats.get("available_date", day)
+                if not day or not available or available >= match_date:
+                    continue
+                if stats.get("gender") != gender or _norm_team(actual_team or "") != normalized:
+                    continue
+                if day > latest_date:
+                    latest_date, names = day, {name}
+                elif day == latest_date:
+                    names.add(name)
+        if not names:
+            raise ValueError(f"No completed {fmt.upper()} squad for '{label}' before {match_date}")
+        pool.extend({"display_name": n, "role": None, "team": label,
+                     "injury_status": "UNKNOWN", "source": "latest_completed_squad"} for n in sorted(names))
+    seen, unique = set(), []
+    for player in pool:
+        if player["display_name"] not in seen:
+            seen.add(player["display_name"])
+            unique.append(player)
     return unique
 
 
@@ -358,6 +342,8 @@ def infer_role_from_history(history: List[dict]) -> str:
     """Fallback role inference from the batting/bowling points split."""
     if not history:
         return "BAT"
+    if any(float(m.get("stumped_outs_made") or 0) > 0 for m in history):
+        return "WK"
     bat = float(np.mean([m.get("batting_points") or 0 for m in history]))
     bowl = float(np.mean([m.get("bowling_points") or 0 for m in history]))
     if bat >= 10 and bowl >= 10:
@@ -386,7 +372,7 @@ def player_history(fantasy: dict, key: str, date: str, n: int = NUM_HISTORY_MATC
         m = re.search(r"(\d{4}-\d{2}-\d{2})", match_key)
         if not m:
             continue
-        if datetime.strptime(m.group(1), "%Y-%m-%d") < cutoff:
+        if datetime.strptime(stats.get("available_date", m.group(1)), "%Y-%m-%d") < cutoff:
             rows.append((m.group(1), stats))
     rows.sort(key=lambda x: x[0])
     return [s for _d, s in rows[-n:]]
@@ -400,31 +386,19 @@ def build_covariance_matrix(histories: Dict[str, List[float]],
     common length with each player's own mean (zero covariance contribution),
     then the diagonal is overridden with true per-player variances.
     """
-    max_len = max((len(h) for h in histories.values()), default=1)
-    max_len = max(max_len, 2)
-    data = {}
+    # Match IDs align shared observations. Missing matches contribute zero
+    # residual, rather than pairing unrelated nth-most-recent games.
+    aligned = pd.DataFrame({p: pd.Series(histories.get(p, {}), dtype=float) for p in players})
+    vectors = []
     for p in players:
-        pts = [float(x) for x in histories.get(p, [])]
-        if pts:
-            mean = float(np.mean(pts))
-            pts = pts + [mean] * (max_len - len(pts))
-        else:
-            pts = [0.0] * max_len
-        data[p] = pts[-max_len:]
-
-    df = pd.DataFrame(data)
-    cov = df.cov().fillna(0.0)
-    cov = (cov + cov.T) / 2
-
-    arr = cov.values.copy()
+        observed = aligned[p]
+        residual = (observed - observed.mean()).fillna(0).to_numpy()
+        norm = np.linalg.norm(residual)
+        vectors.append(residual * np.sqrt(max(0, variances.get(p, 0))) / norm if norm else np.zeros(len(residual)))
+    matrix = np.column_stack(vectors) if vectors else np.zeros((0, 0))
+    arr = matrix.T @ matrix
     for i, p in enumerate(players):
-        arr[i, i] = variances.get(p, 0.0)
-
-    # Positive-semidefinite repair (numerical safety for the solver)
-    min_eig = float(np.min(np.real(np.linalg.eigvals(arr))))
-    if min_eig < 0:
-        arr[np.diag_indices_from(arr)] += (-min_eig + 1e-8)
-
+        arr[i, i] = max(arr[i, i], variances.get(p, 0))
     return pd.DataFrame(arr, index=players, columns=players)
 
 
@@ -452,14 +426,26 @@ def solve_xi(stats_df: pd.DataFrame,
 
     lp = pulp.LpProblem("NEW_X1_Optimization", pulp.LpMaximize)
     x = {i: pulp.LpVariable(f"x_{i}", cat="Binary") for i in range(n)}
-    lp += pulp.lpSum((mu[i] - risk_aversion * var[i]) * x[i] for i in range(n))
-    lp += pulp.lpSum(x[i] for i in range(n)) == min(max_players, n)
+    objective = pulp.lpSum((mu[i] - risk_aversion * var[i]) * x[i] for i in range(n))
+    for i in range(n):
+        for j in range(i + 1, n):
+            covariance = float(cov_matrix.iloc[i, j]) if len(cov_matrix) == n else 0.0
+            if risk_aversion and abs(covariance) > 1e-8:
+                pair = pulp.LpVariable(f"pair_{i}_{j}", cat="Binary")
+                lp += pair <= x[i]
+                lp += pair <= x[j]
+                lp += pair >= x[i] + x[j] - 1
+                objective -= 2 * risk_aversion * covariance * pair
+    lp += objective
+    lp += pulp.lpSum(x[i] for i in range(n)) == max_players
 
     if use_role_bounds:
         def idx(prefixes):
             return [i for i, r in enumerate(roles) if str(r).upper() in prefixes]
         wk, bat = idx(("WK", "WICKETKEEPER")), idx(("BAT", "BATTER"))
         bowl, ar = idx(("BOWL", "BOWLER")), idx(("AR", "ALLROUNDER", "ALL-ROUNDER"))
+        if not wk or not bat or len(bowl) < 2:
+            return [], "Infeasible"
         if wk:
             lp += pulp.lpSum(x[i] for i in wk) >= 1
             lp += pulp.lpSum(x[i] for i in wk) <= 5
@@ -480,9 +466,9 @@ def solve_xi(stats_df: pd.DataFrame,
                 lp += pulp.lpSum(x[i] for i in t_idx) >= 1
                 lp += pulp.lpSum(x[i] for i in t_idx) <= 7
 
-    lp.solve(pulp.PULP_CBC_CMD(msg=False))
+    lp.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=5, threads=1))
     status = pulp.LpStatus[lp.status]
-    selected = [players[i] for i in range(n) if (x[i].value() or 0) > 0.5]
+    selected = [players[i] for i in range(n) if (x[i].value() or 0) > 0.5] if status == "Optimal" else []
     return selected, status
 
 
@@ -505,6 +491,11 @@ def generate_best_team(payload: dict) -> dict:
     use_intelligence = bool(payload.get("use_intelligence", True))
     scan_news = bool(payload.get("scan_news", False))
     risk_aversion = float(payload.get("risk_aversion", 0.05))
+    if not np.isfinite(risk_aversion) or not 0 <= risk_aversion <= 0.2:
+        raise ValueError("risk_aversion must be between 0 and 0.2")
+    mode = payload.get("mode", "prediction")
+    if mode not in ("prediction", "retrospective"):
+        raise ValueError("mode must be prediction or retrospective")
 
     meta: dict = {}
     if match_id:
@@ -515,9 +506,17 @@ def generate_best_team(payload: dict) -> dict:
     else:
         if not team1 or not team2:
             raise ValueError("Provide either match_id, or team1 + team2 (Custom Simulator)")
-        pool = pool_from_custom_teams(team1, team2, fmt)
-        date = validate_date(payload.get("date") or datetime.now().strftime("%Y-%m-%d"))
+        if _norm_team(team1) == _norm_team(team2):
+            raise ValueError("The two teams must differ")
+        date = validate_date(payload.get("date") or (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"))
+        pool = pool_from_custom_teams(team1, team2, fmt, date)
         venue = payload.get("venue") or "Neutral Venue"
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    if mode == "prediction" and date <= today:
+        raise ValueError("Predictions require tomorrow or a later date; use retrospective mode for completed matches")
+    if mode == "retrospective" and (date >= today or date <= "2025-06-30"):
+        raise ValueError("Retrospective analysis must be between 2025-07-01 and yesterday")
 
     # ── Name resolution ──────────────────────────────────────────────────
     fantasy = get_fantasy(fmt)
@@ -526,7 +525,7 @@ def generate_best_team(payload: dict) -> dict:
     seen_keys = set()
     deduped_pool = []
     for p in pool:
-        key, method = resolver.resolve(p["display_name"])
+        key, method = resolver.resolve(p["display_name"], require_gender="female" if "women" in (p["team"] or "").lower() else "male")
         if key and key in seen_keys:
             continue  # duplicate person via two name variants
         if key:
@@ -540,8 +539,7 @@ def generate_best_team(payload: dict) -> dict:
     pool = deduped_pool
 
     if len(pool) < 11:
-        # Small pools can't field a constrained XI; still attempt best-available
-        pass
+        raise ValueError("At least 11 eligible players are required")
 
     # ── History stats ────────────────────────────────────────────────────
     for p in pool:
@@ -552,7 +550,7 @@ def generate_best_team(payload: dict) -> dict:
             p["stat_mean"] = float(np.mean([m.get("total_points") or 0 for m in hist]))
             p["stat_var"] = float(np.var([m.get("total_points") or 0 for m in hist]))
             if not p.get("role"):
-                p["role"] = infer_role_from_history(hist[-15:])
+                p["role"] = infer_role_from_history(hist)
                 p["role_source"] = "inferred"
             else:
                 p["role_source"] = "squad"
@@ -569,13 +567,13 @@ def generate_best_team(payload: dict) -> dict:
         keys_with_history = [p["fantasy_key"] for p in pool if p["fantasy_key"] and p["matches_played"] > 0]
         if keys_with_history:
             try:
-                pred_df, details = predict_squad(keys_with_history, fmt, date, return_details=True)
+                pred_df, details = predict_squad(keys_with_history, fmt, date, return_details=True, venue=venue, opponents={p["fantasy_key"]: team2 if p["team"] == team1 else team1 for p in pool})
                 preds = dict(zip(pred_df["player"], pred_df["predicted_score"]))
             except FileNotFoundError as e:
                 print(f"[WARN] ML model unavailable for {fmt}: {e}")
                 use_ml = False
 
-    prior, prior_var = get_league_prior(fmt)
+    prior, prior_var = get_league_prior(fmt, date)
     players_with_var = [p for p in pool if p["stat_var"] is not None]
     fallback_var = float(np.median([p["stat_var"] for p in players_with_var])) if players_with_var else prior_var
 
@@ -583,13 +581,13 @@ def generate_best_team(payload: dict) -> dict:
     pitch = get_venue_profile(venue, fmt) if use_intelligence else None
     weather = None
     if use_intelligence:
-        weather = fetch_venue_weather(venue)
+        weather = fetch_venue_weather(venue, date)
 
     news_reports: Dict[str, dict] = {}
     if scan_news:
         try:
             from intelligence.injury_detector import get_active_injury_reports
-            news_reports = get_active_injury_reports()
+            news_reports = get_active_injury_reports([p["display_name"] for p in pool])
         except Exception as e:
             print(f"[WARN] Injury news scan failed: {e}")
 
@@ -607,15 +605,9 @@ def generate_best_team(payload: dict) -> dict:
             p["engine"] = "league_prior"
         p["base_score"] = round(base, 2)
 
-        if pitch is not None:
-            p["pitch_multiplier"] = {
-                "BAT": pitch.get("batter_mult", 1.0),
-                "WK": pitch.get("batter_mult", 1.0),
-                "BOWL": max(pitch.get("pacer_mult", 1.0), pitch.get("spinner_mult", 1.0)),
-                "AR": (pitch.get("batter_mult", 1.0) + max(pitch.get("pacer_mult", 1.0), pitch.get("spinner_mult", 1.0))) / 2.0,
-            }[p["role"]]
-        else:
-            p["pitch_multiplier"] = 1.0
+        style = p.get("bowling_style", "")
+        p["pitch_multiplier"] = pitch_multiplier(p["role"], style, pitch) if pitch else 1.0
+        p["weather_multiplier"] = weather_multiplier(p["role"], style, weather)
 
         status = p["injury_status"] if p["injury_status"] in INJURY_MULTIPLIERS else "UNKNOWN"
         news_hit = None
@@ -639,7 +631,7 @@ def generate_best_team(payload: dict) -> dict:
             exp_factor = 1.0
         playing_prob = min(prob_adj * exp_factor, 1.0)
 
-        paf_score = base * p["pitch_multiplier"]
+        paf_score = base * p["pitch_multiplier"] * p["weather_multiplier"]
         final = paf_score * inj_mult * playing_prob
 
         p_std = float(np.sqrt(p["stat_var"] if p["stat_var"] is not None else fallback_var))
@@ -661,7 +653,7 @@ def generate_best_team(payload: dict) -> dict:
         if not p["fantasy_key"]:
             p["fantasy_key"] = k  # synthetic unique id for solver bookkeeping
 
-    histories = {p["fantasy_key"]: [float(m.get("total_points") or 0) for m in p["history"]] for p in pool}
+    histories = {p["fantasy_key"]: {m.get("source_id", m.get("match_date", str(i))): float(m.get("total_points") or 0) for i, m in enumerate(p["history"])} for p in pool}
     variances = {p["fantasy_key"]: p["variance"] for p in pool}
     cov = build_covariance_matrix(histories, pool_keys, variances)
 
@@ -674,15 +666,12 @@ def generate_best_team(payload: dict) -> dict:
         "variance": p["variance"],
     } for p in pool])
 
+    eligible = {p["fantasy_key"] for p in pool if p["injury_status"] not in {"INJURED", "RESTED", "SUSPENDED"}}
+    stats_df = stats_df[stats_df.player.isin(eligible)].reset_index(drop=True)
+    cov = cov.loc[stats_df.player, stats_df.player]
     selected_keys, status = solve_xi(stats_df, cov, risk_aversion=risk_aversion)
-    if status != "Optimal":
-        selected_keys, status = solve_xi(stats_df, cov, risk_aversion=risk_aversion, use_team_bounds=False)
-    if status != "Optimal":
-        selected_keys, status = solve_xi(stats_df, cov, risk_aversion=risk_aversion,
-                                         use_role_bounds=False, use_team_bounds=False)
-    if status != "Optimal":
-        top = stats_df.nlargest(min(11, len(stats_df)), "mean_points")
-        selected_keys, status = top["player"].tolist(), "GREEDY_FALLBACK"
+    if status != "Optimal" or len(selected_keys) != 11:
+        raise ValueError("Cannot construct a valid XI: need 11 available players, a wicketkeeper, a batter, two bowlers and 1–7 players per team. Check squad roles and availability.")
 
     selected_set = set(selected_keys)
     ordered = sorted(pool, key=lambda p: p["adjusted_score"], reverse=True)
@@ -699,6 +688,8 @@ def generate_best_team(payload: dict) -> dict:
             "engine": p["engine"],
             "base_score": p["base_score"],
             "pitch_multiplier": p["pitch_multiplier"],
+            "weather_multiplier": p["weather_multiplier"],
+            "bowling_style": p.get("bowling_style", ""),
             "injury_status": p["injury_status"],
             "injury_multiplier": p["injury_multiplier"],
             "playing_probability": p["playing_probability"],
@@ -726,9 +717,7 @@ def generate_best_team(payload: dict) -> dict:
         vice_captain = ranked[1]["display_name"]
 
     # ── Explainability cache ─────────────────────────────────────────────
-    explain_token = hashlib.sha1(
-        json.dumps([fmt, date, venue, sorted(pool_keys), use_ml, risk_aversion], default=str)
-    .encode()).hexdigest()[:16]
+    explain_token = uuid.uuid4().hex
     _EXPLAIN_CACHE[explain_token] = {
         "fmt": fmt,
         "date": date,
@@ -753,7 +742,7 @@ def generate_best_team(payload: dict) -> dict:
     return {
         "request": {
             "match_id": match_id, "team1": team1, "team2": team2,
-            "format": fmt, "date": date, "venue": venue,
+            "format": fmt, "date": date, "venue": venue, "mode": mode,
             "use_ml": use_ml, "use_intelligence": use_intelligence,
             "risk_aversion": risk_aversion,
         },
@@ -767,7 +756,7 @@ def generate_best_team(payload: dict) -> dict:
             "vice_captain": vice_captain,
             "solver_status": status,
             "squad_size": len(pool),
-            "engine": "TriBE Ensemble (CatBoost+XGBoost+LightGBM)" if use_ml else "Recent Form (statistical)",
+            "engine": ("CatBoost" if fmt == "t20" else "TriBE Ensemble (CatBoost+XGBoost+LightGBM)") if use_ml else "Recent Form (statistical)",
             "league_prior": round(prior, 2),
         },
         "intelligence": intelligence,

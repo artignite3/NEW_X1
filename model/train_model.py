@@ -31,7 +31,9 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import cross_val_predict, KFold
+from sklearn.base import clone
+from sklearn.model_selection import TimeSeriesSplit
+from datetime import date, timedelta
 
 warnings.filterwarnings("ignore")
 
@@ -66,6 +68,7 @@ MODEL_ARTIFACTS = BASE / "model_artifacts"
 MODEL_ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
 TRAIN_CUTOFF = "2025-06-30"
+FEATURE_SCHEMA_VERSION = 2
 
 
 # ─────────────────────────────────────────────
@@ -73,7 +76,7 @@ TRAIN_CUTOFF = "2025-06-30"
 # ─────────────────────────────────────────────
 NON_FEATURE_COLS = {
     "player", "match_key", "match_date", "venue", "opponent",
-    "format", "total_points",
+    "format", "total_points", "feature_schema_version", "available_date",
     # raw stats used to BUILD features but not used directly as features
     "total_runs", "avg_runs_per_inning", "boundaries", "sixes", "fours",
     "wickets", "catches_taken", "stumped_outs_made", "run_outs_made",
@@ -100,6 +103,14 @@ def load_train_test(fmt: str):
     train = pd.read_csv(train_path, parse_dates=["match_date"])
     test  = pd.read_csv(test_path,  parse_dates=["match_date"]) if test_path.exists() else pd.DataFrame()
 
+    for label, frame in (("train", train), ("test", test)):
+        if not frame.empty and ("feature_schema_version" not in frame or not frame["feature_schema_version"].eq(FEATURE_SCHEMA_VERSION).all()):
+            raise ValueError(f"{label} dataset has obsolete features; rebuild feature engineering first")
+    if train["match_date"].gt(pd.Timestamp(TRAIN_CUTOFF)).any() or pd.to_datetime(train["available_date"]).gt(pd.Timestamp(TRAIN_CUTOFF)).any():
+        raise ValueError("Training dataset contains matches beyond the hard cutoff")
+    train = train.sort_values(["match_date", "match_key", "player"]).reset_index(drop=True)
+    if not test.empty:
+        test = test[(test["match_date"] > pd.Timestamp(TRAIN_CUTOFF)) & (test["match_date"] <= pd.Timestamp(date.today() - timedelta(days=1)))].sort_values(["match_date", "match_key", "player"]).reset_index(drop=True)
     print(f"  Train: {len(train):,} rows  |  Test: {len(test):,} rows")
     return train, test
 
@@ -107,7 +118,7 @@ def load_train_test(fmt: str):
 def get_feature_cols(df: pd.DataFrame) -> list[str]:
     """Return all numeric feature columns (excludes metadata + target)."""
     return [c for c in df.columns
-            if c not in NON_FEATURE_COLS
+            if c not in NON_FEATURE_COLS and not c.startswith("career_")
             and df[c].dtype in [np.float64, np.float32, np.int64, np.int32]]
 
 
@@ -152,10 +163,12 @@ def train_t20(train: pd.DataFrame, test: pd.DataFrame):
         early_stopping_rounds=50,
     )
 
-    # Use 10% of train as validation for early stopping
-    val_size = max(1, int(0.1 * len(X_train)))
-    X_val, y_val = X_train.iloc[-val_size:], y_train.iloc[-val_size:]
-    X_tr,  y_tr  = X_train.iloc[:-val_size], y_train.iloc[:-val_size]
+    # Split whole dates so no match spans training and validation.
+    dates = np.sort(train.loc[X_train.index, "match_date"].unique())
+    boundary = dates[max(1, int(len(dates) * 0.9))]
+    earlier = train.loc[X_train.index, "match_date"] < boundary
+    X_tr, y_tr = X_train.loc[earlier], y_train.loc[earlier]
+    X_val, y_val = X_train.loc[~earlier], y_train.loc[~earlier]
 
     model.fit(
         X_tr, y_tr,
@@ -163,6 +176,10 @@ def train_t20(train: pd.DataFrame, test: pd.DataFrame):
         cat_features=cat_idx if cat_idx else None,
         use_best_model=True,
     )
+
+    best_iterations = model.tree_count_
+    model = CatBoostRegressor(iterations=best_iterations, learning_rate=0.05, depth=8, loss_function="MAE", random_seed=42, verbose=False, thread_count=4)
+    model.fit(X_train, y_train)
 
     # Evaluate on test set
     metrics = {}
@@ -185,7 +202,7 @@ def train_t20(train: pd.DataFrame, test: pd.DataFrame):
 
 
     # Also save feature list for inference
-    meta = {"feature_cols": feature_cols, "format": "t20", "cutoff": TRAIN_CUTOFF}
+    meta = {"feature_cols": feature_cols, "format": "t20", "cutoff": TRAIN_CUTOFF, "feature_schema_version": FEATURE_SCHEMA_VERSION}
     joblib.dump(meta, MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl")
 
     return model, feature_cols, metrics
@@ -206,6 +223,7 @@ def build_tribe_base_models():
             loss_function="MAE",
             random_seed=42,
             verbose=0,
+            thread_count=4,
         )
 
     if HAS_XGB:
@@ -217,6 +235,7 @@ def build_tribe_base_models():
             colsample_bytree=0.8,
             random_state=42,
             tree_method="hist",
+            n_jobs=4,
             objective="reg:absoluteerror",
         )
 
@@ -229,6 +248,7 @@ def build_tribe_base_models():
             colsample_bytree=0.8,
             random_state=42,
             verbose=-1,
+            n_jobs=4,
         )
 
     if not models:
@@ -249,31 +269,31 @@ def train_tribe(train: pd.DataFrame, test: pd.DataFrame, fmt: str):
     X_train, y_train = prep_xy(train, feature_cols)
 
     base_models = build_tribe_base_models()
-    kf = KFold(n_splits=5, shuffle=False)  # no shuffle — preserve time order
+    dates = train.loc[X_train.index, "match_date"]
+    unique_dates = np.sort(dates.unique())
+    splits = []
+    for train_days, validation_days in TimeSeriesSplit(n_splits=5).split(unique_dates):
+        tr = np.flatnonzero(dates.isin(unique_dates[train_days]).to_numpy())
+        va = np.flatnonzero(dates.isin(unique_dates[validation_days]).to_numpy())
+        assert dates.iloc[tr].max() < dates.iloc[va].min()
+        splits.append((tr, va))
 
-    # --- Stage 1: OOF predictions from base models ---
-    oof_preds = {}
-    fitted_base = {}
-
+    oof_preds, fitted_base = {}, {}
     for name, model in base_models.items():
-        print(f"  OOF predict: {name}...")
-        # For CatBoost, drop cat columns to avoid issues in cross_val_predict
-        X_fit = X_train.copy()
-
-        oof = cross_val_predict(
-            model, X_fit, y_train,
-            cv=kf, method="predict", n_jobs=-1
-        )
+        print(f"  Forward OOF predict: {name}...", flush=True)
+        oof = np.full(len(X_train), np.nan)
+        for tr, va in splits:
+            fold_model = clone(model)
+            fold_model.fit(X_train.iloc[tr], y_train.iloc[tr])
+            oof[va] = fold_model.predict(X_train.iloc[va])
         oof_preds[name] = oof
-
-        # Refit on full training data
-        model.fit(X_fit, y_train)
+        model.fit(X_train, y_train)
         fitted_base[name] = model
 
-    # --- Stage 2: Meta-model on OOF predictions ---
     meta_X_train = np.column_stack(list(oof_preds.values()))
-    meta_model = LinearRegression(positive=True)  # weights must be ≥ 0
-    meta_model.fit(meta_X_train, y_train)
+    usable = np.isfinite(meta_X_train).all(axis=1)
+    meta_model = LinearRegression(positive=True)
+    meta_model.fit(meta_X_train[usable], y_train.iloc[np.flatnonzero(usable)])
 
     print(f"  Meta weights: { {k: round(float(w), 3) for k, w in zip(oof_preds.keys(), meta_model.coef_)} }")
 
@@ -300,6 +320,7 @@ def train_tribe(train: pd.DataFrame, test: pd.DataFrame, fmt: str):
         "base_model_names": list(oof_preds.keys()),
         "format":         fmt,
         "cutoff":         TRAIN_CUTOFF,
+        "feature_schema_version": FEATURE_SCHEMA_VERSION,
     }
     save_path = MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"
     joblib.dump(tribe_bundle, save_path)
@@ -358,6 +379,8 @@ def main():
             print(f"  {fmt.upper():<6} MAE={m.get('MAE','N/A')}  RMSE={m.get('RMSE','N/A')}  R2={m.get('R2','N/A')}")
 
     print(f"\nAll models saved to: {MODEL_ARTIFACTS}")
+    if len(all_metrics) != 3:
+        raise SystemExit("Training failed for one or more formats")
     print("[OK] Training complete.")
 
 
