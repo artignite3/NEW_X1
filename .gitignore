@@ -45,3 +45,7 @@ outputs/
 Thumbs.db
 .idea/
 .vscode/
+
+# ── Pipeline transients ─────────────────────────────────────────────────
+catboost_info/
+data/processed/*.tmp
