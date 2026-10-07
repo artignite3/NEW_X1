@@ -362,7 +362,7 @@ def save_matches(matches):
             datetime.now().isoformat(),
 
         "source":
-            "cricapi",
+            "Cricbuzz via RapidAPI",
 
         "match_count":
             len(matches),
@@ -371,18 +371,8 @@ def save_matches(matches):
             matches
     }
 
-    with open(
-        OUTPUT_FILE,
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        json.dump(
-            output,
-            f,
-            indent=2,
-            ensure_ascii=False
-        )
+    from fixture_store import publish
+    publish(output)
 
     logger.info(
         f"Saved {len(matches)} matches to {OUTPUT_FILE}"

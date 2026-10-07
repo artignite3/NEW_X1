@@ -12,6 +12,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
+from data_processing.safe_publish import promote
 from model.calculator_t20 import calculate_fantasy_points_t20
 from model.calculate_odi import calculate_fantasy_points_odi
 from model.calculator_test import calculate_fantasy_points_test
@@ -21,12 +22,12 @@ CALCULATORS = {"t20": calculate_fantasy_points_t20, "odi": calculate_fantasy_poi
 ARCHIVES = {"t20": "t20s", "odi": "odis", "test": "tests"}
 
 
-def atomic_json(path, value):
+def atomic_json(path, value, *, preserve_current=True):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(json.dumps(value, ensure_ascii=False, allow_nan=False), encoding="utf-8")
-    temporary.replace(path)
+    promote(temporary, path, preserve_current=preserve_current)
 
 
 def match_records(match, source_id, fmt):
@@ -128,9 +129,18 @@ def ingest_format(fmt):
     processed = BASE_DIR / "data" / "processed"
     output = processed / f"player_fantasy_points_{fmt}.json"
     manifest_path = processed / f"ingestion_{fmt}.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
-    compatible = manifest.get("version") == INGESTION_VERSION and output.exists()
-    data = json.loads(output.read_text(encoding="utf-8")) if compatible else {}
+    existing_valid = True
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+        compatible = manifest.get("version") == INGESTION_VERSION and output.exists()
+        data = json.loads(output.read_text(encoding="utf-8")) if compatible else {}
+        if compatible and (not isinstance(data, dict) or not data):
+            raise ValueError("Invalid existing fantasy history")
+        existing_valid = compatible
+    except (OSError, ValueError, TypeError):
+        print(f"[WARN] {fmt}: damaged primary history or manifest; rebuilding from archive", flush=True)
+        existing_valid = False
+        manifest, compatible, data = {}, False, {}
     previous = manifest.get("members", {}) if compatible else {}
     members = {}
     updated = 0
@@ -158,8 +168,8 @@ def ingest_format(fmt):
             members[item.filename] = fingerprint
             updated += 1
     if updated or not compatible:
-        atomic_json(output, data)
-    atomic_json(manifest_path, {"version": INGESTION_VERSION, "members": members, "latest_available_date": max((s["available_date"] for h in data.values() for s in h.values()), default=None)})
+        atomic_json(output, data, preserve_current=existing_valid)
+    atomic_json(manifest_path, {"version": INGESTION_VERSION, "members": members, "latest_available_date": max((s["available_date"] for h in data.values() for s in h.values()), default=None)}, preserve_current=existing_valid)
     print(f"{fmt}: {updated} added/changed matches; {len(data)} players", flush=True)
 
 

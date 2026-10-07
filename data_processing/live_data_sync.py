@@ -31,20 +31,31 @@ FORMATS = ["t20", "odi", "test"]
 
 def load_existing_data(fmt: str) -> dict:
     file_path = DATA_PROCESSED / f"player_fantasy_points_{fmt}.json"
-    if not file_path.exists():
-        return {}
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Error loading {file_path.name}: {e}")
-        return {}
+    from data_processing.safe_publish import last_good
+    for candidate in (file_path, last_good(file_path)):
+        try:
+            data = json.loads(candidate.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and data:
+                return data
+        except (OSError, ValueError):
+            continue
+    if file_path.exists():
+        raise ValueError(f"No valid fantasy history for {fmt}; refusing to discard it")
+    return {}
 
 def save_data(data: dict, fmt: str):
     file_path = DATA_PROCESSED / f"player_fantasy_points_{fmt}.json"
     DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, separators=(",", ":"))
+    if not isinstance(data, dict) or not data:
+        raise ValueError("Refusing to publish empty fantasy history")
+    from data_processing.safe_publish import promote
+    temporary = file_path.with_name(file_path.name + ".tmp")
+    temporary.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+    def validate_history(path):
+        saved = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(saved, dict) or not saved:
+            raise ValueError("Invalid fantasy history")
+    promote(temporary, file_path, validate=validate_history)
 
 def fetch_completed_matches(target_date: date) -> list:
     """Fetch matches completed on target_date. In a real system, paginates through results."""

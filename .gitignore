@@ -49,3 +49,10 @@ Thumbs.db
 # ── Pipeline transients ─────────────────────────────────────────────────
 catboost_info/
 data/processed/*.tmp
+
+# Local last-known-good fixture snapshot
+data/future_matches/*.last_good.json
+
+# Local rollback copies of generated data and models
+data/processed/*.last_good
+model_artifacts/*.last_good

@@ -63,7 +63,8 @@ def generate_player_explanation(
     weather_summary: str = "Clear conditions",
     is_selected: bool = True,
     driver_labels: List[str] = None,
-) -> str:
+    return_source: bool = False,
+) -> str | tuple[str, bool]:
     """
     Synthesizes a 2-sentence expert analyst explanation for player selection/exclusion.
     Falls back to a high-quality heuristic when Ollama is offline.
@@ -75,18 +76,18 @@ def generate_player_explanation(
     elif shap_top3:
         reasons_text = ", ".join(f"{feat.replace('_', ' ')}: {val:+.1f} pts" for feat, val in shap_top3)
     else:
-        reasons_text = "consistent recent form and favorable role matchup"
+        reasons_text = "feature attribution is unavailable for this prediction"
 
     if not ollama_available():
         if is_selected:
-            return (
+            result = (
                 f"{player_name} is selected with {predicted_score:.1f} projected performance points. "
                 f"Key drivers: {reasons_text}, under {pitch_type.lower()} conditions ({weather_summary.lower()})."
             )
-        return (
-            f"{player_name} misses out — {reasons_text} did not offset a lower projected score "
-            f"({predicted_score:.1f}) for this {pitch_type.lower()} venue."
-        )
+        else:
+            result = (f"{player_name} misses out — {reasons_text} did not offset a lower projected score "
+                      f"({predicted_score:.1f}) for this {pitch_type.lower()} venue.")
+        return (result, False) if return_source else result
 
     prompt = f"""You are a senior cricket performance analyst.
 Write exactly a 2-sentence explanation for why {player_name} ({role}) was {status_word}.
@@ -106,17 +107,18 @@ Reply with ONLY the two sentences.
             messages=[{"role": "user", "content": prompt}],
             options={"temperature": 0.2},
         )
-        return resp["message"]["content"].strip()
+        result = resp["message"]["content"].strip()
+        return (result, True) if return_source else result
     except Exception:
         if is_selected:
-            return (
+            result = (
                 f"{player_name} is selected with {predicted_score:.1f} projected performance points. "
                 f"Key drivers: {reasons_text}."
             )
-        return (
-            f"{player_name} misses out — projected {predicted_score:.1f} points "
-            f"was not enough for this {pitch_type.lower()} venue."
-        )
+        else:
+            result = (f"{player_name} misses out — projected {predicted_score:.1f} points "
+                      f"was not enough for this {pitch_type.lower()} venue.")
+        return (result, False) if return_source else result
 
 
 def generate_team_summary(
@@ -125,18 +127,18 @@ def generate_team_summary(
     weather_summary: str,
     expected_total: float,
     captain: str,
-) -> str:
+    return_source: bool = False,
+) -> str | tuple[str, bool]:
     """Generates the closing paragraph summarizing the whole XI selection."""
     team_text = "\n".join(team_lines)
 
     if not ollama_available():
-        return (
-            f"The optimizer projects {expected_total:.0f} combined performance points from this XI, "
-            f"balancing current form with venue fit at a {pitch_type.lower()} ground ({weather_summary.lower()}). "
-            f"{captain} carries the highest ceiling and is the recommended captaincy pick. "
-            f"Selection respected role balance (wicketkeeper, batters, allrounders, bowlers) "
-            f"and a 1-7 per-team spread constraint."
+        result = (
+            f"The selected XI projects {expected_total:.0f} combined performance points at "
+            f"a {pitch_type.lower()} venue ({weather_summary.lower()}). "
+            f"{captain} has the highest calculated captaincy upside."
         )
+        return (result, False) if return_source else result
 
     prompt = f"""You are a senior cricket performance analyst presenting the Optimal XI.
 Write exactly one short paragraph (3-4 sentences) summarizing why this team was chosen.
@@ -155,12 +157,14 @@ Mention the venue/weather influence and the captain choice. Reply with ONLY the 
             messages=[{"role": "user", "content": prompt}],
             options={"temperature": 0.3},
         )
-        return resp["message"]["content"].strip()
+        result = resp["message"]["content"].strip()
+        return (result, True) if return_source else result
     except Exception:
-        return (
+        result = (
             f"The optimizer projects {expected_total:.0f} combined points from this XI at a "
             f"{pitch_type.lower()} venue. {captain} is the recommended captaincy pick."
         )
+        return (result, False) if return_source else result
 
 
 if __name__ == "__main__":

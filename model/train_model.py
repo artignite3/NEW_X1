@@ -16,6 +16,9 @@ Saves to model_artifacts/:
 """
 
 import sys
+from pathlib import Path as _Path
+sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+from data_processing.safe_publish import promote
 if hasattr(sys.stdout, "reconfigure"):
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -197,13 +200,22 @@ def train_t20(train: pd.DataFrame, test: pd.DataFrame):
 
     # Save — EXACT name required
     save_path = MODEL_ARTIFACTS / "ProductUI_Model"
-    model.save_model(str(save_path))
-    print(f"  [OK] Saved: {save_path}")
-
-
+    temporary_model = save_path.with_name(save_path.name + ".tmp")
+    model.save_model(str(temporary_model))
     # Also save feature list for inference
     meta = {"feature_cols": feature_cols, "format": "t20", "cutoff": TRAIN_CUTOFF, "feature_schema_version": FEATURE_SCHEMA_VERSION}
-    joblib.dump(meta, MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl")
+    meta_path = MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"
+    temporary_meta = meta_path.with_name(meta_path.name + ".tmp")
+    joblib.dump(meta, temporary_meta)
+    from model.predict_model import validate_model_metadata
+    def validate_meta(candidate):
+        validate_model_metadata(joblib.load(candidate))
+    def validate_catboost(candidate):
+        check = CatBoostRegressor()
+        check.load_model(str(candidate))
+    promote(temporary_meta, meta_path, validate=validate_meta)
+    promote(temporary_model, save_path, validate=validate_catboost)
+    print(f"  [OK] Saved: {save_path}")
 
     return model, feature_cols, metrics
 
@@ -323,7 +335,11 @@ def train_tribe(train: pd.DataFrame, test: pd.DataFrame, fmt: str):
         "feature_schema_version": FEATURE_SCHEMA_VERSION,
     }
     save_path = MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"
-    joblib.dump(tribe_bundle, save_path)
+    temporary_bundle = save_path.with_name(save_path.name + ".tmp")
+    joblib.dump(tribe_bundle, temporary_bundle)
+    from model.predict_model import validate_model_metadata
+    promote(temporary_bundle, save_path,
+            validate=lambda candidate: validate_model_metadata(joblib.load(candidate)))
     print(f"  [OK] Saved: {save_path}")
 
     return tribe_bundle, metrics

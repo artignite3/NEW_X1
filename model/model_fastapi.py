@@ -15,11 +15,14 @@ Run:  uvicorn model.model_fastapi:app --host 0.0.0.0 --port 8000
 
 import os
 import sys
+import time
 from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -32,12 +35,32 @@ from model.team_generator import (  # noqa: E402
     get_match_info,
     get_matches_json,
     get_resolver,
+    has_usable_match_squads,
     normalize_format,
     pool_from_match_squads,
     validate_date,
 )
 
 app = FastAPI(title="NEW_X1 Cricket Intelligence API", version="2.0")
+
+
+class GenerateRequest(BaseModel):
+    match_id: str | int | None = None
+    team1: str | None = None
+    team2: str | None = None
+    format: str | None = None
+    venue: str | None = None
+    date: str | None = None
+    use_ml: bool = True
+    use_intelligence: bool = True
+    scan_news: bool = False
+    risk_aversion: float = Field(default=0.05, ge=0, le=0.2)
+    mode: Literal["prediction", "retrospective"] = "prediction"
+    allow_relaxation: bool = False
+
+
+class ExplainRequest(BaseModel):
+    explain_token: str
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,10 +77,17 @@ from intelligence import venue_registry as _vreg  # noqa: E402
 
 
 def _build_venue_registry():
-    from model.team_generator import get_fantasy
-    return _vreg.VenueRegistry.from_fantasy(
-        {fmt: get_fantasy(fmt) for fmt in ("t20", "odi", "test")}
-    )
+    from collections import Counter
+    counts = Counter()
+    for fmt in ("t20", "odi", "test"):
+        fantasy = get_fantasy(fmt)
+        for matches in fantasy.values():
+            for stats in matches.values():
+                venue = stats.get("venue")
+                if venue:
+                    counts[venue] += 1
+        del fantasy
+    return _vreg.VenueRegistry(counts)
 
 
 _vreg.configure(_build_venue_registry)
@@ -77,15 +107,20 @@ def home():
 
 @app.get("/health")
 def health():
-    """Model availability + Ollama reachability, for the UI status bar."""
+    """Lightweight readiness check; large histories load only on analysis."""
     models = {}
-    from model.predict_model import get_model
+    model_sources, feature_sources, fantasy_sources = {}, {}, {}
+    from model.predict_model import get_model, _MODEL_SOURCES, _DF_SOURCES, _DF_CACHE
+    from model.team_generator import _FANTASY_SOURCES, _FANTASY_CACHE
     for fmt in ("t20", "odi", "test"):
         try:
             get_model(fmt)
             models[fmt] = True
         except Exception:
             models[fmt] = False
+        model_sources[fmt] = _MODEL_SOURCES.get(fmt, "unavailable") if models[fmt] else "unavailable"
+        feature_sources[fmt] = _DF_SOURCES.get(fmt, "unchecked") if fmt in _DF_CACHE else "unchecked"
+        fantasy_sources[fmt] = _FANTASY_SOURCES.get(fmt, "unchecked") if fmt in _FANTASY_CACHE else "unchecked"
 
     ollama_ok = False
     try:
@@ -94,7 +129,18 @@ def health():
     except Exception:
         ollama_ok = False
 
-    return {"status": "ok" if all(models.values()) else "degraded", "models": models, "ollama": ollama_ok}
+    from data.future_matches.fixture_store import load
+    feed = load()
+    from data.future_matches.squad_store import load as load_squads
+    squads = load_squads()
+    sources = {"models": model_sources, "features": feature_sources, "fantasy": fantasy_sources}
+    healthy = (all(models.values()) and all(source == "current" for source in model_sources.values())
+               and all(source != "last_good" for group in (feature_sources, fantasy_sources) for source in group.values())
+               and not feed["warning"] and not squads["warning"])
+    return {"status": "ok" if healthy else "degraded", "models": models, "ollama": ollama_ok,
+            "sources": sources, "data_checked_on_request": True,
+            "fixtures": {k: feed[k] for k in ("source", "fetched_at", "fallback_used", "warning")},
+            "squads": {k: squads[k] for k in ("fetched_at", "fallback_used", "warning")}}
 
 
 @app.get("/matches")
@@ -111,13 +157,15 @@ def matches():
     except FileNotFoundError:
         squads_json = {}
 
+    from data.future_matches.fixture_store import load
+    feed = load()
     out = []
-    for m in get_matches_json():
+    for m in feed["matches"]:
         m = dict(m)
         entry = squads_json.get(str(m.get("match_id")), {})
-        m["has_squad"] = bool(entry.get("available_squads") or entry.get("team1_squad"))
+        m["has_squad"] = has_usable_match_squads(m, entry)
         out.append(m)
-    return {"matches": out}
+    return {**feed, "matches": out}
 
 
 @app.get("/match_squads")
@@ -195,25 +243,27 @@ def venues():
 # POST endpoints
 # ─────────────────────────────────────────────────────────────────────────────
 @app.post("/generate_best_team")
-def generate_best_team_endpoint(request_data: dict):
+def generate_best_team_endpoint(request_data: GenerateRequest):
+    start = time.perf_counter()
     try:
-        return generate_best_team(request_data)
+        return generate_best_team(request_data.model_dump(exclude_none=True))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Team generation failed: {e}")
+    finally:
+        print(f"[latency] generate_best_team {time.perf_counter() - start:.3f}s", flush=True)
 
 
 @app.post("/explain_team")
-def explain_team(request_data: dict):
+def explain_team(request_data: ExplainRequest):
     """
     SHAP feature drivers + natural-language analyst report (local Ollama).
     Body: {"explain_token": "<token from /generate_best_team response>"}
     """
-    token = request_data.get("explain_token")
-    import time
+    token = request_data.explain_token
     if not token or token not in _EXPLAIN_CACHE or time.time() - _EXPLAIN_CACHE[token]["created"] > 3600:
         raise HTTPException(
             status_code=404,
@@ -229,21 +279,24 @@ def explain_team(request_data: dict):
 
     if details and cached["fmt"] == "t20":
         # T20: single CatBoost model
-        for key, feat_row in details["features"].items():
+        for key in cached["selected"]:
+            feat_row = details["features"].get(key)
+            if feat_row is None:
+                continue
             drivers_by_player[key] = top_shap_features(
                 details["model"], feat_row, details["feature_cols"], "catboost"
             )
     elif details:
-        # TriBE: explain with the strongest base learner
-        base_models = details["model"].get("base_models", {})
-        preferred = next(
-            (n for n in ("catboost", "xgboost", "lightgbm") if n in base_models), None
-        )
-        if preferred:
-            for key, feat_row in details["features"].items():
-                drivers_by_player[key] = top_shap_features(
-                    base_models[preferred], feat_row, details["feature_cols"], preferred
-                )
+        # TriBE: ensemble-level attribution — per-base SHAP combined with the
+        # meta-model's learned weights, not one base learner's view
+        from intelligence.shap_explainer import top_shap_features_ensemble
+        for key in cached["selected"]:
+            feat_row = details["features"].get(key)
+            if feat_row is None:
+                continue
+            drivers_by_player[key] = top_shap_features_ensemble(
+                details["model"], feat_row, details["feature_cols"]
+            )
 
     report = generate_team_report(
         cached=cached,

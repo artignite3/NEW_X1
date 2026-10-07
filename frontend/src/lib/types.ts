@@ -10,6 +10,7 @@ export interface Match {
   date: string;
   status: string;
   has_squad?: boolean;
+  match_ended?: boolean;
 }
 
 export type Role = "WK" | "BAT" | "AR" | "BOWL";
@@ -67,6 +68,7 @@ export interface GenerationSummary {
   captain: string | null;
   vice_captain: string | null;
   solver_status: string;
+  constraint_mode: "strict" | "relaxed_team" | "relaxed_roles";
   squad_size: number;
   engine: string;
   league_prior: number;
@@ -94,6 +96,15 @@ export interface GenerateResponse {
     news_scan_used: boolean;
   };
   name_resolution: { resolved: number; unresolved: string[] };
+  validation: { valid: boolean; violations: string[] };
+  data_provenance: {
+    model: string;
+    features: string;
+    fantasy: string;
+    fixtures: string;
+    squads: string;
+    warnings: string[];
+  };
   explain_token: string;
 }
 
@@ -125,6 +136,7 @@ export interface AnalystDriver {
 
 export interface AnalystReport {
   generated_with: "ollama" | "heuristic";
+  attribution: { method: string; available: boolean; covered_selected: number; selected_count: number };
   team_report: string;
   players: {
     display_name: string;
@@ -139,6 +151,7 @@ export interface AnalystReport {
     venue: string;
     date: string;
     format: string;
+    constraint_mode: string;
     pitch_category: string;
     weather_summary: string;
     expected_total_points: number;
@@ -149,6 +162,9 @@ export interface HealthStatus {
   status: string;
   models: Record<string, boolean>;
   ollama: boolean;
+  sources?: Record<string, Record<string, string>>;
+  fixtures?: { source: string | null; fetched_at: string | null; fallback_used: boolean; warning: string | null };
+  squads?: { fetched_at: string | null; fallback_used: boolean; warning: string | null };
 }
 
 export interface TeamsResponse {

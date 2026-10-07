@@ -107,9 +107,21 @@ export default function AnalysisResult({ result }: Props) {
           <Metric icon={<IconUsers size={13} />} label="Team Split" value={Object.entries(summary.team_split).map(([t, n]) => `${n} ${t}`).join(" / ")} />
           <Metric icon={<IconShield size={13} />} label="Role Mix" value={(["WK", "BAT", "AR", "BOWL"] as const).filter((r) => summary.role_counts[r] > 0).map((r) => `${summary.role_counts[r]} ${r}`).join(" · ")} />
           <Metric icon={<IconTarget size={13} />} label="Solver" value={`${summary.solver_status} · squad ${summary.squad_size}`} />
+          <Metric icon={<IconShield size={13} />} label="Constraints" value={`${summary.constraint_mode.replaceAll("_", " ")} · ${result.validation.valid ? "verified" : "invalid"}`} />
           <Metric icon={<IconTerminal size={13} />} label="Resolution" value={`${name_resolution.resolved}/${summary.squad_size} matched`} />
         </div>
       </Panel>
+
+      {(result.data_provenance.warnings.length > 0 ||
+        Object.values(result.data_provenance).some((value) => value === "last_good")) && (
+        <div className="flex items-start gap-2.5 text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-4 py-3">
+          <IconAlert size={15} className="shrink-0 mt-0.5" />
+          <span>
+            {Object.values(result.data_provenance).some((value) => value === "last_good") ? "Using verified backup data. " : "Data warning. "}
+            {result.data_provenance.warnings.join(" ")}
+          </span>
+        </div>
+      )}
 
       {/* ── Intelligence ─────────────────────────────────────────────── */}
       {intelligence.enabled && (intelligence.weather || intelligence.pitch) && (
@@ -215,7 +227,10 @@ export default function AnalysisResult({ result }: Props) {
           <div className="space-y-5">
             <div className="flex items-center gap-2">
               <Chip tone={report.generated_with === "ollama" ? "accent" : "neutral"}>
-                {report.generated_with === "ollama" ? "Generated · llama3.2 local" : "Heuristic mode · Ollama offline"}
+                {report.generated_with === "ollama" ? "Generated · llama3.2 local" : "Heuristic fallback"}
+              </Chip>
+              <Chip tone={report.attribution.covered_selected === report.attribution.selected_count ? "accent" : "neutral"}>
+                {report.attribution.available ? `${report.attribution.method.replaceAll("_", " ")} drivers ${report.attribution.covered_selected}/${report.attribution.selected_count}` : "Feature attribution unavailable"}
               </Chip>
             </div>
 

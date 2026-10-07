@@ -13,11 +13,13 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import re
 import warnings
 from datetime import datetime, date, timedelta
 from model.data_contract import FEATURE_SCHEMA_VERSION, TRAIN_CUTOFF
+from data_processing.safe_publish import last_good
 from pathlib import Path
 
 import joblib
@@ -54,46 +56,62 @@ _MODEL_CACHE: dict = {}
 _DF_CACHE: dict = {}
 _MODEL_STAMPS: dict = {}
 _DF_STAMPS: dict = {}
+_MODEL_SOURCES: dict = {}
+_DF_SOURCES: dict = {}
 
 
 def get_model(fmt: str):
-    """Cached load_model — avoids re-deserializing heavy model bundles per request."""
+    """Cached load with a compatible last-good artifact if publication fails."""
     fmt = fmt.lower()
-    paths = ([MODEL_ARTIFACTS / "ProductUI_Model", MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"]
-             if fmt == "t20" else [MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"])
-    stamp = tuple(p.stat().st_mtime_ns if p.exists() else None for p in paths)
+    primary = ([MODEL_ARTIFACTS / "ProductUI_Model", MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"]
+               if fmt == "t20" else [MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"])
+    candidates = primary + [last_good(p) for p in primary]
+    stamp = tuple(_model_stamp(p) for p in candidates)
     if fmt not in _MODEL_CACHE or _MODEL_STAMPS.get(fmt) != stamp:
         _MODEL_CACHE[fmt] = load_model(fmt)
         _MODEL_STAMPS[fmt] = stamp
     return _MODEL_CACHE[fmt]
 
 
+def _model_stamp(path):
+    if not path.exists():
+        return None
+    with path.open("rb") as handle:
+        digest = hashlib.file_digest(handle, "sha256").hexdigest()
+    return digest
+
+
 def load_model(fmt: str):
-    """Load the correct model for a format. Returns (model_type, model_object)."""
+    """Only a complete, schema-compatible model pair can be used."""
+    errors = []
     if fmt == "t20":
-        model_path = MODEL_ARTIFACTS / "ProductUI_Model"
-        meta_path  = MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"
-        if not model_path.exists():
-            raise FileNotFoundError(
-                f"ProductUI_Model not found in {MODEL_ARTIFACTS}\n"
-                f"Run model/train_model.py first."
-            )
-        from catboost import CatBoostRegressor
-        model = CatBoostRegressor()
-        model.load_model(str(model_path))
-        meta = joblib.load(meta_path) if meta_path.exists() else {}
-        validate_model_metadata(meta)
-        return "catboost", model, meta["feature_cols"]
+        primary_model = MODEL_ARTIFACTS / "ProductUI_Model"
+        primary_meta = MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"
+        for model_path, meta_path, source in ((primary_model, primary_meta, "current"),
+                                              (last_good(primary_model), last_good(primary_meta), "last_good")):
+            try:
+                meta = joblib.load(meta_path)
+                validate_model_metadata(meta)
+                from catboost import CatBoostRegressor
+                model = CatBoostRegressor()
+                model.load_model(str(model_path))
+                if list(model.feature_names_) != list(meta["feature_cols"]):
+                    raise ValueError("T20 model and metadata feature lists differ")
+                _MODEL_SOURCES[fmt] = source
+                return "catboost", model, meta["feature_cols"]
+            except Exception as error:
+                errors.append(f"{source}: {type(error).__name__}")
     else:
-        bundle_path = MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"
-        if not bundle_path.exists():
-            raise FileNotFoundError(
-                f"tribe_{fmt}.pkl not found in {MODEL_ARTIFACTS}\n"
-                f"Run model/train_model.py first."
-            )
-        bundle = joblib.load(bundle_path)
-        validate_model_metadata(bundle)
-        return "tribe", bundle, bundle["feature_cols"]
+        primary = MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"
+        for path, source in ((primary, "current"), (last_good(primary), "last_good")):
+            try:
+                bundle = joblib.load(path)
+                validate_model_metadata(bundle)
+                _MODEL_SOURCES[fmt] = source
+                return "tribe", bundle, bundle["feature_cols"]
+            except Exception as error:
+                errors.append(f"{source}: {type(error).__name__}")
+    raise FileNotFoundError(f"No compatible {fmt} model available ({'; '.join(errors)})")
 
 
 def validate_model_metadata(meta):
@@ -132,30 +150,38 @@ def get_player_features(
 
 
 def _load_features_dataset(fmt: str) -> pd.DataFrame:
-    """Cached feature dataset loader (parquet preferred, csv fallback)."""
+    """Load a versioned dataset, recovering from a validated previous copy."""
     fmt = fmt.lower()
-    parquet_path = DATA_PROCESSED / f"features_{fmt}.parquet"
-    csv_path     = DATA_PROCESSED / f"features_{fmt}.csv"
-
-    selected_path = parquet_path if parquet_path.exists() else csv_path
-    stamp = selected_path.stat().st_mtime_ns if selected_path.exists() else None
+    parquet = DATA_PROCESSED / f"features_{fmt}.parquet"
+    csv = DATA_PROCESSED / f"features_{fmt}.csv"
+    candidates = (parquet, last_good(parquet), csv, last_good(csv))
+    stamp = tuple((p.stat().st_mtime_ns, p.stat().st_ctime_ns, p.stat().st_size)
+                  if p.exists() else None for p in candidates)
     if fmt in _DF_CACHE and _DF_STAMPS.get(fmt) == stamp:
         return _DF_CACHE[fmt]
-    if parquet_path.exists():
-        df = pd.read_parquet(parquet_path)
-        if not pd.api.types.is_datetime64_any_dtype(df["match_date"]):
-            df["match_date"] = pd.to_datetime(df["match_date"])
-    elif csv_path.exists():
-        df = pd.read_csv(csv_path, parse_dates=["match_date"])
-    else:
-        raise FileNotFoundError(f"Feature dataset not found for format {fmt}")
-
-    if "feature_schema_version" not in df or not df.feature_schema_version.eq(FEATURE_SCHEMA_VERSION).all():
-        raise FileNotFoundError("Obsolete feature dataset; rebuild feature engineering first")
-    df["available_date"] = pd.to_datetime(df["available_date"])
-    _DF_STAMPS[fmt] = stamp
-    _DF_CACHE[fmt] = df
-    return df
+    errors = []
+    for path in candidates:
+        try:
+            if path.suffix == ".parquet" or path.name.endswith(".parquet.last_good"):
+                df = pd.read_parquet(path)
+            else:
+                df = pd.read_csv(path, parse_dates=["match_date", "available_date"])
+            if "feature_schema_version" not in df or not df.feature_schema_version.eq(FEATURE_SCHEMA_VERSION).all():
+                raise ValueError("obsolete feature schema")
+            if not pd.api.types.is_datetime64_any_dtype(df["match_date"]):
+                df["match_date"] = pd.to_datetime(df["match_date"])
+            df["available_date"] = pd.to_datetime(df["available_date"])
+            _DF_SOURCES[fmt] = "last_good" if path.name.endswith(".last_good") else "current"
+            for other in list(_DF_CACHE):
+                if other != fmt:
+                    _DF_CACHE.pop(other, None)
+                    _DF_STAMPS.pop(other, None)
+            _DF_STAMPS[fmt] = stamp
+            _DF_CACHE[fmt] = df
+            return df
+        except Exception as error:
+            errors.append(f"{path.name}: {type(error).__name__}")
+    raise FileNotFoundError(f"No compatible {fmt} features ({'; '.join(errors)})")
 
 
 def build_request_features(players, fmt, match_date, feature_cols, venue=None, opponents=None):

@@ -51,6 +51,7 @@ export interface GenerateRequest {
   risk_aversion?: number;
   scan_news?: boolean;
   mode?: "prediction" | "retrospective";
+  allow_relaxation?: boolean;
 }
 
 export async function generateBestTeam(req: GenerateRequest): Promise<GenerateResponse> {

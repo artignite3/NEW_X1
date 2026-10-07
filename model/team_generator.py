@@ -42,11 +42,14 @@ FUTURE_MATCHES = BASE / "data" / "future_matches"
 # ── Caches (process-level, warmed on first use per format) ───────────────────
 _FANTASY_CACHE: Dict[str, dict] = {}
 _DATA_STAMPS: dict = {}
+_FANTASY_SOURCES: dict = {}
 _RESOLVER_CACHE: Dict[str, PlayerNameResolver] = {}
 _PRIOR_CACHE: Dict[str, dict] = {}          # fmt -> {"prior": float, "prior_var": float}
 _SQUADS_JSON: Optional[dict] = None
 _MATCHES_JSON: Optional[dict] = None
 _DATEWISE_JSON: Optional[dict] = None
+_DATEWISE_STAMP: object = None
+_DATEWISE_SOURCE: str = "unavailable"
 _DATEWISE_INDEX: Optional[dict] = None      # normalized team -> [(date, players, fmt)]
 
 # Explainability cache: generation responses keep their feature rows here so
@@ -100,13 +103,32 @@ def validate_date(date: str) -> str:
 
 
 def get_fantasy(fmt: str) -> dict:
+    from data_processing.safe_publish import last_good
     path = DATA_PROCESSED / f"player_fantasy_points_{fmt}.json"
-    stamp = path.stat().st_mtime_ns
-    if _DATA_STAMPS.get(fmt) != stamp:
-        _FANTASY_CACHE[fmt] = json.loads(path.read_text(encoding="utf-8"))
-        _RESOLVER_CACHE.pop(fmt, None)
-        _PRIOR_CACHE.clear()
-        _DATA_STAMPS[fmt] = stamp
+    backup = last_good(path)
+    stamp = tuple((p.stat().st_mtime_ns, p.stat().st_ctime_ns, p.stat().st_size)
+                  if p.exists() else None for p in (path, backup))
+    if fmt not in _FANTASY_CACHE or _DATA_STAMPS.get(fmt) != stamp:
+        errors = []
+        for source, candidate in (("current", path), ("last_good", backup)):
+            try:
+                data = json.loads(candidate.read_text(encoding="utf-8"))
+                if not isinstance(data, dict) or not data:
+                    raise ValueError("Fantasy history is empty or malformed")
+                _FANTASY_CACHE[fmt] = data
+                _FANTASY_SOURCES[fmt] = source
+                for other in list(_FANTASY_CACHE):
+                    if other != fmt:
+                        _FANTASY_CACHE.pop(other, None)
+                        _DATA_STAMPS.pop(other, None)
+                _RESOLVER_CACHE.pop(fmt, None)
+                _PRIOR_CACHE.clear()
+                _DATA_STAMPS[fmt] = stamp
+                break
+            except (OSError, ValueError, TypeError) as error:
+                errors.append(f"{candidate.name}: {type(error).__name__}")
+        else:
+            raise FileNotFoundError(f"No valid {fmt} fantasy history ({'; '.join(errors)})")
     return _FANTASY_CACHE[fmt]
 
 
@@ -118,20 +140,37 @@ def get_resolver(fmt: str) -> PlayerNameResolver:
 
 
 def get_squads_json() -> dict:
-    path = FUTURE_MATCHES / "upcoming_squads.json"
-    return json.loads(path.read_text(encoding="utf-8")).get("squads", {}) if path.exists() else {}
+    from data.future_matches.squad_store import load
+    return load()["squads"]
 
 
 def get_matches_json() -> list:
-    path = FUTURE_MATCHES / "upcoming_matches.json"
-    return json.loads(path.read_text(encoding="utf-8")).get("matches", []) if path.exists() else []
+    from data.future_matches.fixture_store import load
+    return load()["matches"]
 
 
 def get_datewise_json() -> dict:
-    global _DATEWISE_JSON
-    if _DATEWISE_JSON is None:
-        with open(DATA_PROCESSED / "datewise_squad.json", "r", encoding="utf-8") as f:
-            _DATEWISE_JSON = json.load(f)
+    global _DATEWISE_JSON, _DATEWISE_STAMP, _DATEWISE_SOURCE
+    from data_processing.safe_publish import last_good
+    primary = DATA_PROCESSED / "datewise_squad.json"
+    backup = last_good(primary)
+    stamp = tuple((p.stat().st_mtime_ns, p.stat().st_ctime_ns, p.stat().st_size)
+                  if p.exists() else None for p in (primary, backup))
+    if _DATEWISE_JSON is None or _DATEWISE_STAMP != stamp:
+        errors = []
+        for source, candidate in (("current", primary), ("last_good", backup)):
+            try:
+                value = json.loads(candidate.read_text(encoding="utf-8"))
+                if not isinstance(value, dict) or not value:
+                    raise ValueError("Squad history is malformed")
+                _DATEWISE_JSON = value
+                _DATEWISE_SOURCE = source
+                _DATEWISE_STAMP = stamp
+                break
+            except (OSError, ValueError, TypeError) as error:
+                errors.append(f"{candidate.name}: {type(error).__name__}")
+        else:
+            raise FileNotFoundError("No valid datewise squad history: " + "; ".join(errors))
     return _DATEWISE_JSON
 
 
@@ -218,6 +257,35 @@ def _pick_squad_for_team(available_squads: List[dict], team: str, fmt: str) -> O
         return (fmt_match, confirmed, n_players)
 
     return max(candidates, key=score)
+
+
+def has_usable_match_squads(match: dict, entry: dict) -> bool:
+    """Availability means both fixture teams have enough distinct named players."""
+    if not isinstance(entry, dict):
+        return False
+    team1, team2 = match.get("team1"), match.get("team2")
+    if not team1 or not team2:
+        return False
+    try:
+        fmt = normalize_format(match.get("match_type", entry.get("format", "t20")))
+    except ValueError:
+        return False
+    blocks = entry.get("available_squads")
+    if isinstance(blocks, list):
+        if any(not isinstance(block, dict) for block in blocks):
+            return False
+        picked = [_pick_squad_for_team(blocks, team, fmt) for team in (team1, team2)]
+        lists = [(block or {}).get("players", []) for block in picked]
+    else:
+        lists = [(entry.get(key) or {}).get("players", []) if isinstance(entry.get(key), dict) else []
+                 for key in ("team1", "team2")]
+    names = []
+    for players in lists:
+        if not isinstance(players, list):
+            return False
+        names.append({(p.get("player_name") or p.get("name") or "").strip() if isinstance(p, dict)
+                      else str(p).strip() for p in players} - {""})
+    return all(names) and len(names[0] | names[1]) >= 11
 
 
 def get_match_info(match_id) -> Optional[dict]:
@@ -431,31 +499,25 @@ def solve_xi(stats_df: pd.DataFrame,
 
     # Pairwise covariance terms (correlation-aware risk). Kept only for pairs
     # whose covariance is meaningful: sub-threshold pairs are estimation noise
-    # from <=65 aligned samples, and every kept pair costs one binary plus three
-    # constraints. Unpruned, CBC 2.10 thrashes in branch-and-bound past its time
-    # limit once n >= ~22 (O(n^2) pairs, dense degenerate LP relaxation).
+    # from <=65 aligned samples. Cap at 40 strongest interactions; every kept
+    # pair costs one binary plus three constraints. Dense CBC models can hang
+    # well past their reported 10-second limit on real 50-player pools.
     COV_PRUNE_RATIO = 0.10
-    offdiag = [
-        abs(float(cov_matrix.iloc[i, j]))
-        for i in range(n) for j in range(i + 1, n)
-        if len(cov_matrix) == n
-    ]
-    cov_cap = max(offdiag) if offdiag else 0.0
-    pair_budget = 0
-    for i in range(n):
-        for j in range(i + 1, n):
-            covariance = float(cov_matrix.iloc[i, j]) if len(cov_matrix) == n else 0.0
-            if (
-                risk_aversion
-                and cov_cap > 0
-                and abs(covariance) >= COV_PRUNE_RATIO * cov_cap
-            ):
-                pair_budget += 1
-                pair = pulp.LpVariable(f"pair_{i}_{j}", cat="Binary")
-                lp += pair <= x[i]
-                lp += pair <= x[j]
-                lp += pair >= x[i] + x[j] - 1
-                objective -= 2 * risk_aversion * covariance * pair
+    MAX_PAIR_TERMS = 40
+    candidate_pairs = (
+        [(abs(float(cov_matrix.iloc[i, j])), i, j) for i in range(n) for j in range(i + 1, n)]
+        if risk_aversion and len(cov_matrix) == n else []
+    )
+    cov_cap = max((strength for strength, _, _ in candidate_pairs), default=0.0)
+    kept_pairs = sorted((p for p in candidate_pairs if p[0] >= COV_PRUNE_RATIO * cov_cap),
+                        reverse=True)[:MAX_PAIR_TERMS] if cov_cap else []
+    for _, i, j in kept_pairs:
+        covariance = float(cov_matrix.iloc[i, j])
+        pair = pulp.LpVariable(f"pair_{i}_{j}", cat="Binary")
+        lp += pair <= x[i]
+        lp += pair <= x[j]
+        lp += pair >= x[i] + x[j] - 1
+        objective -= 2 * risk_aversion * covariance * pair
     lp += objective
     lp += pulp.lpSum(x[i] for i in range(n)) == max_players
 
@@ -487,7 +549,7 @@ def solve_xi(stats_df: pd.DataFrame,
                 lp += pulp.lpSum(x[i] for i in t_idx) <= 7
 
     try:
-        lp.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=10, threads=1))
+        lp.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=10, threads=1, maxNodes=1000))
         status = pulp.LpStatus[lp.status]
     except pulp.PulpSolverError as e:
         print(f"[WARN] CBC solver failed: {e}")
@@ -512,6 +574,8 @@ def generate_best_team(payload: dict) -> dict:
     fmt = normalize_format(raw_fmt or "t20")
 
     use_ml = bool(payload.get("use_ml", True))
+    requested_ml = use_ml
+    model_failure = None
     use_intelligence = bool(payload.get("use_intelligence", True))
     scan_news = bool(payload.get("scan_news", False))
     risk_aversion = float(payload.get("risk_aversion", 0.05))
@@ -596,6 +660,10 @@ def generate_best_team(payload: dict) -> dict:
             except FileNotFoundError as e:
                 print(f"[WARN] ML model unavailable for {fmt}: {e}")
                 use_ml = False
+                model_failure = str(e)
+        else:
+            use_ml = False
+            model_failure = "No players have matching model history"
 
     prior, prior_var = get_league_prior(fmt, date)
     players_with_var = [p for p in pool if p["stat_var"] is not None]
@@ -604,16 +672,22 @@ def generate_best_team(payload: dict) -> dict:
     # ── Intelligence layer ───────────────────────────────────────────────
     pitch = get_venue_profile(venue, fmt) if use_intelligence else None
     weather = None
+    intelligence_warnings = []
     if use_intelligence:
         weather = fetch_venue_weather(venue, date)
+        if not weather or not weather.get("available", False):
+            intelligence_warnings.append("Weather forecast unavailable; neutral weather adjustment used")
 
     news_reports: Dict[str, dict] = {}
+    news_scan_used = False
     if scan_news:
         try:
             from intelligence.injury_detector import get_active_injury_reports
             news_reports = get_active_injury_reports([p["display_name"] for p in pool])
+            news_scan_used = True
         except Exception as e:
             print(f"[WARN] Injury news scan failed: {e}")
+            intelligence_warnings.append("Injury news scan unavailable; squad status only")
 
     # ── Scoring: base -> pitch PAF -> injury/availability ────────────────
     for p in pool:
@@ -780,6 +854,7 @@ def generate_best_team(payload: dict) -> dict:
         "players": {p["fantasy_key"]: entry(p) for p in pool},
         "selected": [p["fantasy_key"] for p in best_team],
         "pitch_category": pitch.get("category") if pitch else "NEUTRAL",
+        "constraint_mode": constraint_mode,
         "weather_summary": (weather or {}).get("summary", "Typical playing conditions"),
         "created": datetime.now().timestamp(),
     }
@@ -790,7 +865,25 @@ def generate_best_team(payload: dict) -> dict:
         "enabled": use_intelligence,
         "weather": weather,
         "pitch": pitch,
-        "news_scan_used": scan_news,
+        "news_scan_used": news_scan_used,
+    }
+
+    from model.predict_model import _MODEL_SOURCES, _DF_SOURCES
+    from data.future_matches.fixture_store import load as load_fixtures
+    from data.future_matches.squad_store import load as load_squads
+    model_used = bool(use_ml and details)
+    fixtures = load_fixtures() if match_id else None
+    squads = load_squads() if match_id else None
+    data_provenance = {
+        "model": _MODEL_SOURCES.get(fmt, "unavailable") if model_used else ("recent_form_fallback" if requested_ml and model_failure else "not_used"),
+        "features": _DF_SOURCES.get(fmt, "unavailable") if model_used else "not_used",
+        "fantasy": _FANTASY_SOURCES.get(fmt, "unavailable"),
+        "fixtures": "last_good" if fixtures and fixtures["fallback_used"] else ("current" if fixtures else "not_used"),
+        "squads": "last_good" if squads and squads["fallback_used"] else ("current" if squads else "not_used"),
+        "warnings": ([value["warning"] for value in (fixtures, squads) if value and value["warning"]]
+                     + (["No players have model history; using recent-form fallback" if model_failure.startswith("No players")
+                         else "Saved ML model unavailable; using recent-form fallback"] if model_failure else [])
+                     + intelligence_warnings),
     }
 
     return {
@@ -802,6 +895,7 @@ def generate_best_team(payload: dict) -> dict:
         },
         "best_team": [entry(p) for p in best_team],
         "bench": [entry(p) for p in bench],
+        "data_provenance": data_provenance,
         "summary": {
             "expected_total_points": expected_total,
             "role_counts": role_counts,

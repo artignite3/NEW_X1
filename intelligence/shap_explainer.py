@@ -16,35 +16,59 @@ from typing import List
 import numpy as np
 
 
+_EXPLAINERS = {}
+
+
+def _raw_shap_values(model, feat_row, feature_cols, kind):
+    """Return every unrounded feature contribution for one base learner."""
+    X = feat_row[feature_cols]
+    if kind == "catboost":
+        from catboost import Pool
+        values = np.asarray(model.get_feature_importance(Pool(X), type="ShapValues"), dtype=float)[0, :-1]
+    else:
+        import shap
+        key = id(model)
+        if key not in _EXPLAINERS:
+            _EXPLAINERS[key] = shap.TreeExplainer(model)
+        values = np.asarray(_EXPLAINERS[key].shap_values(X), dtype=float).reshape(-1)
+    if values.shape != (len(feature_cols),) or not np.isfinite(values).all():
+        raise ValueError(f"Incomplete {kind} attribution")
+    return values
+
+
+def _top(values, feature_cols, top_k):
+    indices = np.argsort(-np.abs(values))[:top_k]
+    return [{"feature": feature_cols[int(i)], "impact": round(float(values[i]), 2)}
+            for i in indices if abs(values[i]) > 0.05]
+
+
 def top_shap_features(model, feat_row, feature_cols: List[str], kind: str = "catboost",
                       top_k: int = 3) -> List[dict]:
-    """
-    Returns [{"feature": <raw feature name>, "impact": <+/-points>}, ...]
-    for the top_k most influential features of a single-row prediction.
+    try:
+        return _top(_raw_shap_values(model, feat_row, feature_cols, kind), feature_cols, top_k)
+    except Exception as error:
+        print(f"[WARN] SHAP computation failed ({kind}): {error}")
+        return []
+
+
+def top_shap_features_ensemble(bundle: dict, feat_row, feature_cols: List[str],
+                               top_k: int = 3) -> List[dict]:
+    """Sum full base-model SHAP vectors under the trained linear meta weights.
+
+    If even one base attribution fails, decline to report partial drivers.
+    The linear intercept affects the baseline, not each feature's impact.
     """
     try:
-        X = feat_row[feature_cols] if hasattr(feat_row, "__getitem__") else feat_row
-
-        if kind == "catboost":
-            from catboost import Pool
-            sv = model.get_feature_importance(Pool(X), type="ShapValues")
-            values = np.asarray(sv)[0][:-1]  # last column = expected value
-        else:
-            import shap
-            explainer = shap.TreeExplainer(model)
-            sv = explainer.shap_values(X)
-            arr = np.asarray(sv)
-            values = arr[0] if arr.ndim > 1 else arr
-
-        pairs = [
-            (feat, float(val))
-            for feat, val in zip(feature_cols, values)
-            if abs(val) > 0.05
-        ]
-        pairs.sort(key=lambda kv: abs(kv[1]), reverse=True)
-        return [{"feature": f, "impact": round(v, 2)} for f, v in pairs[:top_k]]
-    except Exception as e:
-        print(f"[WARN] SHAP computation failed ({kind}): {e}")
+        names = bundle["base_model_names"]
+        weights = np.asarray(bundle["meta_model"].coef_, dtype=float).reshape(-1)
+        if len(names) != len(weights) or not np.isfinite(weights).all():
+            raise ValueError("Ensemble weights do not match base models")
+        combined = np.zeros(len(feature_cols))
+        for name, weight in zip(names, weights):
+            combined += weight * _raw_shap_values(bundle["base_models"][name], feat_row, feature_cols, name)
+        return _top(combined, feature_cols, top_k)
+    except Exception as error:
+        print(f"[WARN] Ensemble SHAP unavailable: {error}")
         return []
 
 

@@ -19,7 +19,6 @@ Usage:
 """
 
 import argparse
-import json
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -33,7 +32,6 @@ API_KEY = os.getenv("CRICKET_DATA_API_KEY")
 BASE = "https://api.cricapi.com/v1"
 HERE = os.path.dirname(os.path.abspath(__file__))
 MATCHES_FILE = os.path.join(HERE, "upcoming_matches.json")
-SQUADS_FILE = os.path.join(HERE, "upcoming_squads.json")
 
 FORMAT_MAP = {"t20": "T20", "t20i": "T20", "odi": "ODI", "test": "TEST"}
 
@@ -167,11 +165,9 @@ def main():
         print(f"    {m['date']}  {m['match_type']:4s}  {m['team1']} vs {m['team2']}")
     print(f"  imminent international fixtures: {len(matches)}")
 
-    try:
-        with open(MATCHES_FILE, "r", encoding="utf-8") as f:
-            old = json.load(f).get("matches", [])
-    except FileNotFoundError:
-        old = []
+    from fixture_store import load as load_matches, publish
+    prior = load_matches()
+    old = prior["matches"]
     new_ids = {str(m["match_id"]) for m in matches}
     # Replace old entries that are now started/ended; keep prior upcoming feed entries
     merged = matches + [
@@ -181,22 +177,24 @@ def main():
     ]
 
     payload = {
-        "fetched_at": datetime.now().isoformat(),
-        "source": "cricketdata.org (cricapi free tier)",
+        "fetched_at": datetime.now().isoformat() if matches else prior["fetched_at"] or datetime.now().isoformat(),
+        "source": "cricketdata.org (cricapi free tier)" if matches else (prior["source"] or "cricketdata.org (empty result)"),
         "match_count": len(merged),
         "window": "tomorrow onward",
         "imminent_count": len(matches),
         "matches": merged,
     }
-    with open(MATCHES_FILE, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2, ensure_ascii=False)
-    print(f"[OK] wrote {len(merged)} matches -> {MATCHES_FILE}")
+    if matches or prior["source"]:
+        publish(payload)
+        print(f"[OK] wrote {len(merged)} matches -> {MATCHES_FILE}")
+    else:
+        print("[WARN] Empty API result and no verified old feed; existing files untouched")
 
     if args.try_squads and matches:
         try:
-            with open(SQUADS_FILE, "r", encoding="utf-8") as f:
-                squads = json.load(f).get("squads", {})
-        except FileNotFoundError:
+            from squad_store import load as load_squads
+            squads = load_squads()["squads"]
+        except (OSError, ValueError):
             squads = {}
 
         plan_locked = False
@@ -219,8 +217,8 @@ def main():
             time.sleep(0.5)
 
         if not plan_locked:
-            with open(SQUADS_FILE, "w", encoding="utf-8") as f:
-                json.dump({"fetched_at": datetime.now().isoformat(), "squads": squads}, f, indent=2, ensure_ascii=False)
+            from squad_store import publish as publish_squads
+            publish_squads({"fetched_at": datetime.now().isoformat(), "squads": squads})
             print(f"[OK] squads available for {len(squads)} matches")
 
 

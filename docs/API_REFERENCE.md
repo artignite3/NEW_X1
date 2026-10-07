@@ -1,88 +1,37 @@
-# NEW_X1 — REST API Reference
+# NEW_X1 API and recovery contract
 
-The backend API runs on **port 8000** (interactive documentation available at `http://localhost:8000/docs`).
+Run `env/Scripts/python.exe -m uvicorn model.model_fastapi:app --host 127.0.0.1 --port 8000` from the repository root. Interactive request schemas are at `/docs`.
 
----
+## `GET /health`
 
-## 1. Optimal Team Generator
-**`POST /generate_best_team`**
+Returns `status` (`ok` or `degraded`), model availability by format, Ollama reachability, and `sources` for models, features, and fantasy history. Model sources are `current`, `last_good`, or `unavailable`; large data sources remain `unchecked` until first analysis, then show their active source. `data_checked_on_request` documents this lazy check. `fixtures` and `squads` include `fetched_at`, `fallback_used`, and `warning`. A known fallback, stale fixture feed (over 24 hours), or unavailable model makes status `degraded`. Ollama being offline does not prevent generation.
 
-Generates the optimal 11-player team from candidate squads for a given match date and format.
+## `GET /matches`, `GET /match_squads?match_id=...`
 
-### Request Body:
+`/matches` serves only future, unended, schema-validated fixtures, with feed provenance and warnings. A verified last-good snapshot is used if the primary feed is damaged. If neither copy is valid, `matches` is empty and `warning` explains why. `has_squad` is derived from the verified squad feed. `/match_squads` returns the normalized players and roles for a known fixture, or a 404 if the fixture or squad is unavailable. Neither endpoint invents fixtures or players.
+
+## `POST /generate_best_team`
+
+Fixture request:
+
 ```json
-{
-  "player_info": [
-    "Virat Kohli",
-    "Rohit Sharma",
-    "Jasprit Bumrah",
-    "Glenn Maxwell",
-    "Travis Head"
-  ],
-  "date": "2025-10-15",
-  "format": "T20",
-  "use_ml": true
-}
+{"match_id":"151576","use_ml":true,"use_intelligence":true}
 ```
 
-### Response:
+Custom simulator request:
+
 ```json
-{
-  "best_team": [
-    "Virat Kohli",
-    "Rohit Sharma",
-    "Glenn Maxwell",
-    "Jasprit Bumrah"
-  ],
-  "player_stats": "[{\"player\":\"Virat Kohli\",\"mean_points\":58.4,...}]",
-  "cov_matrix": "[[...]]"
-}
+{"team1":"India","team2":"Australia","format":"t20","date":"2026-10-12","venue":"Neutral Venue","risk_aversion":0.05}
 ```
 
----
+Optional flags are `scan_news`, `mode` (`prediction` or `retrospective`), and `allow_relaxation`. Prediction dates must be in the future. Retrospective dates must be before today and after the training cutoff. Default selection is `strict`. When `allow_relaxation` is explicitly true, the solver may report `relaxed_team` or `relaxed_roles`; the response always includes `summary.constraint_mode`, independent `validation`, and `data_provenance` showing active sources and warnings. Hard constraints (11 unique, available, pool-listed players and captain/vice-captain in the XI) remain mandatory. Infeasible requests return 400, unavailable required history returns 503, and unexpected errors return 500. If both model copies are unavailable, generation can use recent-form statistics and reports that fallback. `use_ml=false` explicitly selects that statistical engine.
 
-## 2. Team Evaluation
-**`POST /team_evaluation`**
+## `POST /explain_team`
 
-Evaluates the overall consistency, diversity, and form metrics of a proposed lineup.
+Pass `{"explain_token":"<token from generation>"}` within one hour in the same API process. The report returns selected-player drivers and narrative plus `attribution.method` and `attribution.available`. ODI/Test drivers combine full CatBoost, XGBoost, and LightGBM SHAP vectors using the fitted linear meta-model weights. If a required explainer fails, no partial ensemble drivers are presented. Ollama is optional; heuristic narration remains available and labels missing attribution explicitly.
 
-### Request Body:
-```json
-{
-  "best_team": ["Virat Kohli", "Rohit Sharma", "..."],
-  "player_stats": "[...]",
-  "cov_matrix": "[[...]]"
-}
-```
+## Recovery operation
 
-### Response:
-```json
-{
-  "team_consistency_score": 54.2,
-  "team_diversity_score": 0.85,
-  "form_score": 0.90
-}
-```
+Run `env/Scripts/python.exe data_processing/seed_backups.py` once after a healthy install. It validates current fixtures, squads, fantasy histories, feature tables, and schema-v2 models before creating missing local `last_good` copies. Future refreshes use atomic promotion and keep a prior copy. Backups are local and ignored by Git; copy them separately for off-machine disaster recovery. If both current and backup are invalid or expired, the API reports degraded/unavailable instead of fabricating a result.
 
----
-
-## 3. Player Analysis (AI Explainer)
-**`POST /analyze_player`**
-
-Provides a 2-sentence expert analyst breakdown of why a player was selected or excluded.
-
-### Request Body:
-```json
-{
-  "Player": "Virat Kohli",
-  "best_team": ["Virat Kohli", "Rohit Sharma"],
-  "format": "T20"
-}
-```
-
-### Response:
-```json
-{
-  "analysis": "Virat Kohli was selected due to strong form and favorable venue conditions..."
-}
-```
+Verify with `env/Scripts/python.exe -m unittest discover -s tests -p 'test_*.py' -v`, `npm run lint`, and `npm run build` from `frontend`. The resilience tests use fixed inputs and deliberately corrupt primary artifacts to verify fallback. Evaluate saved models against the recent-form baseline with `env/Scripts/python.exe -m model.evaluate t20 odi test`.

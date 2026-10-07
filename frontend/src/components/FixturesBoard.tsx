@@ -10,9 +10,10 @@ import { Button, CheckRow, Chip, Rivets, SectionLabel, StatusDot } from "./ui";
 
 interface Props {
   matches: Match[];
+  feedWarning?: string | null;
 }
 
-export default function FixturesBoard({ matches }: Props) {
+export default function FixturesBoard({ matches, feedWarning }: Props) {
   const router = useRouter();
   const [scanNews, setScanNews] = useState(false);
   const [useMl, setUseMl] = useState(true);
@@ -56,6 +57,11 @@ export default function FixturesBoard({ matches }: Props) {
 
   return (
     <div className="space-y-8">
+      {feedWarning && (
+        <div className="flex items-start gap-3 text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-4 py-3.5">
+          <IconAlert size={15} className="shrink-0 mt-0.5" />{feedWarning}
+        </div>
+      )}
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap justify-between items-end gap-4">
         <div>

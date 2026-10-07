@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 from dotenv import load_dotenv
 import time
@@ -8,9 +7,6 @@ load_dotenv()
 
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-MATCHES_PATH = os.path.join(_HERE, "upcoming_matches.json")
-SQUADS_PATH = os.path.join(_HERE, "upcoming_squads.json")
 SERIES_SQUAD_CACHE = {}
 PLAYER_CACHE = {}
 
@@ -149,8 +145,12 @@ def main():
 
     id_filter = {i.strip() for i in args.ids.split(",") if i.strip()}
 
-    with open(MATCHES_PATH, "r", encoding="utf-8") as f:
-        matches_data = json.load(f)
+    from fixture_store import load as load_matches
+    matches_data = load_matches()
+    if matches_data["warning"]:
+        print(f"[WARN] {matches_data['warning']}")
+    if not matches_data["matches"]:
+        raise SystemExit("No verified upcoming fixtures to fetch squads for")
 
     matches_to_process = [
         m for m in matches_data["matches"]
@@ -164,12 +164,8 @@ def main():
 
     # Merge with the existing squads file instead of replacing it — a partial
     # quota-limited run must never wipe squads fetched for other matches.
-    if os.path.exists(SQUADS_PATH):
-        try:
-            with open(SQUADS_PATH, "r", encoding="utf-8") as f:
-                squads_out["squads"] = json.load(f).get("squads", {})
-        except (json.JSONDecodeError, OSError):
-            pass
+    from squad_store import load as load_squads
+    squads_out["squads"] = load_squads()["squads"]
 
     for match in matches_to_process:
 
@@ -343,18 +339,8 @@ def main():
             f"{len(all_squads)} squads"
         )
         squads_out["fetched_at"] = __import__("datetime").datetime.now().isoformat()
-        with open(
-            SQUADS_PATH,
-            "w",
-            encoding="utf-8"
-        ) as f:
-
-            json.dump(
-                squads_out,
-                f,
-                indent=2,
-                ensure_ascii=False
-            )
+        from squad_store import publish
+        publish(squads_out)
 
         print(
             f"Saved {len(squads_out['squads'])} matches"

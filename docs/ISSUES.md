@@ -3,6 +3,17 @@
 Severity: **P1** blocks a milestone gate · **P2** wrong/missing behavior without a
 workaround · **P3** quality/hygiene. Each issue carries acceptance criteria (AC).
 
+2026-10-07 audit: #1, #4, and #8 are implemented and verified locally. #2 has
+model/baseline evaluations for all three formats, but empirical interval
+coverage is only 71–73% against an 80% target. #3 has hand-coded scoring tests,
+but fewer than its 30-innings acceptance target and no scoring-version stamp.
+#5 passes fixed-data idempotency tests but still needs a full-dataset unchanged
+rerun. #11 has pinned direct requirements and a CI workflow; a clean hosted CI
+run has not yet been observed. #7 is partially addressed with verified local
+feed snapshots and visible warnings, but full-window squad refresh is still
+manual and provider-limited. These open criteria remain open despite milestone
+commits being merged.
+
 | ID | Sev | Area | Issue | Depends on | Acceptance criteria |
 |---|---|---|---|---|---|
 | #1 | P1 | ML | **Test model is pre-v2** and rejected by the guard; Test analyses run in recent-form mode | #3, #4 | `tribe_test.pkl` passes `validate_model_metadata`; Test-format eval beats recent-form baseline on chronological holdout |
