@@ -93,11 +93,13 @@ export default function FixturesBoard({ matches }: Props) {
         <div className="flex items-start gap-3 text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-4 py-3.5">
           <IconAlert size={15} className="shrink-0 mt-0.5" />
           <div>
-            Fixture feed is {feedStaleDays} days old. Run{" "}
-            <code className="mono-value text-[12px] text-warn">python data/future_matches/schedule_fetcher.py</code>{" "}
-            to refresh — requires <span className="mono-value text-[12px]">RAPID_API_KEY</span> in{" "}
-            <span className="mono-value text-[12px]">.env</span>. Recent fixtures below still support
-            retrospective analysis.
+            Fixture feed is {feedStaleDays} days old. Refresh it with{" "}
+            <code className="mono-value text-[12px] text-warn">python data/future_matches/cricapi_sync.py</code>{" "}
+            (free tier — imminent matches only) or{" "}
+            <code className="mono-value text-[12px] text-warn">schedule_fetcher.py</code> +{" "}
+            <code className="mono-value text-[12px] text-warn">squad_fetcher.py</code> (full window,
+            requires <span className="mono-value text-[12px]">RAPID_API_KEY</span>). Recent fixtures
+            below still support retrospective analysis.
           </div>
         </div>
       )}
