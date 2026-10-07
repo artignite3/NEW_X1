@@ -19,6 +19,7 @@ export default function AccountPanel() {
   const [analyses, setAnalyses] = useState<SavedAnalysis[]>([]);
   const [opened, setOpened] = useState<SavedAnalysis | null>(null);
   const [factorId, setFactorId] = useState("");
+  const [unfinishedFactorId, setUnfinishedFactorId] = useState("");
   const [qr, setQr] = useState("");
   const [secret, setSecret] = useState("");
   const [mfaCode, setMfaCode] = useState("");
@@ -52,8 +53,11 @@ export default function AccountPanel() {
     }).catch((error) => { if (active) setMessage(error.message); });
     auth.auth.mfa.listFactors().then((factors) => {
       if (!active) return;
-      const factor = factors.data?.totp.find((f) => f.status === "verified");
-      if (factor) setFactorId(factor.id);
+      const totp = factors.data?.totp ?? [];
+      const verified = totp.find((f) => f.status === "verified");
+      const unfinished = totp.find((f) => f.status !== "verified" && f.friendly_name?.startsWith("NEW_X1"));
+      setFactorId(verified?.id ?? "");
+      setUnfinishedFactorId(unfinished?.id ?? "");
     }).catch((error) => { if (active) setMessage(error.message); });
     return () => { active = false; };
   }, [session, auth]);
@@ -63,6 +67,16 @@ export default function AccountPanel() {
     try { await work(); }
     catch (error) { setMessage(error instanceof Error ? error.message : "Please try again."); }
     finally { setBusy(false); }
+  }
+
+  async function startAuthenticatorEnrollment() {
+    // Supabase keeps an abandoned, unverified factor name reserved. A unique name
+    // allows a user to safely recover from an interrupted enrollment.
+    const friendlyName = `NEW_X1-${crypto.randomUUID().slice(0, 8)}`;
+    const { data, error } = await auth!.auth.mfa.enroll({ factorType: "totp", friendlyName });
+    if (error) throw error;
+    const image = data.totp.qr_code;
+    setFactorId(data.id); setQr(image.startsWith("data:") ? image.slice(image.indexOf(",") + 1) : image); setSecret(data.totp.secret);
   }
 
   if (!auth) return <section className="plate p-6"><h1 className="text-2xl font-semibold">Account</h1>
@@ -119,12 +133,16 @@ export default function AccountPanel() {
 
     {session && <section className="plate p-6 space-y-3">
       <h2 className="text-xl font-semibold">Authenticator verification</h2>
-      {!factorId && <Button disabled={busy} onClick={() => act(async () => {
-        const { data, error } = await auth.auth.mfa.enroll({ factorType: "totp", friendlyName: "NEW_X1" });
-        if (error) throw error;
-        const image = data.totp.qr_code;
-        setFactorId(data.id); setQr(image.startsWith("data:") ? image.slice(image.indexOf(",") + 1) : image); setSecret(data.totp.secret);
-      })}>Set up Google Authenticator</Button>}
+      {!factorId && !unfinishedFactorId && <Button disabled={busy} onClick={() => act(startAuthenticatorEnrollment)}>Set up Google Authenticator</Button>}
+      {!factorId && unfinishedFactorId && <div className="space-y-3">
+        <p className="text-fg-dim">An unfinished NEW_X1 authenticator setup exists. Restart it to generate a fresh QR code.</p>
+        <Button disabled={busy} onClick={() => act(async () => {
+          const { error: removeError } = await auth.auth.mfa.unenroll({ factorId: unfinishedFactorId });
+          if (removeError) throw removeError;
+          setUnfinishedFactorId("");
+          await startAuthenticatorEnrollment();
+        })}>Restart authenticator setup</Button>
+      </div>}
       {qr && <div>
         {/* Supabase supplies this QR; a data URI avoids inserting SVG markup into the DOM. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
