@@ -23,10 +23,28 @@ A domain purchase is optional. Render's assigned HTTPS address is enough for the
 1. Open [Supabase Dashboard](https://supabase.com/dashboard) and sign up, preferably with the GitHub account used for the repository.
 2. Create an organization if prompted, then a project named **NEW_X1**. Select a region near your audience and save the database password privately.
 3. Wait until the project is ready. Find its **Project URL** and **publishable key** in the project's connection/API settings. You may share the project URL; keep database passwords, service-role/secret keys and provider credentials private.
-4. Open the project's SQL editor. Open `supabase/migrations/202610080001_accounts.sql` in this repository, paste its complete contents into a new query, and run it once. Check for SQL errors. It creates saved-result/explanation tables, ownership policies and generation quotas.
+4. Open the project's SQL editor. Open `supabase/migrations/202610080001_accounts.sql` in this repository, paste its complete contents into a new query, and run it. Check for SQL errors. It creates saved-result/explanation tables, ownership policies and generation quotas. The setup can be rerun: it replaces its five named policies in the same transaction without deleting account data or disabling RLS.
 5. Under Auth signing keys, use an asymmetric signing key (**ES256 or RS256**). A legacy HS256-only project will not pass this backend's session verification.
 
 **Checkpoint:** you have a running project, its URL/publishable key, and a successful migration. No website deployment is needed for this step. Real SQL/RLS behavior must still be tested with two accounts later.
+
+If you see `42710: policy "own_explanations_select" ... already exists`, an earlier run created that policy. Replace the entire editor query with the current migration file and run the whole file, including `begin;` and `commit;`. Do not delete tables or disable RLS. A successful run alone is not a full login/RLS integration test.
+
+The rerun fix was checked locally with PGlite (PostgreSQL compiled to WebAssembly) and simulated Supabase auth roles/identity: fresh setup, repeated execution, partial-policy repair, retained rows, unchanged policy definitions, RLS enabled, rollback on an injected error, two-user isolation, rejected cross-user writes/deletes, anonymous access rejection and the 20/day quota passed. The 12 Python account tests also passed. This does not establish that the hosted project's migration or Auth configuration is complete.
+
+To confirm the setup after a successful run, execute this separate read-only query. Expect five rows with `rls_enabled=true`, covering two policies on `explanations` and three on `saved_analyses`:
+
+```sql
+select p.tablename, p.policyname, p.cmd, c.relrowsecurity as rls_enabled
+from pg_policies p
+join pg_namespace n on n.nspname = p.schemaname
+join pg_class c on c.relnamespace = n.oid and c.relname = p.tablename
+where p.schemaname = 'public'
+  and p.tablename in ('explanations', 'saved_analyses')
+order by p.tablename, p.policyname;
+```
+
+SQL Editor execution does not record CLI migration history. If you later adopt `supabase db push`, reconcile the manual setup with the CLI history first, following the [Supabase migration guide](https://supabase.com/docs/guides/deployment/database-migrations); do not reset the hosted database to resolve a history mismatch.
 
 ## Step 2 — create Render and connect GitHub
 

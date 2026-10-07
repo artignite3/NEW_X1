@@ -17,6 +17,14 @@ create index if not exists saved_analyses_owner_date on public.saved_analyses(us
 create index if not exists explanations_expiry on public.explanations(expires_at);
 alter table public.explanations enable row level security;
 alter table public.saved_analyses enable row level security;
+-- SQL Editor setup may be rerun after a successful or partially applied attempt.
+-- Replace only our named policies in this transaction; existing rows are retained
+-- and RLS stays enabled throughout. A later error rolls the replacements back.
+drop policy if exists own_explanations_select on public.explanations;
+drop policy if exists own_explanations_insert on public.explanations;
+drop policy if exists own_analyses_select on public.saved_analyses;
+drop policy if exists own_analyses_insert on public.saved_analyses;
+drop policy if exists own_analyses_delete on public.saved_analyses;
 create policy own_explanations_select on public.explanations for select to authenticated
   using (user_id = (select auth.uid()) and expires_at > now());
 create policy own_explanations_insert on public.explanations for insert to authenticated
