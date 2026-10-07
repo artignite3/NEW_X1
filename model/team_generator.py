@@ -693,9 +693,30 @@ def generate_best_team(payload: dict) -> dict:
     eligible = {p["fantasy_key"] for p in pool if p["injury_status"] not in {"INJURED", "RESTED", "SUSPENDED"}}
     stats_df = stats_df[stats_df.player.isin(eligible)].reset_index(drop=True)
     cov = cov.loc[stats_df.player, stats_df.player]
-    selected_keys, status = solve_xi(stats_df, cov, risk_aversion=risk_aversion)
+
+    # Strict by default: the full contract or a clear infeasibility. The
+    # explicit allow_relaxation flag unlocks progressively weaker constraint
+    # sets, and the response reports which one produced the XI.
+    allow_relaxation = bool(payload.get("allow_relaxation", False))
+    ladder = [("strict", True, True),
+              ("relaxed_team", True, False),
+              ("relaxed_roles", False, False)]
+    selected_keys, status, constraint_mode = [], "Not Solved", "strict"
+    for mode, use_role_bounds, use_team_bounds in ladder:
+        if mode != "strict" and not allow_relaxation:
+            break
+        selected_keys, status = solve_xi(
+            stats_df, cov, risk_aversion=risk_aversion,
+            use_role_bounds=use_role_bounds, use_team_bounds=use_team_bounds)
+        constraint_mode = mode
+        if status == "Optimal" and len(selected_keys) == 11:
+            break
     if status != "Optimal" or len(selected_keys) != 11:
-        raise ValueError("Cannot construct a valid XI: need 11 available players, a wicketkeeper, a batter, two bowlers and 1–7 players per team. Check squad roles and availability.")
+        raise ValueError(
+            "Cannot construct a valid XI: need 11 available players, a wicketkeeper, "
+            "a batter, two bowlers and 1-7 players per team. Check squad roles and "
+            "availability, or pass allow_relaxation=true to permit a relaxed selection."
+        )
 
     selected_set = set(selected_keys)
     ordered = sorted(pool, key=lambda p: p["adjusted_score"], reverse=True)
@@ -740,6 +761,15 @@ def generate_best_team(payload: dict) -> dict:
         ranked = sorted(best_team, key=lambda p: p["captain_upside"], reverse=True)
         vice_captain = ranked[1]["display_name"]
 
+    # Independent contract check (defense-in-depth; solver-independent)
+    from model.squad_validator import validate_squad
+    validation = validate_squad(
+        [entry(p) for p in best_team], [entry(p) for p in pool],
+        constraint_mode=constraint_mode, captain=captain, vice_captain=vice_captain,
+    )
+    if not validation["valid"]:
+        raise ValueError("Squad contract violated: " + "; ".join(validation["violations"]))
+
     # ── Explainability cache ─────────────────────────────────────────────
     explain_token = uuid.uuid4().hex
     _EXPLAIN_CACHE[explain_token] = {
@@ -779,11 +809,13 @@ def generate_best_team(payload: dict) -> dict:
             "captain": captain,
             "vice_captain": vice_captain,
             "solver_status": status,
+            "constraint_mode": constraint_mode,
             "squad_size": len(pool),
             "engine": ("CatBoost" if fmt == "t20" else "TriBE Ensemble (CatBoost+XGBoost+LightGBM)") if use_ml else "Recent Form (statistical)",
             "league_prior": round(prior, 2),
         },
         "intelligence": intelligence,
         "name_resolution": resolution_log,
+        "validation": validation,
         "explain_token": explain_token,
     }

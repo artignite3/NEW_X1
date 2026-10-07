@@ -1,0 +1,45 @@
+match_key,actual_dream_team,predicted_team_actual,baseline_team_actual,format
+Australia-Bangladesh-2026-08-13-male-Test-1527273,1400.0,1001.0,1046.0,test
+Australia-England-2025-12-17-male-Test-1455613,1763.0,1380.0,1352.0,test
+Australia-England-2025-12-26-male-Test-1455614,1077.0,726.0,904.0,test
+Australia-West Indies-2025-07-03-male-Test-1472518,1413.0,1252.0,1306.0,test
+Australia-West Indies-2025-07-12-male-Test-1472519,1193.0,928.0,999.0,test
+Bangladesh-Australia-2026-08-22-male-Test-1527274,970.0,699.0,417.0,test
+Bangladesh-Ireland-2025-11-19-male-Test-1506013,1629.0,1342.0,1300.0,test
+Bangladesh-Pakistan-2026-05-08-male-Test-1532486,1564.0,1186.0,1167.0,test
+Bangladesh-Pakistan-2026-05-16-male-Test-1532487,1751.0,1497.0,1434.0,test
+Bangladesh-Zimbabwe-2026-06-28-male-Test-1538297,1185.0,953.0,849.0,test
+England-Australia-2025-11-21-male-Test-1455611,1198.0,934.0,986.0,test
+England-Australia-2025-12-04-male-Test-1455612,1541.0,1230.0,1161.0,test
+England-Australia-2026-01-04-male-Test-1455615,1778.0,1353.0,1247.0,test
+England-India-2025-07-10-male-Test-1448351,1612.0,1373.0,910.0,test
+England-New Zealand-2026-06-04-male-Test-1496571,1385.0,1138.0,670.0,test
+England-Pakistan-2026-08-27-male-Test-1496583,1412.0,1220.0,920.0,test
+India-Australia-2026-03-06-female-Test-1478918,1008.0,922.0,888.0,test
+India-England-2025-07-02-male-Test-1448350,2286.0,1352.0,867.0,test
+India-England-2025-07-23-male-Test-1448352,1678.0,1341.0,1387.0,test
+India-England-2025-07-31-male-Test-1448353,1757.0,1179.0,1298.0,test
+India-England-2026-07-10-female-Test-1496551,1596.0,1330.0,1204.0,test
+India-Sri Lanka-2026-08-15-male-Test-1544001,1617.0,1378.0,904.0,test
+India-Sri Lanka-2026-08-23-male-Test-1544002,1563.0,1389.0,985.0,test
+India-West Indies-2025-10-10-male-Test-1479570,1576.0,1108.0,1213.0,test
+Ireland-Bangladesh-2025-11-11-male-Test-1506012,1327.0,1040.0,1104.0,test
+New Zealand-England-2026-06-17-male-Test-1496572,1669.0,1376.0,1205.0,test
+New Zealand-England-2026-06-25-male-Test-1496573,1684.0,1029.0,1014.0,test
+New Zealand-Ireland-2026-05-27-male-Test-1528547,1289.0,1137.0,978.0,test
+New Zealand-West Indies-2025-12-02-male-Test-1491732,1828.0,1057.0,1542.0,test
+New Zealand-West Indies-2025-12-18-male-Test-1491734,1914.0,944.0,1529.0,test
+Pakistan-England-2026-08-19-male-Test-1496582,1240.0,988.0,836.0,test
+Pakistan-South Africa-2025-10-12-male-Test-1501893,1652.0,1254.0,1226.0,test
+Pakistan-South Africa-2025-10-20-male-Test-1501894,1302.0,1032.0,1078.0,test
+South Africa-India-2025-11-14-male-Test-1479571,1181.0,918.0,924.0,test
+South Africa-India-2025-11-22-male-Test-1479572,1610.0,1329.0,966.0,test
+South Africa-Zimbabwe-2025-07-06-male-Test-1478864,1419.0,1206.0,1257.0,test
+Sri Lanka-West Indies-2026-06-25-male-Test-1538311,1515.0,966.0,815.0,test
+Sri Lanka-West Indies-2026-07-03-male-Test-1538312,1657.0,1073.0,881.0,test
+West Indies-India-2025-10-02-male-Test-1479569,1183.0,1062.0,973.0,test
+West Indies-New Zealand-2025-12-10-male-Test-1491733,903.0,673.0,762.0,test
+West Indies-Pakistan-2026-07-25-male-Test-1538630,1555.0,1110.0,1083.0,test
+West Indies-Pakistan-2026-08-02-male-Test-1538631,1425.0,925.0,903.0,test
+Zimbabwe-New Zealand-2025-07-30-male-Test-1478872,1055.0,772.0,815.0,test
+Zimbabwe-New Zealand-2025-08-07-male-Test-1478873,1147.0,684.0,480.0,test
