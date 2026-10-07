@@ -6,6 +6,7 @@ import type {
   MatchSquads,
   TeamsResponse,
 } from "./types";
+import { sessionHeaders } from "./auth";
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE ?? "http://localhost:8000";
@@ -57,7 +58,8 @@ export interface GenerateRequest {
 export async function generateBestTeam(req: GenerateRequest): Promise<GenerateResponse> {
   const res = await fetch(`${API_BASE}/generate_best_team`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...await sessionHeaders() },
+    signal: AbortSignal.timeout(120000),
     body: JSON.stringify(req),
   });
   return handle<GenerateResponse>(res);
@@ -66,8 +68,33 @@ export async function generateBestTeam(req: GenerateRequest): Promise<GenerateRe
 export async function explainTeam(explainToken: string): Promise<AnalystReport> {
   const res = await fetch(`${API_BASE}/explain_team`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...await sessionHeaders() },
+    signal: AbortSignal.timeout(120000),
     body: JSON.stringify({ explain_token: explainToken }),
   });
   return handle<AnalystReport>(res);
+}
+
+export interface SavedAnalysis {
+  id: string;
+  created_at: string;
+  payload: { title: string; result: GenerateResponse };
+}
+
+export async function saveAnalysis(explainToken: string, title: string): Promise<SavedAnalysis> {
+  return handle<SavedAnalysis>(await fetch(`${API_BASE}/analyses`, {
+    method: "POST", headers: { "Content-Type": "application/json", ...await sessionHeaders() },
+    signal: AbortSignal.timeout(15000), body: JSON.stringify({ explain_token: explainToken, title }),
+  }));
+}
+
+export async function getSavedAnalyses(): Promise<{ analyses: SavedAnalysis[] }> {
+  return handle(await fetch(`${API_BASE}/analyses`, { cache: "no-store",
+    headers: await sessionHeaders(), signal: AbortSignal.timeout(15000) }));
+}
+
+export async function deleteSavedAnalysis(id: string): Promise<void> {
+  await handle(await fetch(`${API_BASE}/analyses/${encodeURIComponent(id)}`, {
+    method: "DELETE", headers: await sessionHeaders(), signal: AbortSignal.timeout(15000),
+  }));
 }

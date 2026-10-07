@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AnalystReport, GenerateResponse } from "@/lib/types";
-import { explainTeam } from "@/lib/api";
+import { explainTeam, saveAnalysis } from "@/lib/api";
 import PlayerCard from "./PlayerCard";
 import { PitchPanel, WeatherPanel } from "./IntelligencePanels";
 import { ROLE_LABELS } from "./RoleBadge";
@@ -42,6 +42,8 @@ export default function AnalysisResult({ result }: Props) {
   const [report, setReport] = useState<AnalystReport | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const { request, best_team, bench, summary, intelligence, name_resolution } = result;
   const total = useCountUp(summary.expected_total_points);
@@ -61,6 +63,18 @@ export default function AnalysisResult({ result }: Props) {
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center gap-3 flex-wrap">
+        <Button disabled={saving || saveMessage === "Saved to your account."} onClick={async () => {
+          setSaving(true);
+          try {
+            await saveAnalysis(result.explain_token, `${request.team1} vs ${request.team2} · ${request.date}`.slice(0, 120));
+            setSaveMessage("Saved to your account.");
+          } catch (error) {
+            setSaveMessage(error instanceof Error ? error.message : "Unable to save. Please retry.");
+          } finally { setSaving(false); }
+        }}>{saving ? "Saving…" : "Save analysis"}</Button>
+        <span className="text-sm text-fg-dim" role="status">{saveMessage}</span>
+      </div>
       {/* ── Match header ─────────────────────────────────────────────── */}
       <Panel className="p-6 reveal">
         <div className="flex flex-wrap justify-between gap-x-10 gap-y-5">

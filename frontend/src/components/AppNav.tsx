@@ -8,6 +8,7 @@ import StatusBadge from "./StatusBadge";
 const LINKS = [
   { href: "/", label: "Fixtures" },
   { href: "/simulator", label: "Simulator" },
+  { href: "/account", label: "Account" },
 ];
 
 export default function AppNav() {

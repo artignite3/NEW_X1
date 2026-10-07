@@ -59,3 +59,7 @@ class GenerateRequest(BaseModel):
 class ExplainRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     explain_token: str = Field(min_length=32, max_length=32, pattern=r"^[a-f0-9]{32}$")
+
+
+class SaveAnalysisRequest(ExplainRequest):
+    title: str = Field(min_length=1, max_length=120)

@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Path as APIPath
 from fastapi.middleware.cors import CORSMiddleware
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -40,7 +40,10 @@ from model.team_generator import (  # noqa: E402
 )
 
 app = FastAPI(title="NEW_X1 Cricket Intelligence API", version="2.0")
-from model.api_schemas import GenerateRequest, ExplainRequest  # noqa: E402
+from model.api_schemas import GenerateRequest, ExplainRequest, SaveAnalysisRequest  # noqa: E402
+from model.auth import Principal, require_user, auth_config  # noqa: E402
+from model.user_store import UserStore  # noqa: E402
+from model.explanation_snapshot import create_snapshot  # noqa: E402
 
 app.add_middleware(
     CORSMiddleware,
@@ -225,66 +228,83 @@ def venues():
 # POST endpoints
 # ─────────────────────────────────────────────────────────────────────────────
 @app.post("/generate_best_team")
-def generate_best_team_endpoint(request_data: GenerateRequest):
+def generate_best_team_endpoint(request_data: GenerateRequest, user: Principal = Depends(require_user)):
     start = time.perf_counter()
     try:
-        return generate_best_team(request_data.model_dump(exclude_none=True))
+        store = UserStore(user)
+        store.consume_quota()
+        result = generate_best_team(request_data.model_dump(exclude_none=True))
+        token = result["explain_token"]
+        cached = _EXPLAIN_CACHE.get(token)
+        if cached is None:
+            raise HTTPException(503, "Explanation state unavailable; please retry")
+        store.save_explanation(token, create_snapshot(cached), result)
+        return result
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Team generation failed: {e}")
+    except Exception:
+        raise HTTPException(status_code=500, detail="Team generation failed; please retry")
     finally:
         print(f"[latency] generate_best_team {time.perf_counter() - start:.3f}s", flush=True)
 
 
 @app.post("/explain_team")
-def explain_team(request_data: ExplainRequest):
+def explain_team(request_data: ExplainRequest, user: Principal = Depends(require_user)):
     """
     SHAP feature drivers + natural-language analyst report (local Ollama).
     Body: {"explain_token": "<token from /generate_best_team response>"}
     """
     token = request_data.explain_token
-    if not token or token not in _EXPLAIN_CACHE or time.time() - _EXPLAIN_CACHE[token]["created"] > 3600:
+    record = UserStore(user).get("explanations", token)
+    if not record:
         raise HTTPException(
             status_code=404,
             detail="Explain token not found or expired. Re-run /generate_best_team.",
         )
 
-    cached = _EXPLAIN_CACHE[token]
-    from intelligence.shap_explainer import top_shap_features
+    cached = record["payload"]["snapshot"]
     from intelligence.llm_analyst import generate_team_report
 
-    details = cached.get("details")
-    drivers_by_player: dict = {}
-
-    if details and cached["fmt"] == "t20":
-        # T20: single CatBoost model
-        for key in cached["selected"]:
-            feat_row = details["features"].get(key)
-            if feat_row is None:
-                continue
-            drivers_by_player[key] = top_shap_features(
-                details["model"], feat_row, details["feature_cols"], "catboost"
-            )
-    elif details:
-        # TriBE: ensemble-level attribution — per-base SHAP combined with the
-        # meta-model's learned weights, not one base learner's view
-        from intelligence.shap_explainer import top_shap_features_ensemble
-        for key in cached["selected"]:
-            feat_row = details["features"].get(key)
-            if feat_row is None:
-                continue
-            drivers_by_player[key] = top_shap_features_ensemble(
-                details["model"], feat_row, details["feature_cols"]
-            )
+    drivers_by_player = cached.get("drivers", {})
 
     report = generate_team_report(
         cached=cached,
         drivers_by_player=drivers_by_player,
     )
     return report
+
+
+@app.get("/auth/config")
+def authentication_config():
+    config = auth_config()
+    return {"required": config["required"], "provider": "supabase",
+            "phone_enabled": os.getenv("PHONE_AUTH_ENABLED", "false").lower() == "true"}
+
+
+@app.get("/me")
+def current_user(user: Principal = Depends(require_user)):
+    return {"user_id": user.user_id, "is_admin": user.is_admin, "assurance_level": user.aal}
+
+
+@app.get("/analyses")
+def saved_analyses(user: Principal = Depends(require_user)):
+    return {"analyses": UserStore(user).list_analyses()}
+
+
+@app.post("/analyses", status_code=201)
+def save_analysis(request_data: SaveAnalysisRequest, user: Principal = Depends(require_user)):
+    return UserStore(user).save_analysis(request_data.explain_token, request_data.title)
+
+
+@app.delete("/analyses/{analysis_id}")
+def delete_analysis(analysis_id: str = APIPath(pattern=r"^[a-f0-9]{32}$"), user: Principal = Depends(require_user)):
+    if not UserStore(user).delete_analysis(analysis_id):
+        raise HTTPException(404, "Saved analysis not found")
+    return {"deleted": True}
 
 
 if __name__ == "__main__":

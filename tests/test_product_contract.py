@@ -1,5 +1,6 @@
 """Fixed-data regression checks for the audited product defects."""
 import unittest
+import os
 from copy import deepcopy
 from datetime import datetime
 from unittest.mock import MagicMock, patch
@@ -67,7 +68,8 @@ class ProductContractTests(unittest.TestCase):
         self.assertEqual(result["summary"]["constraint_mode"], "relaxed_roles")
 
     def test_active_api_rejects_invalid_requests_before_generation(self):
-        with TestClient(app) as client, patch("model.model_fastapi.generate_best_team") as generate:
+        with patch.dict(os.environ, {"APP_ENV": "test", "SUPABASE_URL": "", "SUPABASE_PUBLISHABLE_KEY": ""}), \
+             TestClient(app) as client, patch("model.model_fastapi.generate_best_team") as generate:
             for body in ({}, {"team1": "Alpha"}, {"team1": "Alpha", "team2": "alpha"},
                          {"match_id": True}, {"match_id": "x", "date": "2026-02-30"},
                          {"match_id": "x", "format": "T10"}, {"match_id": "x", "risk_aversion": 1.}):

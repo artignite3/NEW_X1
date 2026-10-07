@@ -27,6 +27,8 @@ fastapi==0.115.5
 uvicorn==0.32.0
 pydantic==2.9.2
 python-multipart==0.0.12
+PyJWT[crypto]==2.15.1
+cryptography==50.0.2
 
 # --- Streamlit Frontend ---
 streamlit==1.40.1
