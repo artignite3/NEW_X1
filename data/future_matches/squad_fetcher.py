@@ -8,8 +8,9 @@ load_dotenv()
 
 RAPID_API_KEY = os.getenv("RAPID_API_KEY")
 
-MATCHES_PATH = "upcoming_matches.json"
-SQUADS_PATH = "upcoming_squads.json"
+_HERE = os.path.dirname(os.path.abspath(__file__))
+MATCHES_PATH = os.path.join(_HERE, "upcoming_matches.json")
+SQUADS_PATH = os.path.join(_HERE, "upcoming_squads.json")
 SERIES_SQUAD_CACHE = {}
 PLAYER_CACHE = {}
 
@@ -134,16 +135,34 @@ def normalize_role(role):
     return "BAT"
     
 def main():
+    # Optional: restrict to specific match ids to conserve RapidAPI quota, e.g.
+    #   python squad_fetcher.py --ids 148404,148405
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Fetch squads for upcoming matches")
+    parser.add_argument(
+        "--ids",
+        default="",
+        help="Comma-separated match_ids to fetch (default: all matches in upcoming_matches.json)",
+    )
+    args = parser.parse_args()
+
+    id_filter = {i.strip() for i in args.ids.split(",") if i.strip()}
 
     with open(MATCHES_PATH, "r", encoding="utf-8") as f:
         matches_data = json.load(f)
+
+    matches_to_process = [
+        m for m in matches_data["matches"]
+        if not id_filter or str(m.get("match_id")) in id_filter
+    ]
 
     squads_out = {
         "fetched_at": "",
         "squads": {}
     }
 
-    for match in matches_data["matches"]:
+    for match in matches_to_process:
 
         series_id = match.get(
             "series_id"
@@ -314,6 +333,7 @@ def main():
             f"{match['team2']} -> "
             f"{len(all_squads)} squads"
         )
+        squads_out["fetched_at"] = __import__("datetime").datetime.now().isoformat()
         with open(
             SQUADS_PATH,
             "w",
