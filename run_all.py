@@ -2,7 +2,7 @@
 NEW_X1 — Universal Service Launcher
 Runs all 3 platform services together in a single terminal process:
   1. FastAPI Backend        -> http://localhost:8000  (Docs: /docs)
-  2. Streamlit Product UI   -> http://localhost:8501
+  2. Next.js Product UI     -> http://localhost:3000
   3. Streamlit Model UI     -> http://localhost:8502
 
 Press Ctrl + C in this terminal to stop all services simultaneously.
@@ -64,13 +64,13 @@ SERVICES = [
 def print_banner():
     banner = """
 ======================================================================
-           NEW_X1 - CRICKET PERFORMANCE INTELLIGENCE PLATFORM         
-                       ALL SERVICES LAUNCHER                          
+           NEW_X1 - CRICKET PERFORMANCE INTELLIGENCE PLATFORM
+                       ALL SERVICES LAUNCHER
 ======================================================================
   [1] FastAPI Backend        : http://localhost:8000
       Interactive API Docs   : http://localhost:8000/docs
-  [2] Product UI (Analyst)   : http://localhost:8501
-  [3] Model UI (Evaluators)  : http://localhost:8502
+  [2] Product UI (Next.js)   : http://localhost:3000
+  [3] Model UI (Streamlit)   : http://localhost:8502
 ======================================================================
   Logs will stream below. Press Ctrl + C to stop all services.
 ======================================================================
