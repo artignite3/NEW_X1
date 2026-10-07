@@ -47,8 +47,20 @@ NON_FEATURE_COLS = {
 
 
 # ─────────────────────────────────────────────
-# Model Loading
+# Model Loading (cached for API request speed)
 # ─────────────────────────────────────────────
+_MODEL_CACHE: dict = {}
+_DF_CACHE: dict = {}
+
+
+def get_model(fmt: str):
+    """Cached load_model — avoids re-deserializing heavy model bundles per request."""
+    fmt = fmt.lower()
+    if fmt not in _MODEL_CACHE:
+        _MODEL_CACHE[fmt] = load_model(fmt)
+    return _MODEL_CACHE[fmt]
+
+
 def load_model(fmt: str):
     """Load the correct model for a format. Returns (model_type, model_object)."""
     if fmt == "t20":
@@ -126,16 +138,11 @@ def get_player_features(
     return row
 
 
-def predict_squad(
-    players: list[str],
-    fmt: str,
-    match_date: str,
-) -> pd.DataFrame:
-    """
-    Predict performance scores for a list of players.
-    Loads dataset once for speed (conforming to <= 10s response time).
-    """
-    model_type, model, feature_cols = load_model(fmt)
+def _load_features_dataset(fmt: str) -> pd.DataFrame:
+    """Cached feature dataset loader (parquet preferred, csv fallback)."""
+    fmt = fmt.lower()
+    if fmt in _DF_CACHE:
+        return _DF_CACHE[fmt]
 
     parquet_path = DATA_PROCESSED / f"features_{fmt}.parquet"
     csv_path     = DATA_PROCESSED / f"features_{fmt}.csv"
@@ -149,9 +156,31 @@ def predict_squad(
     else:
         raise FileNotFoundError(f"Feature dataset not found for format {fmt}")
 
+    _DF_CACHE[fmt] = df
+    return df
+
+
+def predict_squad(
+    players: list[str],
+    fmt: str,
+    match_date: str,
+    return_details: bool = False,
+):
+    """
+    Predict performance scores for a list of players.
+    Loads dataset/model once per process (cached) for fast repeat requests.
+
+    When return_details=True, returns (predictions_df, details) where details
+    carries the per-player latest feature row plus the model handle — used by
+    the SHAP explainability layer.
+    """
+    model_type, model, feature_cols = get_model(fmt)
+    df = _load_features_dataset(fmt)
+
     cutoff = pd.Timestamp(match_date)
 
     rows = []
+    features_by_player: dict[str, pd.DataFrame] = {}
 
     for player in players:
         player_df = df[
@@ -175,8 +204,18 @@ def predict_squad(
             pred = float(tribe_predict(model, feat_row)[0])
 
         rows.append({"player": player, "predicted_score": round(pred, 2), "has_history": True})
+        if return_details:
+            features_by_player[player] = feat_row
 
-    return pd.DataFrame(rows).sort_values("predicted_score", ascending=False).reset_index(drop=True)
+    out = pd.DataFrame(rows).sort_values("predicted_score", ascending=False).reset_index(drop=True)
+    if return_details:
+        return out, {
+            "model_type": model_type,
+            "model": model,
+            "feature_cols": feature_cols,
+            "features": features_by_player,
+        }
+    return out
 
 
 

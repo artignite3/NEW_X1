@@ -1,25 +1,35 @@
 """
 NEW_X1 — Intelligence Layer: Explainability (SHAP + Ollama Llama 3.2 3B)
-Computes feature attributions using SHAP TreeExplainer and synthesizes
-natural language analyst explanations via local Ollama.
+Synthesizes natural language analyst explanations via local Ollama.
 
 Zero API cost, zero rate limits, runs completely offline on CPU.
+Configuration is read from .env (OLLAMA_BASE_URL, OLLAMA_MODEL).
 """
 
-from typing import Dict, List, Tuple
-import numpy as np
-
-try:
-    import shap
-    HAS_SHAP = True
-except ImportError:
-    HAS_SHAP = False
+import os
+from typing import List, Tuple
 
 try:
     import ollama
+    _client = ollama.Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
     HAS_OLLAMA = True
 except ImportError:
+    _client = None
     HAS_OLLAMA = False
+
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
+
+
+def ollama_available() -> bool:
+    """True when the Ollama server is reachable and the model is pulled."""
+    if not HAS_OLLAMA:
+        return False
+    try:
+        models = _client.list()
+        names = [m.get("model", "") for m in models.get("models", [])]
+        return any(OLLAMA_MODEL in n for n in names) or len(names) > 0
+    except Exception:
+        return False
 
 
 def generate_player_explanation(
@@ -29,62 +39,109 @@ def generate_player_explanation(
     shap_top3: List[Tuple[str, float]],
     pitch_type: str = "Neutral",
     weather_summary: str = "Clear conditions",
-    is_selected: bool = True
+    is_selected: bool = True,
+    driver_labels: List[str] = None,
 ) -> str:
     """
     Synthesizes a 2-sentence expert analyst explanation for player selection/exclusion.
+    Falls back to a high-quality heuristic when Ollama is offline.
     """
-    status_word = "selected for the optimal XI" if is_selected else "excluded from the optimal XI"
-    
-    # Format SHAP features nicely
-    reasons_text = ""
-    if shap_top3:
-        top_reasons = [f"{feat.replace('_', ' ')}: {val:+.1f} pts" for feat, val in shap_top3]
-        reasons_text = ", ".join(top_reasons)
+    status_word = "selected for the optimal XI" if is_selected else "left out of the optimal XI"
+
+    if driver_labels:
+        reasons_text = ", ".join(driver_labels)
+    elif shap_top3:
+        reasons_text = ", ".join(f"{feat.replace('_', ' ')}: {val:+.1f} pts" for feat, val in shap_top3)
     else:
         reasons_text = "consistent recent form and favorable role matchup"
 
-    if not HAS_OLLAMA:
-        # High quality heuristic fallback
+    if not ollama_available():
         if is_selected:
             return (
-                f"{player_name} is selected with {predicted_score:.1f} projected performance score. "
-                f"Driven by positive indicators in {reasons_text}, excelling under {pitch_type.lower()} conditions."
+                f"{player_name} is selected with {predicted_score:.1f} projected performance points. "
+                f"Key drivers: {reasons_text}, under {pitch_type.lower()} conditions ({weather_summary.lower()})."
             )
-        else:
-            return (
-                f"{player_name} is excluded due to unfavorable venue fit and recent variance indicators. "
-                f"Budget and role constraints favored alternative selections."
-            )
+        return (
+            f"{player_name} misses out — {reasons_text} did not offset a lower projected score "
+            f"({predicted_score:.1f}) for this {pitch_type.lower()} venue."
+        )
 
-    prompt = f"""
-You are a senior cricket performance analyst.
+    prompt = f"""You are a senior cricket performance analyst.
 Write exactly a 2-sentence explanation for why {player_name} ({role}) was {status_word}.
 
 Context:
 - Projected Score: {predicted_score:.1f}
-- Key SHAP feature contributions: {reasons_text}
+- Key analytical drivers: {reasons_text}
 - Venue pitch profile: {pitch_type}
 - Weather: {weather_summary}
 
 Be concise, confident, analytical, and mention at least one key stat/driver.
+Reply with ONLY the two sentences.
 """
     try:
-        resp = ollama.chat(
-            model="llama3.2:3b",
+        resp = _client.chat(
+            model=OLLAMA_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            options={"temperature": 0.2}
+            options={"temperature": 0.2},
         )
         return resp["message"]["content"].strip()
-    except Exception as e:
-        # Fallback if Ollama server is offline
+    except Exception:
+        if is_selected:
+            return (
+                f"{player_name} is selected with {predicted_score:.1f} projected performance points. "
+                f"Key drivers: {reasons_text}."
+            )
         return (
-            f"{player_name} was {status_word} with {predicted_score:.1f} projected score. "
-            f"Key analytical drivers include {reasons_text} under {pitch_type.lower()} pitch conditions."
+            f"{player_name} misses out — projected {predicted_score:.1f} points "
+            f"was not enough for this {pitch_type.lower()} venue."
+        )
+
+
+def generate_team_summary(
+    team_lines: List[str],
+    pitch_type: str,
+    weather_summary: str,
+    expected_total: float,
+    captain: str,
+) -> str:
+    """Generates the closing paragraph summarizing the whole XI selection."""
+    team_text = "\n".join(team_lines)
+
+    if not ollama_available():
+        return (
+            f"The optimizer projects {expected_total:.0f} combined performance points from this XI, "
+            f"balancing current form with venue fit at a {pitch_type.lower()} ground ({weather_summary.lower()}). "
+            f"{captain} carries the highest ceiling and is the recommended captaincy pick. "
+            f"Selection respected role balance (wicketkeeper, batters, allrounders, bowlers) "
+            f"and a 1-7 per-team spread constraint."
+        )
+
+    prompt = f"""You are a senior cricket performance analyst presenting the Optimal XI.
+Write exactly one short paragraph (3-4 sentences) summarizing why this team was chosen.
+
+Selected XI (player, role, projected points):
+{team_text}
+
+Venue: {pitch_type} pitch. Weather: {weather_summary}.
+Projected total: {expected_total:.0f} points. Recommended captain: {captain}.
+
+Mention the venue/weather influence and the captain choice. Reply with ONLY the paragraph.
+"""
+    try:
+        resp = _client.chat(
+            model=OLLAMA_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            options={"temperature": 0.3},
+        )
+        return resp["message"]["content"].strip()
+    except Exception:
+        return (
+            f"The optimizer projects {expected_total:.0f} combined points from this XI at a "
+            f"{pitch_type.lower()} venue. {captain} is the recommended captaincy pick."
         )
 
 
 if __name__ == "__main__":
     top3 = [("avg_runs_per_inning_roll3_mean", 14.5), ("venue_avg_pts", 8.2), ("avg_economy_rate_per_inning", -2.1)]
-    exp = generate_player_explanation("Virat Kohli", "BAT", 78.4, top3, "Batting Pitch", "Humid and overcast", is_selected=True)
-    print("Sample Analyst Explanation:\n", exp)
+    print("Sample Analyst Explanation:\n", generate_player_explanation(
+        "Virat Kohli", "BAT", 78.4, top3, "Batting Pitch", "Humid and overcast", True))

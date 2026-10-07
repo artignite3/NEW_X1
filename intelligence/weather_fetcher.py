@@ -9,8 +9,13 @@ Conditions evaluated:
   - High dew point in evening: favors 2nd innings batters
 """
 
+import time
 import requests
 from typing import Dict, Optional
+
+# Weather responses cached for 30 minutes per venue (forecasts change slowly)
+_WEATHER_CACHE: dict[str, tuple[float, Dict]] = {}
+_WEATHER_TTL_SECONDS = 30 * 60
 
 # Coordinates for major international and IPL cricket grounds
 VENUE_COORDINATES = {
@@ -50,12 +55,47 @@ VENUE_COORDINATES = {
 }
 
 
+# Cache for geocoded venue coordinates and fetched weather (TTL handled by caller)
+_GEOCODE_CACHE: dict[str, tuple[float, float]] = {}
+
+
+def _geocode_venue(venue_name: str) -> Optional[tuple[float, float]]:
+    """Geocodes the city portion of a venue string via Open-Meteo geocoding (free, no key)."""
+    if not venue_name:
+        return None
+    if venue_name.lower() in _GEOCODE_CACHE:
+        return _GEOCODE_CACHE[venue_name.lower()]
+
+    # Venue strings usually look like "Ekana Cricket Stadium, Lucknow" — take the last part
+    city = venue_name.split(",")[-1].strip()
+    if not city:
+        return None
+    try:
+        r = requests.get(
+            "https://geocoding-api.open-meteo.com/v1/search",
+            params={"name": city, "count": 1, "language": "en", "format": "json"},
+            timeout=5,
+        )
+        if r.status_code == 200:
+            results = r.json().get("results") or []
+            if results:
+                coords = (float(results[0]["latitude"]), float(results[0]["longitude"]))
+                _GEOCODE_CACHE[venue_name.lower()] = coords
+                return coords
+    except Exception as e:
+        print(f"Geocoding error for '{venue_name}': {e}")
+    return None
+
+
 def get_venue_coords(venue_name: str) -> Optional[tuple[float, float]]:
-    """Fuzzy lookup for venue latitude and longitude."""
+    """Fuzzy lookup for venue latitude and longitude, with geocoding fallback."""
     v_clean = venue_name.lower().strip()
     for name, coords in VENUE_COORDINATES.items():
         if name in v_clean or v_clean in name:
             return coords
+    geocoded = _geocode_venue(venue_name)
+    if geocoded:
+        return geocoded
     # Default fallback: central coordinates (e.g. Mumbai)
     return 19.0760, 72.8777
 
@@ -78,6 +118,11 @@ def fetch_venue_weather(venue_name: str) -> Dict[str, any]:
     coords = get_venue_coords(venue_name)
     if not coords:
         return {"summary": "Weather unavailable"}
+
+    cache_key = venue_name.lower().strip()
+    cached = _WEATHER_CACHE.get(cache_key)
+    if cached and (time.time() - cached[0]) < _WEATHER_TTL_SECONDS:
+        return cached[1]
 
     lat, lon = coords
     url = (
@@ -111,7 +156,7 @@ def fetch_venue_weather(venue_name: str) -> Dict[str, any]:
             if dew_risk:
                 summary_parts.append("Evening dew risk high (2nd innings batting advantage)")
 
-            return {
+            result = {
                 "temperature_c": temp,
                 "humidity_pct": humidity,
                 "cloud_cover_pct": cloud,
@@ -120,6 +165,8 @@ def fetch_venue_weather(venue_name: str) -> Dict[str, any]:
                 "dew_risk": dew_risk,
                 "summary": "; ".join(summary_parts)
             }
+            _WEATHER_CACHE[cache_key] = (time.time(), result)
+            return result
     except Exception as e:
         print(f"Weather API error: {e}")
 
