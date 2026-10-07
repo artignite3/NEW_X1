@@ -71,7 +71,7 @@ export default function PlayerCard({ player, rank, isCaptain, isViceCaptain }: P
           <div className="mono-value text-sm text-fg-dim">
             {player.ci_low.toFixed(0)}–{player.ci_high.toFixed(0)}
           </div>
-          <div className="mono-label text-fg-mute mt-1.5">80% Range</div>
+          <div className="mono-label text-fg-mute mt-1.5" title="Historical spread estimate; coverage is not calibrated">Estimated range</div>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export default function PlayerCard({ player, rank, isCaptain, isViceCaptain }: P
         )}
         {doubtful && (
           <span className="mono-label !text-[9px] border border-warn/40 text-warn rounded-[3px] px-1.5 py-0.5">
-            {player.injury_status} · {player.playing_probability}%
+            {player.injury_status} · XI unconfirmed
           </span>
         )}
         {injured && (

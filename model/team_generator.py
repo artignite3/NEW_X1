@@ -58,7 +58,7 @@ _EXPLAIN_CACHE: "OrderedDict[str, dict]" = OrderedDict()
 _EXPLAIN_CACHE_MAX = 32
 
 NUM_HISTORY_MATCHES = 65
-CI_Z_SCORE = 1.28          # 80% confidence interval
+CI_Z_SCORE = 1.28          # Historical spread heuristic; coverage is uncalibrated
 CAPTAIN_VARIANCE_WEIGHT = 0.30
 
 INJURY_MULTIPLIERS = {
@@ -720,9 +720,8 @@ def generate_best_team(payload: dict) -> dict:
 
         inj_mult = INJURY_MULTIPLIERS.get(status, 1.0)
         prob_adj = PLAYING_PROB_ADJUSTMENTS.get(status, 1.0)
-        # Experience damping only applies when availability is genuinely in
-        # doubt. A player named in an announced squad (FIT/UNKNOWN) is
-        # expected to play — being uncapped is not an availability risk.
+        # These are availability scoring heuristics, not calibrated chances
+        # of appearing in the XI. Squad membership does not confirm selection.
         if status == "DOUBTFUL":
             exp_factor = min(p["matches_played"] / 20.0, 1.0) if p["matches_played"] else 0.5
         else:
@@ -735,7 +734,9 @@ def generate_best_team(payload: dict) -> dict:
         p_std = float(np.sqrt(p["stat_var"] if p["stat_var"] is not None else fallback_var))
         p["injury_status"] = status
         p["injury_multiplier"] = inj_mult
-        p["playing_probability"] = round(playing_prob * 100, 1)
+        p["playing_probability"] = None
+        p["availability_factor"] = round(playing_prob, 3)
+        p["selection_status"] = "unconfirmed"
         p["adjusted_score"] = round(final, 2)
         p["variance"] = p["stat_var"] if p["stat_var"] is not None else fallback_var
         p["std"] = round(p_std, 2)
@@ -776,13 +777,13 @@ def generate_best_team(payload: dict) -> dict:
               ("relaxed_team", True, False),
               ("relaxed_roles", False, False)]
     selected_keys, status, constraint_mode = [], "Not Solved", "strict"
-    for mode, use_role_bounds, use_team_bounds in ladder:
-        if mode != "strict" and not allow_relaxation:
+    for candidate_mode, use_role_bounds, use_team_bounds in ladder:
+        if candidate_mode != "strict" and not allow_relaxation:
             break
         selected_keys, status = solve_xi(
             stats_df, cov, risk_aversion=risk_aversion,
             use_role_bounds=use_role_bounds, use_team_bounds=use_team_bounds)
-        constraint_mode = mode
+        constraint_mode = candidate_mode
         if status == "Optimal" and len(selected_keys) == 11:
             break
     if status != "Optimal" or len(selected_keys) != 11:
@@ -812,10 +813,13 @@ def generate_best_team(payload: dict) -> dict:
             "injury_status": p["injury_status"],
             "injury_multiplier": p["injury_multiplier"],
             "playing_probability": p["playing_probability"],
+            "availability_factor": p["availability_factor"],
+            "selection_status": p["selection_status"],
             "adjusted_score": p["adjusted_score"],
             "std": p["std"],
             "ci_low": p["ci_low"],
             "ci_high": p["ci_high"],
+            "uncertainty_method": "historical_spread_uncalibrated",
             "captain_upside": p["captain_upside"],
             "matches_played": p["matches_played"],
             "name_match": p.get("name_match"),

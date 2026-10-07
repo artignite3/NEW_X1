@@ -1,56 +1,28 @@
 import { connection } from "next/server";
-import fs from "fs";
-import path from "path";
 import AppNav from "@/components/AppNav";
 import FixturesBoard from "@/components/FixturesBoard";
 import type { Match } from "@/lib/types";
 
 interface FixtureFeed { matches: Match[]; warning: string | null; }
 
-function parseFeed(file: string): FixtureFeed {
-  const parsed: unknown = JSON.parse(fs.readFileSync(file, "utf8"));
-  if (typeof parsed !== "object" || parsed === null || !("matches" in parsed) || !Array.isArray(parsed.matches) ||
-      !("fetched_at" in parsed) || typeof parsed.fetched_at !== "string" ||
-      !("source" in parsed) || typeof parsed.source !== "string") {
-    throw new Error("Invalid fixture feed");
-  }
-  const fetched = Date.parse(parsed.fetched_at);
-  if (!Number.isFinite(fetched)) throw new Error("Invalid fixture timestamp");
-  const seen = new Set<string>();
-  const matches = parsed.matches.filter((item: unknown): item is Match => {
-    if (typeof item !== "object" || item === null) throw new Error("Invalid fixture entry");
-    const m = item as Partial<Match>;
-    if (!m.match_id || !m.date || !/^\d{4}-\d{2}-\d{2}$/.test(m.date) ||
-        !m.team1 || !m.team2 || !["T20", "ODI", "TEST"].includes(String(m.match_type).toUpperCase())) {
-      throw new Error("Incomplete fixture entry");
-    }
-    const id = String(m.match_id);
-    if (seen.has(id)) throw new Error("Duplicate fixture ID");
-    seen.add(id);
-    return true;
-  });
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  return { matches: matches.filter((m) => m.date > today && !m.match_ended && !m.status?.toLowerCase().includes("ended")),
-           warning: Date.now() - fetched > 86_400_000 ? "Fixture feed was last refreshed over 24 hours ago. Confirm match details before analysis." : null };
-}
-
-function loadUpcomingMatches(): FixtureFeed {
-  const dir = path.join(process.cwd(), "../data/future_matches");
+async function loadUpcomingMatches(): Promise<FixtureFeed> {
+  const base = process.env.API_INTERNAL_BASE ?? process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
   try {
-    return parseFeed(path.join(dir, "upcoming_matches.json"));
+    const response = await fetch(`${base}/matches`, {
+      cache: "no-store", signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) throw new Error("Fixture API unavailable");
+    const feed = await response.json();
+    if (!Array.isArray(feed.matches)) throw new Error("Invalid fixture response");
+    return { matches: feed.matches, warning: typeof feed.warning === "string" ? feed.warning : null };
   } catch {
-    try {
-      return { ...parseFeed(path.join(dir, "upcoming_matches.last_good.json")),
-               warning: "Fixture feed is unavailable. Showing the last validated snapshot; confirm match details before analysis." };
-    } catch {
-      return { matches: [], warning: "Fixture feed unavailable. No verified backup is present." };
-    }
+    return { matches: [], warning: "Fixtures are temporarily unavailable. Please try again shortly." };
   }
 }
 
 export default async function Home() {
   await connection();
-  const feed = loadUpcomingMatches();
+  const feed = await loadUpcomingMatches();
 
   return (
     <div className="min-h-screen flex flex-col">

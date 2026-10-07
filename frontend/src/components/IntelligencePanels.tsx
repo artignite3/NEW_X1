@@ -74,7 +74,9 @@ export function PitchPanel({ pitch }: { pitch: PitchProfile }) {
           <span className={`mono-label border rounded-[4px] px-2 py-1 ${PITCH_TONES[pitch.category] ?? PITCH_TONES.NEUTRAL}`}>
             {pitch.category}
           </span>
-          <div className="mono-label text-fg-mute mt-2">Avg 1st inns · {pitch.avg_1st_innings}</div>
+          <div className="mono-label text-fg-mute mt-2">
+            {pitch.source === "curated_prior" ? `Curated prior · ${pitch.format.toUpperCase()}` : "Profile unavailable · neutral"}
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-4 text-right">
           <Stat label="Batters" value={`×${pitch.batter_mult.toFixed(2)}`} />

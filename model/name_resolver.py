@@ -70,7 +70,9 @@ class PlayerNameResolver:
 
         # 1. Exact (case-insensitive)
         if norm in self._by_norm:
-            return self._by_norm[norm], "exact"
+            if self._gender_ok(self._entries[norm], require_gender):
+                return self._by_norm[norm], "exact"
+            return None, None
 
         parts = norm.split()
         if len(parts) < 2:

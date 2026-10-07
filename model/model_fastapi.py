@@ -17,12 +17,10 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Literal
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -42,29 +40,12 @@ from model.team_generator import (  # noqa: E402
 )
 
 app = FastAPI(title="NEW_X1 Cricket Intelligence API", version="2.0")
-
-
-class GenerateRequest(BaseModel):
-    match_id: str | int | None = None
-    team1: str | None = None
-    team2: str | None = None
-    format: str | None = None
-    venue: str | None = None
-    date: str | None = None
-    use_ml: bool = True
-    use_intelligence: bool = True
-    scan_news: bool = False
-    risk_aversion: float = Field(default=0.05, ge=0, le=0.2)
-    mode: Literal["prediction", "retrospective"] = "prediction"
-    allow_relaxation: bool = False
-
-
-class ExplainRequest(BaseModel):
-    explain_token: str
+from model.api_schemas import GenerateRequest, ExplainRequest  # noqa: E402
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[origin.strip() for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if origin.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -182,9 +163,10 @@ def match_squads(match_id: str):
         raise HTTPException(status_code=404, detail=str(e))
 
     resolver = get_resolver(fmt)
+    gender = "female" if "women" in (match["team1"] + match["team2"]).lower() else "male"
 
     def player_out(p):
-        key, method = resolver.resolve(p["display_name"])
+        key, method = resolver.resolve(p["display_name"], require_gender=gender)
         return {
             "display_name": p["display_name"],
             "fantasy_key": key,

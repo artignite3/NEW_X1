@@ -28,7 +28,9 @@ export interface PlayerEntry {
   bowling_style?: string;
   injury_status: string;
   injury_multiplier: number;
-  playing_probability: number;
+  playing_probability: number | null;
+  availability_factor: number;
+  selection_status: "unconfirmed" | "confirmed";
   adjusted_score: number;
   std: number;
   ci_low: number;
@@ -53,8 +55,11 @@ export interface Weather {
 
 export interface PitchProfile {
   category: string;
-  avg_1st_innings: number;
-  boundary_pct: number;
+  avg_1st_innings: number | null;
+  boundary_pct: number | null;
+  source: "curated_prior" | "unavailable";
+  format: string;
+  sample_size: number | null;
   batter_mult: number;
   pacer_mult: number;
   spinner_mult: number;
@@ -85,6 +90,7 @@ export interface GenerateResponse {
     use_ml: boolean;
     use_intelligence: boolean;
     risk_aversion: number;
+    mode: "prediction" | "retrospective";
   };
   best_team: PlayerEntry[];
   bench: PlayerEntry[];

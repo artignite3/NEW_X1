@@ -1,7 +1,7 @@
 """
 NEW_X1 — Intelligence Layer: Pitch & Venue Analyzer (PAF Score)
-Calculates the Pitch Adjustment Factor (PAF) for cricket venues using historical
-match data.
+Provides explicitly labelled curated T20 priors. Other formats and unknown
+venues receive neutral adjustments until format-specific evidence is available.
 
 Categories:
   - BATTING: High avg 1st innings score (> 175 in T20), high boundary % (multiplier: 1.10 for batters)
@@ -92,24 +92,30 @@ VENUE_PROFILES = {
 
 def get_venue_profile(venue_name: str, format_type: str = "t20") -> Dict[str, Any]:
     """
-    Looks up pitch profile for a venue, with fallbacks based on format.
+    Return a format-scoped prior without presenting curated numbers as statistics.
     """
     v_clean = venue_name.lower().strip()
     if not v_clean:
         v_clean = "unknown venue"
-    for key, profile in VENUE_PROFILES.items():
-        if key in v_clean or v_clean in key:
-            return profile
+    fmt = format_type.lower()
+    if fmt == "t20":
+        for key, profile in VENUE_PROFILES.items():
+            if key in v_clean or v_clean in key:
+                return {**profile, "avg_1st_innings": None, "boundary_pct": None,
+                        "source": "curated_prior", "format": fmt, "sample_size": None}
 
     # Default neutral profile
     return {
         "category": "NEUTRAL",
-        "avg_1st_innings": 165 if format_type.lower() == "t20" else 265,
-        "boundary_pct": 17.0,
+        "avg_1st_innings": None,
+        "boundary_pct": None,
+        "source": "unavailable",
+        "format": fmt,
+        "sample_size": None,
         "batter_mult": 1.0,
         "pacer_mult": 1.0,
         "spinner_mult": 1.0,
-        "description": "Standard sporting surface with balanced assistance for all skillsets."
+        "description": "No validated venue profile for this format; neutral adjustments applied."
     }
 
 
