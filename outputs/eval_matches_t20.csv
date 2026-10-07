@@ -1,0 +1,1359 @@
+match_key,actual_dream_team,predicted_team_actual,baseline_team_actual,format
+Argentina-Brazil-2025-11-30-male-T20-1511996,603.0,557.0,571.0,t20
+Argentina-Brazil-2025-11-30-male-T20-1511997,365.0,333.0,294.0,t20
+Argentina-Canada-2026-07-31-female-T20-1544144,129.0,45.0,124.0,t20
+Argentina-Canada-2026-08-01-female-T20-1544145,659.0,491.0,491.0,t20
+Argentina-Canada-2026-08-01-female-T20-1544146,377.0,240.0,200.0,t20
+Argentina-Canada-2026-08-02-female-T20-1544147,516.0,406.0,340.0,t20
+Argentina-Cayman Islands-2026-03-08-male-T20-1525166,594.0,509.0,351.0,t20
+Argentina-Cayman Islands-2026-03-15-male-T20-1525177,642.0,591.0,435.0,t20
+Argentina-Mexico-2026-03-11-male-T20-1525171,624.0,490.0,439.0,t20
+Argentina-Mexico-2026-03-14-male-T20-1525174,867.0,699.0,747.0,t20
+Argentina-Suriname-2026-03-09-male-T20-1525168,697.0,384.0,397.0,t20
+Australia-Bangladesh-2026-06-19-male-T20-1532484,741.0,357.0,477.0,t20
+Australia-India-2025-11-02-male-T20-1478909,761.0,531.0,584.0,t20
+Australia-India-2026-02-15-female-T20-1478912,569.0,428.0,275.0,t20
+Australia-India-2026-02-19-female-T20-1478913,747.0,523.0,562.0,t20
+Australia-Ireland-2026-02-11-male-T20-1512732,790.0,614.0,593.0,t20
+Australia-Netherlands-2026-06-20-female-T20-1490690,726.0,501.0,569.0,t20
+Australia-New Zealand-2025-10-03-male-T20-1491715,96.0,46.0,57.0,t20
+Australia-Pakistan-2026-06-23-female-T20-1490697,767.0,550.0,671.0,t20
+Australia-South Africa-2025-08-10-male-T20-1478898,906.0,563.0,581.0,t20
+Australia-South Africa-2026-06-13-female-T20-1490679,831.0,470.0,516.0,t20
+Australia-Sri Lanka-2026-02-16-male-T20-1512748,796.0,417.0,383.0,t20
+Australia-West Indies-2026-03-19-female-T20-1526564,723.0,449.0,425.0,t20
+Australia-West Indies-2026-03-21-female-T20-1526565,609.0,540.0,449.0,t20
+Australia-West Indies-2026-03-23-female-T20-1526566,645.0,489.0,478.0,t20
+Austria-Belgium-2025-08-23-male-T20-1498697,782.0,501.0,534.0,t20
+Austria-Finland-2026-06-11-male-T20-1539465,654.0,507.0,508.0,t20
+Austria-Germany-2026-05-01-male-T20-1533386,725.0,542.0,590.0,t20
+Austria-Germany-2026-05-03-male-T20-1533389,901.0,666.0,618.0,t20
+Austria-Guernsey-2026-08-26-female-T20-1549196,587.0,571.0,571.0,t20
+Austria-Hungary-2026-06-28-male-T20-1542990,1046.0,501.0,645.0,t20
+Austria-Luxembourg-2025-07-26-male-T20-1495659,823.0,526.0,606.0,t20
+Austria-Luxembourg-2025-09-14-female-T20-1500867,343.0,283.0,273.0,t20
+Austria-Norway-2025-10-12-female-T20-1506189,605.0,439.0,494.0,t20
+Austria-Romania-2025-07-27-male-T20-1495661,354.0,293.0,321.0,t20
+Austria-Romania-2025-10-18-male-T20-1506437,790.0,776.0,766.0,t20
+Austria-Romania-2025-10-19-male-T20-1506439,874.0,723.0,659.0,t20
+Austria-Romania-2026-07-30-male-T20-1546388,662.0,492.0,416.0,t20
+Austria-Sweden-2026-05-22-male-T20-1534055,828.0,618.0,556.0,t20
+Austria-Switzerland-2025-09-13-female-T20-1500866,514.0,454.0,475.0,t20
+Austria-Turkey-2025-10-10-female-T20-1506183,613.0,576.0,541.0,t20
+Austria-Turkey-2026-07-25-male-T20-1546378,794.0,688.0,688.0,t20
+Austria-Turkey-2026-08-26-female-T20-1549194,477.0,428.0,438.0,t20
+Bahamas-Belize-2026-06-27-male-T20-1539737,797.0,570.0,554.0,t20
+Bahamas-Bermuda-2026-06-21-male-T20-1539730,87.0,83.0,83.0,t20
+Bahamas-Panama-2026-06-24-male-T20-1539733,674.0,479.0,394.0,t20
+Bahrain-Bhutan-2025-12-09-male-T20-1513099,728.0,526.0,527.0,t20
+Bahrain-Bhutan-2025-12-11-male-T20-1513100,748.0,588.0,494.0,t20
+Bahrain-Bhutan-2025-12-12-male-T20-1513101,625.0,383.0,469.0,t20
+Bahrain-Germany-2025-07-06-male-T20-1492881,769.0,474.0,373.0,t20
+Bahrain-Hong Kong-2026-06-01-male-T20-1538443,565.0,483.0,475.0,t20
+Bahrain-Indonesia-2025-11-18-male-T20-1510178,596.0,408.0,477.0,t20
+Bahrain-Indonesia-2025-11-19-male-T20-1510179,757.0,586.0,471.0,t20
+Bahrain-Japan-2026-02-26-male-T20-1523001,593.0,495.0,370.0,t20
+Bahrain-Kenya-2026-07-31-male-T20-1548122,789.0,599.0,327.0,t20
+Bahrain-Kenya-2026-08-01-male-T20-1548123,635.0,477.0,477.0,t20
+Bahrain-Kuwait-2025-12-13-female-T20-1514519,468.0,415.0,385.0,t20
+Bahrain-Malawi-2025-07-23-male-T20-1495461,789.0,573.0,475.0,t20
+Bahrain-Malawi-2025-07-27-male-T20-1495465,766.0,600.0,649.0,t20
+Bahrain-Malaysia-2025-11-25-male-T20-1511999,700.0,652.0,506.0,t20
+Bahrain-Malaysia-2026-03-08-male-T20-1527158,739.0,567.0,648.0,t20
+Bahrain-Mongolia-2026-06-06-female-T20-1536632,687.0,607.0,524.0,t20
+Bahrain-Myanmar-2026-06-03-female-T20-1536616,562.0,528.0,527.0,t20
+Bahrain-Oman-2025-12-06-female-T20-1514510,432.0,387.0,412.0,t20
+Bahrain-Oman-2025-12-15-female-T20-1514520,486.0,394.0,354.0,t20
+Bahrain-Oman-2026-05-29-female-T20-1538636,532.0,516.0,449.0,t20
+Bahrain-Rwanda-2025-07-22-male-T20-1495459,820.0,551.0,593.0,t20
+Bahrain-Rwanda-2025-07-25-male-T20-1495462,786.0,585.0,541.0,t20
+Bahrain-Saudi Arabia-2025-12-12-female-T20-1514516,539.0,441.0,465.0,t20
+Bahrain-Singapore-2026-06-05-male-T20-1538450,925.0,831.0,814.0,t20
+Bahrain-Tanzania-2025-07-08-male-T20-1492879,758.0,388.0,520.0,t20
+Bahrain-Tanzania-2025-07-13-male-T20-1492892,556.0,440.0,261.0,t20
+Bahrain-Thailand-2026-02-27-male-T20-1523003,727.0,546.0,607.0,t20
+Bahrain-Thailand-2026-06-04-female-T20-1536621,574.0,538.0,556.0,t20
+Bangladesh-Australia-2026-06-17-female-T20-1490685,514.0,309.0,425.0,t20
+Bangladesh-Australia-2026-06-17-male-T20-1532483,581.0,485.0,491.0,t20
+Bangladesh-Australia-2026-06-21-male-T20-1532485,590.0,378.0,428.0,t20
+Bangladesh-India-2026-06-25-female-T20-1490699,626.0,474.0,438.0,t20
+Bangladesh-Indonesia-2026-08-31-female-T20-1548894,682.0,466.0,344.0,t20
+Bangladesh-Ireland-2026-01-24-female-T20-1515223,658.0,419.0,380.0,t20
+Bangladesh-Namibia-2026-01-22-female-T20-1515218,751.0,624.0,556.0,t20
+Bangladesh-Netherlands-2025-09-03-male-T20-1498664,381.0,164.0,281.0,t20
+Bangladesh-Netherlands-2026-06-04-female-T20-1535596,489.0,324.0,302.0,t20
+Bangladesh-New Zealand-2026-05-02-male-T20-1528277,713.0,404.0,413.0,t20
+Bangladesh-Pakistan-2025-07-22-male-T20-1491904,814.0,702.0,404.0,t20
+Bangladesh-Pakistan-2026-06-20-female-T20-1490691,680.0,613.0,424.0,t20
+Bangladesh-Papua New Guinea-2026-01-20-female-T20-1515212,592.0,334.0,440.0,t20
+Bangladesh-Scotland-2026-01-30-female-T20-1515231,662.0,403.0,525.0,t20
+Bangladesh-Scotland-2026-05-30-female-T20-1535592,548.0,363.0,337.0,t20
+Bangladesh-Scotland-2026-06-02-female-T20-1535594,751.0,471.0,545.0,t20
+Bangladesh-South Africa-2026-06-28-female-T20-1490705,599.0,464.0,460.0,t20
+Bangladesh-Sri Lanka-2025-07-10-male-T20-1485508,582.0,361.0,417.0,t20
+Bangladesh-Sri Lanka-2025-07-13-male-T20-1485509,760.0,521.0,370.0,t20
+Bangladesh-Sri Lanka-2025-09-13-male-T20-1496924,594.0,385.0,443.0,t20
+Bangladesh-Sri Lanka-2026-09-06-female-T20-1548900,647.0,479.0,442.0,t20
+Bangladesh-Thailand-2026-01-28-female-T20-1515229,816.0,488.0,442.0,t20
+Bangladesh-United Arab Emirates-2026-09-08-female-T20-1548902,656.0,530.0,566.0,t20
+Bangladesh-United States of America-2026-01-18-female-T20-1515209,760.0,383.0,461.0,t20
+Bangladesh-West Indies-2025-10-31-male-T20-1505127,813.0,572.0,576.0,t20
+Bangladesh-Zimbabwe-2026-07-17-male-T20-1538302,868.0,667.0,648.0,t20
+Belgium-Austria-2025-08-23-male-T20-1498696,797.0,669.0,613.0,t20
+Belgium-Austria-2025-08-24-male-T20-1498698,822.0,607.0,608.0,t20
+Belgium-Austria-2025-08-24-male-T20-1498699,726.0,586.0,554.0,t20
+Belgium-Czech Republic-2026-09-05-female-T20-1551076,466.0,408.0,422.0,t20
+Belgium-Hungary-2026-06-20-male-T20-1540312,740.0,616.0,644.0,t20
+Belgium-Hungary-2026-06-21-male-T20-1540314,835.0,524.0,635.0,t20
+Belgium-Luxembourg-2026-08-22-female-T20-1548522,413.0,373.0,266.0,t20
+Belgium-Luxembourg-2026-08-22-female-T20-1548523,351.0,349.0,326.0,t20
+Belgium-Luxembourg-2026-08-23-female-T20-1548524,648.0,634.0,596.0,t20
+Belgium-Portugal-2026-09-05-female-T20-1551075,640.0,536.0,416.0,t20
+Belgium-Portugal-2026-09-06-female-T20-1551078,609.0,439.0,443.0,t20
+Belgium-Romania-2026-06-19-male-T20-1540308,682.0,401.0,442.0,t20
+Belgium-Romania-2026-06-21-male-T20-1540316,756.0,616.0,544.0,t20
+Belgium-Romania-2026-07-12-male-T20-1543372,769.0,629.0,619.0,t20
+Belgium-Serbia-2026-07-10-male-T20-1543369,778.0,692.0,584.0,t20
+Belgium-Switzerland-2026-06-20-male-T20-1540313,736.0,566.0,609.0,t20
+Belize-Bermuda-2026-06-22-male-T20-1539731,386.0,289.0,266.0,t20
+Bermuda-Brazil-2026-06-27-male-T20-1539738,750.0,515.0,679.0,t20
+Bhutan-Bahrain-2025-12-13-male-T20-1513102,686.0,516.0,464.0,t20
+Bhutan-Bahrain-2026-02-25-male-T20-1522999,643.0,586.0,403.0,t20
+Bhutan-Myanmar-2025-12-24-male-T20-1515011,854.0,681.0,539.0,t20
+Bhutan-Myanmar-2025-12-26-male-T20-1515012,796.0,626.0,682.0,t20
+Bhutan-Myanmar-2025-12-27-male-T20-1515013,710.0,643.0,498.0,t20
+Bhutan-Myanmar-2025-12-29-male-T20-1515014,592.0,471.0,526.0,t20
+Bhutan-Thailand-2026-02-28-male-T20-1523004,661.0,470.0,475.0,t20
+Botswana-Brazil-2026-04-10-female-T20-1528332,526.0,475.0,526.0,t20
+Botswana-Brazil-2026-04-11-female-T20-1529786,641.0,515.0,444.0,t20
+Botswana-Cameroon-2026-05-25-male-T20-1535420,658.0,520.0,566.0,t20
+Botswana-Eswatini-2025-07-20-female-T20-1494125,680.0,597.0,567.0,t20
+Botswana-Ivory Coast-2026-05-28-male-T20-1535425,755.0,706.0,571.0,t20
+Botswana-Lesotho-2026-03-12-male-T20-1527279,761.0,630.0,534.0,t20
+Botswana-Lesotho-2026-03-13-male-T20-1527280,704.0,638.0,529.0,t20
+Botswana-Lesotho-2026-03-15-male-T20-1527281,665.0,515.0,500.0,t20
+Botswana-Lesotho-2026-04-06-female-T20-1528320,619.0,582.0,443.0,t20
+Botswana-Malawi-2025-07-26-female-T20-1494140,672.0,559.0,504.0,t20
+Botswana-Malawi-2026-04-08-female-T20-1528325,657.0,535.0,534.0,t20
+Botswana-Mozambique-2026-04-11-female-T20-1528336,693.0,625.0,607.0,t20
+Botswana-Sierra Leone-2025-07-23-female-T20-1494134,531.0,389.0,416.0,t20
+Botswana-Sierra Leone-2026-05-23-male-T20-1535414,645.0,413.0,352.0,t20
+Botswana-Tanzania-2025-09-26-male-T20-1502746,544.0,315.0,399.0,t20
+Botswana-Uganda-2025-09-30-male-T20-1502752,460.0,293.0,409.0,t20
+Botswana-Zambia-2026-04-08-female-T20-1528328,741.0,712.0,645.0,t20
+Brazil-Argentina-2025-11-28-male-T20-1511993,560.0,529.0,545.0,t20
+Brazil-Argentina-2025-11-29-male-T20-1511994,486.0,430.0,416.0,t20
+Brazil-Bahamas-2026-06-25-male-T20-1539736,665.0,368.0,499.0,t20
+Brazil-Belize-2026-06-24-male-T20-1539734,584.0,488.0,488.0,t20
+Brazil-Botswana-2026-04-06-female-T20-1528317,655.0,619.0,516.0,t20
+Brazil-Costa Rica-2026-04-04-male-T20-1529380,686.0,539.0,545.0,t20
+Brazil-Isle of Man-2025-09-01-female-T20-1500636,691.0,597.0,511.0,t20
+Brazil-Lesotho-2026-04-09-female-T20-1528330,778.0,576.0,563.0,t20
+Brazil-Malawi-2026-04-07-female-T20-1528321,649.0,598.0,577.0,t20
+Brazil-Malawi-2026-06-12-female-T20-1539497,697.0,608.0,618.0,t20
+Brazil-Malawi-2026-06-17-female-T20-1539506,730.0,693.0,660.0,t20
+Brazil-Mexico-2026-08-08-male-T20-1545657,809.0,601.0,575.0,t20
+Brazil-Nigeria-2026-06-20-female-T20-1539510,700.0,619.0,437.0,t20
+Brazil-Panama-2026-08-09-male-T20-1549355,648.0,544.0,549.0,t20
+Brazil-Zambia-2026-04-08-female-T20-1528326,769.0,712.0,716.0,t20
+Bulgaria-Austria-2025-10-11-female-T20-1506187,630.0,593.0,582.0,t20
+Bulgaria-Cyprus-2025-11-02-male-T20-1506444,688.0,559.0,514.0,t20
+Bulgaria-Cyprus-2025-11-03-male-T20-1506446,589.0,495.0,432.0,t20
+Bulgaria-Cyprus-2025-11-03-male-T20-1506447,709.0,376.0,369.0,t20
+Bulgaria-Czech Republic-2026-08-21-male-T20-1545681,791.0,606.0,605.0,t20
+Bulgaria-Gibraltar-2025-07-10-male-T20-1491604,799.0,553.0,521.0,t20
+Bulgaria-Luxembourg-2026-08-20-male-T20-1545676,525.0,346.0,418.0,t20
+Bulgaria-Serbia-2025-07-07-female-T20-1490855,520.0,482.0,441.0,t20
+Bulgaria-Serbia-2025-07-09-female-T20-1490860,309.0,216.0,237.0,t20
+Bulgaria-Serbia-2025-11-01-male-T20-1506443,702.0,519.0,511.0,t20
+Bulgaria-Serbia-2026-06-26-female-T20-1541615,454.0,454.0,454.0,t20
+Bulgaria-Serbia-2026-06-27-female-T20-1541616,617.0,604.0,604.0,t20
+Bulgaria-Serbia-2026-06-28-female-T20-1541618,646.0,593.0,590.0,t20
+Bulgaria-Serbia-2026-09-05-female-T20-1551069,571.0,485.0,528.0,t20
+Bulgaria-Serbia-2026-09-06-female-T20-1551071,569.0,467.0,538.0,t20
+Bulgaria-Spain-2026-08-18-male-T20-1545675,538.0,402.0,370.0,t20
+Cambodia-Indonesia-2025-12-24-male-T20-1515544,539.0,453.0,441.0,t20
+Cambodia-Indonesia-2025-12-26-male-T20-1515546,395.0,270.0,244.0,t20
+Cambodia-Indonesia-2025-12-26-male-T20-1517208,454.0,361.0,356.0,t20
+Cambodia-Indonesia-2025-12-27-male-T20-1515547,591.0,397.0,415.0,t20
+Cambodia-Indonesia-2025-12-27-male-T20-1515548,616.0,492.0,516.0,t20
+Cambodia-Indonesia-2025-12-29-male-T20-1515549,644.0,414.0,318.0,t20
+Cameroon-Eswatini-2025-07-24-female-T20-1494136,803.0,694.0,624.0,t20
+Cameroon-Ivory Coast-2026-05-26-male-T20-1535424,733.0,695.0,687.0,t20
+Cameroon-Kenya-2026-05-28-male-T20-1535427,495.0,404.0,339.0,t20
+Cameroon-Lesotho-2025-07-21-female-T20-1494131,719.0,576.0,570.0,t20
+Cameroon-Mali-2026-05-29-male-T20-1535428,726.0,625.0,613.0,t20
+Cameroon-Rwanda-2025-07-23-female-T20-1494135,423.0,385.0,400.0,t20
+Cameroon-Rwanda-2026-05-23-male-T20-1535413,577.0,424.0,487.0,t20
+Canada-Argentina-2026-07-29-female-T20-1544142,272.0,249.0,196.0,t20
+Canada-Argentina-2026-07-30-female-T20-1544143,458.0,325.0,375.0,t20
+Canada-Argentina-2026-08-02-female-T20-1544148,628.0,375.0,290.0,t20
+Canada-New Zealand-2026-02-17-male-T20-1512749,655.0,285.0,224.0,t20
+Canada-Tanzania-2025-11-04-female-T20-1506669,313.0,243.0,251.0,t20
+Canada-Tanzania-2025-11-05-female-T20-1506671,627.0,412.0,392.0,t20
+Canada-Uganda-2025-10-20-female-T20-1506664,588.0,531.0,491.0,t20
+Canada-Uganda-2025-10-21-female-T20-1506665,564.0,475.0,448.0,t20
+Canada-United Arab Emirates-2026-02-13-male-T20-1512738,715.0,432.0,445.0,t20
+Cayman Islands-Mexico-2026-03-12-male-T20-1525172,733.0,430.0,430.0,t20
+Chile-Costa Rica-2026-04-25-female-T20-1531171,298.0,295.0,294.0,t20
+Chile-Costa Rica-2026-04-26-female-T20-1531172,466.0,417.0,373.0,t20
+China-Malaysia-2026-05-08-female-T20-1534323,685.0,531.0,539.0,t20
+China-Malaysia-2026-06-02-male-T20-1538445,521.0,417.0,277.0,t20
+Cook Islands-Fiji-2025-09-09-female-T20-1499784,479.0,335.0,389.0,t20
+Cook Islands-Indonesia-2026-05-17-male-T20-1532659,680.0,666.0,621.0,t20
+Cook Islands-Philippines-2025-09-15-female-T20-1499801,657.0,609.0,571.0,t20
+Cook Islands-Samoa-2026-05-18-male-T20-1532662,553.0,427.0,317.0,t20
+Cook Islands-Vanuatu-2025-09-10-female-T20-1499791,457.0,287.0,392.0,t20
+Cook Islands-Vanuatu-2026-05-13-male-T20-1532651,681.0,607.0,416.0,t20
+Costa Rica-Brazil-2026-04-03-male-T20-1529378,480.0,367.0,363.0,t20
+Costa Rica-Mexico-2026-04-04-male-T20-1529381,534.0,378.0,367.0,t20
+Croatia-Austria-2026-05-23-male-T20-1534060,683.0,549.0,547.0,t20
+Croatia-Bulgaria-2026-09-04-female-T20-1551067,584.0,517.0,429.0,t20
+Croatia-Cyprus-2025-08-07-male-T20-1496829,637.0,637.0,637.0,t20
+Croatia-Cyprus-2025-08-08-male-T20-1496830,720.0,468.0,492.0,t20
+Croatia-Cyprus-2026-05-22-male-T20-1534056,721.0,581.0,592.0,t20
+Croatia-Serbia-2026-09-04-female-T20-1551066,458.0,400.0,402.0,t20
+Croatia-Spain-2025-12-05-male-T20-1514473,562.0,459.0,437.0,t20
+Croatia-Spain-2025-12-06-male-T20-1514475,560.0,536.0,459.0,t20
+Croatia-Spain-2025-12-07-male-T20-1514477,430.0,386.0,412.0,t20
+Croatia-Switzerland-2026-05-19-male-T20-1534048,781.0,524.0,423.0,t20
+Cyprus-Austria-2026-03-14-male-T20-1527770,875.0,561.0,645.0,t20
+Cyprus-Austria-2026-03-16-male-T20-1527773,648.0,509.0,426.0,t20
+Cyprus-Bulgaria-2025-11-02-male-T20-1506445,603.0,351.0,438.0,t20
+Cyprus-Croatia-2025-08-07-male-T20-1496828,538.0,519.0,519.0,t20
+Cyprus-Croatia-2025-08-08-male-T20-1496831,772.0,606.0,568.0,t20
+Cyprus-Finland-2026-05-08-male-T20-1533397,653.0,540.0,485.0,t20
+Cyprus-Finland-2026-05-08-male-T20-1533398,479.0,258.0,198.0,t20
+Cyprus-France-2026-05-16-male-T20-1534038,530.0,367.0,302.0,t20
+Cyprus-Greece-2026-04-03-female-T20-1529780,703.0,695.0,695.0,t20
+Cyprus-Greece-2026-04-03-female-T20-1529781,544.0,440.0,440.0,t20
+Cyprus-Greece-2026-04-04-female-T20-1529782,620.0,588.0,588.0,t20
+Cyprus-Greece-2026-04-04-female-T20-1529783,223.0,173.0,170.0,t20
+Cyprus-Greece-2026-04-05-female-T20-1529784,534.0,520.0,520.0,t20
+Cyprus-Greece-2026-04-05-female-T20-1529785,439.0,415.0,415.0,t20
+Cyprus-Malta-2026-06-18-female-T20-1540322,650.0,638.0,644.0,t20
+Cyprus-Malta-2026-06-18-female-T20-1540323,607.0,528.0,586.0,t20
+Cyprus-Malta-2026-06-20-female-T20-1540326,802.0,750.0,750.0,t20
+Cyprus-Serbia-2025-10-31-male-T20-1506440,772.0,653.0,567.0,t20
+Cyprus-Serbia-2025-10-31-male-T20-1506441,687.0,514.0,488.0,t20
+Czech Republic-Austria-2026-08-28-female-T20-1549202,525.0,451.0,406.0,t20
+Czech Republic-Belgium-2026-09-04-female-T20-1551074,569.0,522.0,485.0,t20
+Czech Republic-Estonia-2025-09-06-female-T20-1499781,623.0,553.0,550.0,t20
+Czech Republic-Estonia-2025-09-07-female-T20-1499783,620.0,546.0,546.0,t20
+Czech Republic-Guernsey-2026-08-29-female-T20-1549204,520.0,345.0,412.0,t20
+Czech Republic-Israel-2026-08-18-male-T20-1545674,609.0,489.0,322.0,t20
+Czech Republic-Luxembourg-2026-06-26-male-T20-1539477,704.0,629.0,592.0,t20
+Czech Republic-Luxembourg-2026-06-28-male-T20-1539480,843.0,629.0,509.0,t20
+Czech Republic-Norway-2026-06-27-female-T20-1539514,640.0,559.0,444.0,t20
+Czech Republic-Portugal-2026-09-06-female-T20-1551079,731.0,661.0,663.0,t20
+Czech Republic-Romania-2025-08-21-male-T20-1499011,689.0,588.0,592.0,t20
+Czech Republic-Turkey-2026-08-27-female-T20-1549198,499.0,448.0,411.0,t20
+Denmark-Estonia-2026-07-08-male-T20-1543361,733.0,598.0,652.0,t20
+Denmark-Germany-2026-06-18-male-T20-1539472,797.0,626.0,550.0,t20
+Denmark-Greece-2026-05-09-female-T20-1534066,594.0,487.0,465.0,t20
+Denmark-Hungary-2026-07-13-male-T20-1543375,744.0,585.0,603.0,t20
+Denmark-Norway-2026-07-12-male-T20-1543371,846.0,664.0,750.0,t20
+Denmark-Romania-2026-07-14-male-T20-1544121,788.0,563.0,534.0,t20
+Denmark-Switzerland-2026-06-27-female-T20-1540948,565.0,556.0,521.0,t20
+Denmark-Turkey-2026-07-09-male-T20-1543365,698.0,554.0,458.0,t20
+England-Australia-2026-07-05-female-T20-1490709,546.0,448.0,360.0,t20
+England-India-2025-07-04-female-T20-1448399,798.0,477.0,478.0,t20
+England-India-2025-07-09-female-T20-1448400,525.0,462.0,409.0,t20
+England-India-2026-05-30-female-T20-1496549,653.0,408.0,421.0,t20
+England-India-2026-07-07-male-T20-1496576,798.0,492.0,376.0,t20
+England-India-2026-07-11-male-T20-1496578,896.0,370.0,663.0,t20
+England-Italy-2026-02-16-male-T20-1512747,925.0,734.0,728.0,t20
+England-Nepal-2026-02-08-male-T20-1512723,750.0,609.0,502.0,t20
+England-New Zealand-2025-10-18-male-T20-1491717,390.0,301.0,253.0,t20
+England-New Zealand-2025-10-20-male-T20-1491718,806.0,449.0,609.0,t20
+England-Scotland-2026-06-20-female-T20-1490692,712.0,592.0,534.0,t20
+England-South Africa-2025-09-12-male-T20-1448358,948.0,634.0,661.0,t20
+England-South Africa-2026-07-02-female-T20-1490708,694.0,532.0,473.0,t20
+England-Sri Lanka-2026-02-03-male-T20-1507721,834.0,530.0,442.0,t20
+England-Sri Lanka-2026-02-22-male-T20-1512760,806.0,648.0,427.0,t20
+England-Sri Lanka-2026-06-12-female-T20-1490677,764.0,328.0,638.0,t20
+England-West Indies-2026-06-24-female-T20-1490698,642.0,428.0,518.0,t20
+Estonia-Czech Republic-2025-09-06-female-T20-1499782,617.0,613.0,585.0,t20
+Estonia-Finland-2025-07-19-female-T20-1494577,205.0,202.0,192.0,t20
+Estonia-Finland-2025-07-20-female-T20-1494580,644.0,533.0,547.0,t20
+Estonia-Finland-2025-07-27-male-T20-1494772,723.0,606.0,473.0,t20
+Estonia-Finland-2026-07-25-female-T20-1547107,453.0,402.0,326.0,t20
+Estonia-Finland-2026-07-25-female-T20-1547108,397.0,390.0,329.0,t20
+Estonia-Norway-2026-07-09-male-T20-1543366,759.0,406.0,393.0,t20
+Eswatini-Malawi-2026-03-27-male-T20-1526847,601.0,571.0,553.0,t20
+Eswatini-Mozambique-2025-09-12-male-T20-1501502,764.0,629.0,629.0,t20
+Eswatini-Mozambique-2025-09-12-male-T20-1501503,610.0,493.0,579.0,t20
+Eswatini-Mozambique-2025-09-13-male-T20-1501504,823.0,615.0,638.0,t20
+Eswatini-Mozambique-2025-09-13-male-T20-1501505,781.0,526.0,655.0,t20
+Eswatini-Mozambique-2025-09-14-male-T20-1501506,172.0,144.0,142.0,t20
+Eswatini-Mozambique-2026-06-03-male-T20-1538213,575.0,422.0,429.0,t20
+Eswatini-St Helena-2026-03-24-male-T20-1526841,776.0,454.0,310.0,t20
+Fiji-Japan-2026-05-10-male-T20-1532644,550.0,466.0,388.0,t20
+Fiji-Philippines-2026-05-14-male-T20-1532652,731.0,461.0,478.0,t20
+Fiji-South Korea-2026-05-13-male-T20-1532649,779.0,480.0,663.0,t20
+Fiji-South Korea-2026-05-17-male-T20-1532658,571.0,421.0,420.0,t20
+Finland-Bulgaria-2026-08-15-male-T20-1545667,882.0,770.0,649.0,t20
+Finland-Cyprus-2026-05-09-male-T20-1533399,833.0,656.0,485.0,t20
+Finland-Cyprus-2026-05-09-male-T20-1533400,666.0,582.0,602.0,t20
+Finland-Denmark-2025-08-30-female-T20-1499025,467.0,318.0,405.0,t20
+Finland-Estonia-2025-07-26-male-T20-1494771,603.0,532.0,496.0,t20
+Finland-Germany-2025-08-29-female-T20-1499021,384.0,347.0,266.0,t20
+Finland-Luxembourg-2026-08-18-male-T20-1545673,816.0,703.0,678.0,t20
+Finland-Norway-2025-08-30-female-T20-1499023,753.0,576.0,603.0,t20
+Finland-Norway-2026-06-13-male-T20-1539468,679.0,510.0,528.0,t20
+Finland-Spain-2026-08-14-male-T20-1545660,663.0,456.0,552.0,t20
+Finland-Sweden-2026-06-14-male-T20-1539471,623.0,255.0,270.0,t20
+Finland-Switzerland-2025-07-19-female-T20-1494578,321.0,321.0,321.0,t20
+Finland-Switzerland-2025-07-20-female-T20-1494581,458.0,367.0,378.0,t20
+France-Austria-2025-08-09-male-T20-1496824,729.0,623.0,618.0,t20
+France-Austria-2026-07-28-male-T20-1546385,799.0,548.0,439.0,t20
+France-Croatia-2026-05-17-male-T20-1534043,695.0,642.0,578.0,t20
+France-Jersey-2026-05-19-male-T20-1534046,749.0,429.0,521.0,t20
+France-Norway-2026-04-07-male-T20-1528303,770.0,519.0,612.0,t20
+France-Portugal-2026-04-05-male-T20-1528300,678.0,427.0,627.0,t20
+France-Romania-2026-07-25-male-T20-1546377,667.0,533.0,408.0,t20
+France-Romania-2026-07-30-male-T20-1546389,755.0,445.0,514.0,t20
+France-Sweden-2026-05-23-male-T20-1534058,743.0,582.0,384.0,t20
+France-Switzerland-2026-05-22-male-T20-1534054,691.0,441.0,537.0,t20
+France-Turkey-2026-07-27-male-T20-1546381,715.0,458.0,479.0,t20
+Germany-Austria-2026-05-01-male-T20-1533385,939.0,538.0,776.0,t20
+Germany-Austria-2026-05-02-male-T20-1533387,814.0,723.0,572.0,t20
+Germany-Czech Republic-2026-08-14-male-T20-1545663,775.0,541.0,510.0,t20
+Germany-Denmark-2025-08-31-female-T20-1499029,687.0,374.0,439.0,t20
+Germany-Denmark-2026-06-19-male-T20-1539473,823.0,513.0,659.0,t20
+Germany-Denmark-2026-06-19-male-T20-1539474,615.0,452.0,442.0,t20
+Germany-Denmark-2026-06-20-male-T20-1539475,767.0,649.0,594.0,t20
+Germany-Denmark-2026-08-29-female-T20-1548660,527.0,410.0,395.0,t20
+Germany-Denmark-2026-08-30-female-T20-1548663,634.0,450.0,529.0,t20
+Germany-Finland-2026-08-11-male-T20-1549394,607.0,466.0,386.0,t20
+Germany-Finland-2026-08-21-male-T20-1545680,781.0,611.0,662.0,t20
+Germany-Ireland-2025-08-20-female-T20-1498207,527.0,384.0,221.0,t20
+Germany-Italy-2025-08-21-female-T20-1498209,658.0,432.0,542.0,t20
+Germany-Italy-2025-08-26-female-T20-1498214,468.0,241.0,341.0,t20
+Germany-Malawi-2025-07-13-male-T20-1492891,805.0,641.0,497.0,t20
+Germany-Norway-2025-08-30-female-T20-1499026,649.0,522.0,469.0,t20
+Germany-Portugal-2026-08-15-male-T20-1545666,741.0,600.0,533.0,t20
+Germany-Sweden-2025-08-31-female-T20-1499028,664.0,547.0,540.0,t20
+Germany-Sweden-2026-08-28-female-T20-1548658,388.0,150.0,198.0,t20
+Germany-Switzerland-2026-07-10-female-T20-1544137,641.0,625.0,537.0,t20
+Germany-Switzerland-2026-07-11-female-T20-1544139,725.0,629.0,629.0,t20
+Germany-Switzerland-2026-07-11-female-T20-1544140,550.0,494.0,443.0,t20
+Germany-Tanzania-2025-07-12-male-T20-1492890,735.0,435.0,487.0,t20
+Ghana-Eswatini-2026-03-28-male-T20-1526851,770.0,619.0,659.0,t20
+Gibraltar-Belgium-2026-07-08-male-T20-1543362,667.0,589.0,634.0,t20
+Gibraltar-Bulgaria-2025-07-11-male-T20-1491607,938.0,718.0,753.0,t20
+Gibraltar-Bulgaria-2025-07-13-male-T20-1491610,853.0,624.0,631.0,t20
+Gibraltar-Malta-2026-05-08-male-T20-1531683,588.0,469.0,490.0,t20
+Gibraltar-Malta-2026-05-09-male-T20-1531685,640.0,450.0,483.0,t20
+Gibraltar-Romania-2026-07-10-male-T20-1543367,809.0,545.0,496.0,t20
+Greece-Bulgaria-2025-07-08-female-T20-1490857,574.0,468.0,363.0,t20
+Greece-Czech Republic-2026-08-15-male-T20-1545664,643.0,566.0,493.0,t20
+Greece-Denmark-2026-05-09-female-T20-1534065,624.0,530.0,469.0,t20
+Greece-Denmark-2026-05-10-female-T20-1534067,452.0,375.0,349.0,t20
+Greece-Denmark-2026-05-10-female-T20-1534068,453.0,378.0,411.0,t20
+Greece-Germany-2026-08-18-male-T20-1545672,680.0,446.0,464.0,t20
+Greece-Isle of Man-2026-08-27-female-T20-1549197,502.0,440.0,442.0,t20
+Greece-Norway-2026-08-29-female-T20-1549203,450.0,351.0,305.0,t20
+Greece-Portugal-2026-08-17-male-T20-1545670,747.0,599.0,593.0,t20
+Guernsey-Austria-2026-05-19-male-T20-1534049,903.0,725.0,751.0,t20
+Guernsey-Isle of Man-2026-05-03-male-T20-1533395,691.0,517.0,551.0,t20
+Guernsey-Isle of Man-2026-05-03-male-T20-1533396,77.0,56.0,56.0,t20
+Guernsey-Italy-2025-07-05-male-T20-1490472,647.0,394.0,498.0,t20
+Guernsey-Jersey-2026-05-23-male-T20-1534061,680.0,457.0,526.0,t20
+Guernsey-Papua New Guinea-2025-08-14-male-T20-1498689,632.0,447.0,353.0,t20
+Guernsey-Sweden-2026-05-16-male-T20-1534039,775.0,583.0,605.0,t20
+Guernsey-Switzerland-2025-08-30-male-T20-1498690,388.0,256.0,246.0,t20
+Hong Kong-Bangladesh-2025-09-11-male-T20-1496922,615.0,473.0,417.0,t20
+Hong Kong-Bhutan-2026-01-22-female-T20-1519147,709.0,539.0,493.0,t20
+Hong Kong-Bhutan-2026-01-25-female-T20-1519149,713.0,556.0,568.0,t20
+Hong Kong-Bhutan-2026-01-29-female-T20-1519152,598.0,422.0,407.0,t20
+Hong Kong-Bhutan-2026-06-03-female-T20-1536619,583.0,402.0,556.0,t20
+Hong Kong-China-2026-05-08-female-T20-1534324,570.0,438.0,486.0,t20
+Hong Kong-China-2026-05-10-female-T20-1534326,577.0,465.0,434.0,t20
+Hong Kong-Indonesia-2026-06-13-female-T20-1536650,610.0,491.0,541.0,t20
+Hong Kong-Japan-2026-06-10-female-T20-1536645,644.0,450.0,503.0,t20
+Hong Kong-Kuwait-2026-02-26-male-T20-1525160,787.0,634.0,459.0,t20
+Hong Kong-Kuwait-2026-03-01-male-T20-1525162,705.0,531.0,545.0,t20
+Hong Kong-Malaysia-2025-07-18-male-T20-1494090,702.0,656.0,637.0,t20
+Hong Kong-Malaysia-2025-07-22-male-T20-1494096,661.0,550.0,512.0,t20
+Hong Kong-Malaysia-2025-07-26-male-T20-1494102,299.0,202.0,203.0,t20
+Hong Kong-Malaysia-2026-01-21-female-T20-1519146,658.0,374.0,525.0,t20
+Hong Kong-Malaysia-2026-05-07-female-T20-1534322,603.0,546.0,504.0,t20
+Hong Kong-Malaysia-2026-05-10-female-T20-1534325,631.0,453.0,609.0,t20
+Hong Kong-Malaysia-2026-05-11-female-T20-1534327,666.0,529.0,504.0,t20
+Hong Kong-Namibia-2026-06-19-male-T20-1539740,702.0,491.0,401.0,t20
+Hong Kong-Namibia-2026-07-24-female-T20-1544604,630.0,454.0,508.0,t20
+Hong Kong-Namibia-2026-07-28-female-T20-1544609,513.0,351.0,412.0,t20
+Hong Kong-Nepal-2026-06-06-female-T20-1536635,646.0,509.0,577.0,t20
+Hong Kong-Nepal-2026-06-08-male-T20-1538455,699.0,445.0,402.0,t20
+Hong Kong-Oman-2026-06-05-male-T20-1538451,846.0,615.0,645.0,t20
+Hong Kong-Qatar-2025-11-13-male-T20-1510725,696.0,541.0,525.0,t20
+Hong Kong-Qatar-2026-06-04-female-T20-1536627,631.0,571.0,467.0,t20
+Hong Kong-Samoa-2025-07-19-male-T20-1494093,767.0,682.0,450.0,t20
+Hong Kong-Singapore-2025-07-20-male-T20-1494094,748.0,433.0,414.0,t20
+Hong Kong-Singapore-2025-07-24-male-T20-1494101,765.0,515.0,502.0,t20
+Hong Kong-Sri Lanka-2025-09-15-male-T20-1496927,601.0,423.0,498.0,t20
+Hong Kong-Tanzania-2026-07-22-female-T20-1544602,518.0,379.0,423.0,t20
+Hong Kong-Tanzania-2026-07-30-female-T20-1544611,554.0,364.0,283.0,t20
+Hong Kong-Uganda-2026-07-21-female-T20-1544599,531.0,349.0,472.0,t20
+Hong Kong-Uganda-2026-07-25-female-T20-1544606,631.0,400.0,514.0,t20
+Hong Kong-United Arab Emirates-2026-06-12-female-T20-1536649,460.0,408.0,404.0,t20
+Hungary-Austria-2025-07-26-male-T20-1495658,860.0,536.0,381.0,t20
+Hungary-Austria-2026-06-27-male-T20-1542988,596.0,455.0,528.0,t20
+Hungary-Austria-2026-06-28-male-T20-1542989,613.0,371.0,428.0,t20
+Hungary-Belgium-2026-07-14-male-T20-1544120,552.0,407.0,394.0,t20
+Hungary-Estonia-2026-07-10-male-T20-1543368,662.0,376.0,478.0,t20
+Hungary-Luxembourg-2025-07-25-male-T20-1495656,700.0,434.0,376.0,t20
+Hungary-Luxembourg-2025-07-27-male-T20-1495660,827.0,635.0,648.0,t20
+Hungary-Romania-2025-07-25-male-T20-1495655,610.0,501.0,392.0,t20
+Hungary-Romania-2026-06-20-male-T20-1540311,660.0,467.0,445.0,t20
+Hungary-Switzerland-2026-06-19-male-T20-1540310,605.0,416.0,463.0,t20
+Hungary-Turkey-2026-07-12-male-T20-1543373,531.0,370.0,296.0,t20
+India-Australia-2025-10-29-male-T20-1478907,209.0,94.0,94.0,t20
+India-Australia-2025-10-31-male-T20-1478908,737.0,613.0,486.0,t20
+India-Australia-2025-11-06-male-T20-1478910,769.0,545.0,522.0,t20
+India-Australia-2025-11-08-male-T20-1478911,117.0,70.0,76.0,t20
+India-Australia-2026-02-21-female-T20-1478914,758.0,495.0,572.0,t20
+India-Australia-2026-06-28-female-T20-1490706,623.0,379.0,461.0,t20
+India-Bangladesh-2025-09-24-male-T20-1496935,758.0,603.0,672.0,t20
+India-England-2025-07-01-female-T20-1448398,698.0,417.0,396.0,t20
+India-England-2025-07-12-female-T20-1448401,746.0,498.0,571.0,t20
+India-England-2026-03-05-male-T20-1512772,903.0,524.0,536.0,t20
+India-England-2026-05-28-female-T20-1496548,698.0,428.0,432.0,t20
+India-England-2026-06-02-female-T20-1496550,697.0,348.0,319.0,t20
+India-England-2026-07-01-male-T20-1496574,496.0,270.0,298.0,t20
+India-England-2026-07-04-male-T20-1496575,754.0,432.0,509.0,t20
+India-England-2026-07-09-male-T20-1496577,610.0,328.0,393.0,t20
+India-Hong Kong-2026-09-03-female-T20-1548897,751.0,668.0,648.0,t20
+India-Namibia-2026-02-12-male-T20-1512736,871.0,743.0,594.0,t20
+India-Netherlands-2026-02-18-male-T20-1512754,738.0,548.0,566.0,t20
+India-Netherlands-2026-06-17-female-T20-1490686,836.0,731.0,583.0,t20
+India-New Zealand-2026-01-21-male-T20-1490234,816.0,541.0,497.0,t20
+India-New Zealand-2026-01-31-male-T20-1490238,980.0,849.0,704.0,t20
+India-New Zealand-2026-03-08-male-T20-1512773,953.0,696.0,649.0,t20
+India-Oman-2025-09-19-male-T20-1496931,734.0,394.0,508.0,t20
+India-Pakistan-2026-02-15-male-T20-1512745,807.0,631.0,632.0,t20
+India-Pakistan-2026-06-14-female-T20-1490682,793.0,683.0,581.0,t20
+India-South Africa-2025-12-09-male-T20-1479576,748.0,536.0,543.0,t20
+India-South Africa-2025-12-19-male-T20-1479580,862.0,643.0,644.0,t20
+India-South Africa-2026-04-17-female-T20-1527253,638.0,373.0,487.0,t20
+India-South Africa-2026-04-19-female-T20-1527254,658.0,464.0,378.0,t20
+India-South Africa-2026-04-22-female-T20-1527255,679.0,274.0,448.0,t20
+India-South Africa-2026-04-25-female-T20-1527256,817.0,451.0,362.0,t20
+India-South Africa-2026-06-21-female-T20-1490694,718.0,615.0,668.0,t20
+India-Sri Lanka-2025-09-26-male-T20-1496937,710.0,446.0,582.0,t20
+India-Sri Lanka-2025-12-28-female-T20-1513738,688.0,491.0,369.0,t20
+India-Sri Lanka-2025-12-30-female-T20-1513739,752.0,500.0,601.0,t20
+India-Thailand-2026-08-30-female-T20-1548893,802.0,719.0,678.0,t20
+India-United States of America-2026-02-07-male-T20-1512721,793.0,617.0,581.0,t20
+India-Zimbabwe-2026-02-26-male-T20-1512766,787.0,575.0,431.0,t20
+India-Zimbabwe-2026-07-25-male-T20-1530061,769.0,601.0,471.0,t20
+India-Zimbabwe-2026-07-26-male-T20-1530062,696.0,428.0,526.0,t20
+Indonesia-Bahrain-2025-11-21-male-T20-1510180,522.0,431.0,370.0,t20
+Indonesia-Cambodia-2025-12-23-male-T20-1515542,817.0,791.0,441.0,t20
+Indonesia-Cambodia-2025-12-23-male-T20-1515543,570.0,399.0,486.0,t20
+Indonesia-Cambodia-2025-12-25-male-T20-1515545,696.0,639.0,603.0,t20
+Indonesia-China-2026-05-26-female-T20-1536400,619.0,508.0,508.0,t20
+Indonesia-Cook Islands-2025-09-12-female-T20-1499792,637.0,525.0,492.0,t20
+Indonesia-Fiji-2025-09-10-female-T20-1499789,697.0,476.0,468.0,t20
+Indonesia-Malaysia-2025-12-10-male-T20-1513826,593.0,451.0,437.0,t20
+Indonesia-Malaysia-2026-05-01-male-T20-1533390,529.0,370.0,343.0,t20
+Indonesia-Malaysia-2026-05-05-male-T20-1533393,658.0,533.0,469.0,t20
+Indonesia-Myanmar-2025-11-08-male-T20-1508273,519.0,409.0,326.0,t20
+Indonesia-Nepal-2026-05-28-female-T20-1536404,566.0,510.0,380.0,t20
+Indonesia-Oman-2026-06-10-female-T20-1536647,706.0,641.0,491.0,t20
+Indonesia-Papua New Guinea-2025-09-13-female-T20-1499798,538.0,325.0,379.0,t20
+Indonesia-Philippines-2025-07-07-male-T20-1490872,697.0,639.0,525.0,t20
+Indonesia-Philippines-2025-07-10-male-T20-1490876,699.0,226.0,180.0,t20
+Indonesia-Philippines-2025-07-13-male-T20-1490880,774.0,559.0,566.0,t20
+Indonesia-Philippines-2025-12-16-female-T20-1513757,748.0,469.0,584.0,t20
+Indonesia-Philippines-2026-05-08-male-T20-1532637,670.0,658.0,582.0,t20
+Indonesia-Samoa-2026-05-09-male-T20-1532640,585.0,363.0,181.0,t20
+Indonesia-Singapore-2025-07-05-female-T20-1490227,384.0,350.0,299.0,t20
+Indonesia-Singapore-2025-12-12-male-T20-1513830,795.0,618.0,527.0,t20
+Indonesia-South Korea-2025-07-08-male-T20-1490873,868.0,670.0,684.0,t20
+Indonesia-South Korea-2025-07-12-male-T20-1490878,755.0,523.0,502.0,t20
+Indonesia-Sweden-2026-04-07-male-T20-1529787,616.0,474.0,411.0,t20
+Indonesia-Sweden-2026-04-07-male-T20-1529788,549.0,483.0,411.0,t20
+Indonesia-Sweden-2026-04-09-male-T20-1529789,732.0,588.0,402.0,t20
+Indonesia-Sweden-2026-04-11-male-T20-1529791,717.0,573.0,647.0,t20
+Indonesia-Thailand-2026-06-12-female-T20-1536648,569.0,530.0,463.0,t20
+Indonesia-United Arab Emirates-2026-09-04-female-T20-1548898,671.0,514.0,492.0,t20
+Indonesia-Uzbekistan-2026-06-23-male-T20-1541805,670.0,437.0,476.0,t20
+Indonesia-Uzbekistan-2026-06-26-male-T20-1541809,814.0,546.0,467.0,t20
+Ireland-Bangladesh-2025-11-27-male-T20-1506014,777.0,475.0,438.0,t20
+Ireland-Bangladesh-2025-11-29-male-T20-1506015,699.0,388.0,407.0,t20
+Ireland-Bangladesh-2025-12-02-male-T20-1506016,663.0,409.0,474.0,t20
+Ireland-England-2025-09-17-male-T20-1448360,699.0,419.0,522.0,t20
+Ireland-England-2025-09-21-male-T20-1448362,654.0,477.0,393.0,t20
+Ireland-England-2026-06-16-female-T20-1490684,670.0,601.0,529.0,t20
+Ireland-Germany-2025-08-24-female-T20-1498212,650.0,363.0,398.0,t20
+Ireland-India-2026-06-26-male-T20-1528548,787.0,640.0,569.0,t20
+Ireland-India-2026-06-28-male-T20-1528549,752.0,529.0,347.0,t20
+Ireland-Italy-2025-08-23-female-T20-1498210,610.0,551.0,508.0,t20
+Ireland-Italy-2025-08-27-female-T20-1498217,800.0,550.0,628.0,t20
+Ireland-Italy-2026-01-25-male-T20-1519137,629.0,387.0,480.0,t20
+Ireland-Italy-2026-01-26-male-T20-1519138,773.0,502.0,529.0,t20
+Ireland-Netherlands-2026-01-30-female-T20-1515232,793.0,596.0,674.0,t20
+Ireland-Oman-2026-02-14-male-T20-1512740,905.0,503.0,452.0,t20
+Ireland-Pakistan-2025-08-06-female-T20-1476992,743.0,626.0,627.0,t20
+Ireland-Pakistan-2025-08-10-female-T20-1476994,588.0,333.0,327.0,t20
+Ireland-Papua New Guinea-2026-01-18-female-T20-1515210,659.0,495.0,495.0,t20
+Ireland-Sri Lanka-2026-06-23-female-T20-1490696,558.0,410.0,401.0,t20
+Ireland-Thailand-2026-02-01-female-T20-1515234,771.0,675.0,489.0,t20
+Ireland-United Arab Emirates-2026-01-29-male-T20-1519139,764.0,636.0,534.0,t20
+Ireland-United Arab Emirates-2026-01-31-male-T20-1519140,761.0,593.0,578.0,t20
+Ireland-United States of America-2026-01-22-female-T20-1515216,771.0,583.0,675.0,t20
+Ireland-West Indies-2026-05-28-female-T20-1528538,644.0,385.0,426.0,t20
+Ireland-Zimbabwe-2025-07-22-female-T20-1476988,766.0,493.0,477.0,t20
+Ireland-Zimbabwe-2025-07-23-female-T20-1476989,636.0,441.0,332.0,t20
+Isle of Man-Brazil-2025-08-31-female-T20-1500635,433.0,336.0,413.0,t20
+Isle of Man-Bulgaria-2026-08-17-male-T20-1545669,743.0,659.0,606.0,t20
+Isle of Man-Guernsey-2026-05-02-male-T20-1533394,521.0,458.0,330.0,t20
+Isle of Man-Norway-2026-08-29-female-T20-1549205,686.0,612.0,523.0,t20
+Isle of Man-Spain-2026-08-15-male-T20-1545665,582.0,469.0,400.0,t20
+Isle of Man-Turkey-2026-08-30-female-T20-1549207,671.0,511.0,530.0,t20
+Israel-Austria-2026-07-28-male-T20-1546383,701.0,518.0,401.0,t20
+Israel-France-2026-07-29-male-T20-1546386,522.0,335.0,396.0,t20
+Israel-Germany-2026-08-17-male-T20-1545668,562.0,525.0,426.0,t20
+Israel-Greece-2026-08-20-male-T20-1545679,410.0,394.0,380.0,t20
+Israel-Isle of Man-2026-08-21-male-T20-1545682,616.0,577.0,571.0,t20
+Israel-Romania-2026-07-27-male-T20-1546382,390.0,323.0,333.0,t20
+Italy-Ireland-2026-01-23-male-T20-1519136,769.0,588.0,563.0,t20
+Italy-Nepal-2026-05-01-female-T20-1531169,351.0,311.0,342.0,t20
+Italy-Netherlands-2025-07-11-male-T20-1490480,531.0,442.0,398.0,t20
+Italy-Netherlands-2025-08-24-female-T20-1498213,591.0,534.0,473.0,t20
+Italy-Rwanda-2026-04-18-female-T20-1531150,314.0,202.0,227.0,t20
+Italy-Rwanda-2026-04-27-female-T20-1531162,578.0,401.0,349.0,t20
+Italy-Scotland-2025-07-09-male-T20-1490477,778.0,444.0,511.0,t20
+Italy-United States of America-2026-04-30-female-T20-1531166,551.0,449.0,437.0,t20
+Ivory Coast-Kenya-2026-05-30-male-T20-1535432,489.0,437.0,432.0,t20
+Ivory Coast-Mali-2026-05-25-male-T20-1535421,454.0,426.0,295.0,t20
+Ivory Coast-Sierra Leone-2026-05-29-male-T20-1535429,468.0,431.0,403.0,t20
+Japan-Bahrain-2026-02-28-male-T20-1523005,840.0,684.0,539.0,t20
+Japan-Bahrain-2026-06-07-female-T20-1536638,507.0,383.0,356.0,t20
+Japan-Bhutan-2026-02-27-male-T20-1523002,739.0,354.0,375.0,t20
+Japan-Cook Islands-2026-05-14-male-T20-1532654,742.0,603.0,535.0,t20
+Japan-Fiji-2025-09-05-female-T20-1499779,654.0,438.0,380.0,t20
+Japan-Fiji-2025-09-06-female-T20-1499780,702.0,640.0,648.0,t20
+Japan-Indonesia-2025-09-15-female-T20-1499802,578.0,447.0,518.0,t20
+Japan-Indonesia-2026-05-12-male-T20-1532648,785.0,633.0,687.0,t20
+Japan-Mongolia-2026-06-04-female-T20-1536624,667.0,580.0,469.0,t20
+Japan-Myanmar-2026-06-06-female-T20-1536630,627.0,520.0,499.0,t20
+Japan-Nepal-2025-10-10-male-T20-1503457,633.0,347.0,467.0,t20
+Japan-Oman-2025-10-17-male-T20-1503469,614.0,494.0,400.0,t20
+Japan-Papua New Guinea-2026-05-18-male-T20-1532663,629.0,479.0,511.0,t20
+Japan-Qatar-2025-10-15-male-T20-1503464,637.0,533.0,380.0,t20
+Japan-Samoa-2025-09-10-female-T20-1499788,644.0,597.0,475.0,t20
+Japan-Samoa-2025-10-12-male-T20-1503461,783.0,500.0,467.0,t20
+Japan-Thailand-2026-02-25-male-T20-1522998,708.0,548.0,482.0,t20
+Japan-United Arab Emirates-2025-10-16-male-T20-1503467,577.0,345.0,296.0,t20
+Japan-Vanuatu-2026-05-09-male-T20-1532641,695.0,545.0,516.0,t20
+Jersey-Croatia-2026-05-20-male-T20-1534053,951.0,783.0,791.0,t20
+Jersey-Cyprus-2026-05-17-male-T20-1534045,884.0,733.0,631.0,t20
+Jersey-Guernsey-2025-07-08-male-T20-1490475,632.0,494.0,348.0,t20
+Jersey-Guernsey-2026-06-14-female-T20-1539583,677.0,649.0,553.0,t20
+Jersey-Guernsey-2026-06-14-female-T20-1539584,669.0,583.0,587.0,t20
+Jersey-Isle of Man-2025-09-02-female-T20-1500638,568.0,507.0,484.0,t20
+Jersey-Netherlands-2025-07-05-male-T20-1490471,684.0,341.0,337.0,t20
+Kenya-Botswana-2026-05-29-male-T20-1535430,692.0,445.0,390.0,t20
+Kenya-Mali-2026-05-23-male-T20-1535415,700.0,654.0,590.0,t20
+Kenya-Nigeria-2025-07-17-male-T20-1494115,772.0,560.0,377.0,t20
+Kenya-Nigeria-2025-09-04-female-T20-1498720,716.0,657.0,571.0,t20
+Kenya-Rwanda-2025-08-31-female-T20-1498708,491.0,435.0,425.0,t20
+Kenya-Rwanda-2026-05-25-male-T20-1535419,714.0,635.0,524.0,t20
+Kenya-Sierra Leone-2026-05-26-male-T20-1535423,686.0,507.0,409.0,t20
+Kenya-Sierra Leone-2026-09-08-male-T20-1552907,683.0,539.0,396.0,t20
+Kenya-Tanzania-2025-10-04-male-T20-1502759,779.0,545.0,508.0,t20
+Kenya-Uganda-2025-07-25-male-T20-1494114,583.0,514.0,502.0,t20
+Kenya-Uganda-2025-09-03-female-T20-1498717,521.0,394.0,390.0,t20
+Kenya-United Arab Emirates-2025-07-23-male-T20-1494110,632.0,314.0,316.0,t20
+Kenya-Zimbabwe-2025-10-02-male-T20-1502757,577.0,438.0,486.0,t20
+Kuwait-Hong Kong-2026-02-25-male-T20-1525159,761.0,554.0,511.0,t20
+Kuwait-Indonesia-2026-06-04-female-T20-1536626,545.0,393.0,254.0,t20
+Kuwait-Japan-2025-10-09-male-T20-1503454,625.0,402.0,414.0,t20
+Kuwait-Oman-2025-09-29-male-T20-1504941,594.0,339.0,352.0,t20
+Kuwait-Oman-2025-12-16-female-T20-1514525,535.0,475.0,475.0,t20
+Kuwait-Qatar-2025-12-12-female-T20-1514514,599.0,465.0,483.0,t20
+Kuwait-United Arab Emirates-2025-12-15-female-T20-1514522,449.0,377.0,366.0,t20
+Lesotho-Botswana-2026-03-09-male-T20-1527277,556.0,514.0,492.0,t20
+Lesotho-Botswana-2026-03-10-male-T20-1527278,553.0,443.0,467.0,t20
+Lesotho-Eswatini-2025-07-26-female-T20-1494141,727.0,685.0,685.0,t20
+Lesotho-Eswatini-2026-06-04-male-T20-1538215,632.0,615.0,477.0,t20
+Lesotho-Eswatini-2026-06-07-male-T20-1538218,898.0,689.0,763.0,t20
+Lesotho-Malawi-2026-04-06-female-T20-1528318,442.0,431.0,379.0,t20
+Lesotho-Malawi-2026-04-10-female-T20-1528333,511.0,411.0,374.0,t20
+Lesotho-Mozambique-2025-07-24-female-T20-1494138,530.0,497.0,459.0,t20
+Lesotho-Rwanda-2025-07-20-female-T20-1494124,403.0,285.0,300.0,t20
+Lesotho-Zambia-2026-04-11-female-T20-1528337,505.0,425.0,396.0,t20
+Luxembourg-Belgium-2026-08-23-female-T20-1548525,497.0,438.0,483.0,t20
+Luxembourg-Czech Republic-2026-06-26-female-T20-1539513,345.0,307.0,290.0,t20
+Luxembourg-Czech Republic-2026-06-28-female-T20-1539516,490.0,465.0,360.0,t20
+Luxembourg-Isle of Man-2026-08-14-male-T20-1545662,715.0,253.0,328.0,t20
+Luxembourg-Switzerland-2025-09-14-female-T20-1500868,422.0,356.0,345.0,t20
+Malawi-Bahrain-2025-07-07-male-T20-1492884,570.0,446.0,468.0,t20
+Malawi-Bahrain-2025-07-12-male-T20-1492889,508.0,418.0,408.0,t20
+Malawi-Bahrain-2025-07-19-male-T20-1495454,489.0,419.0,324.0,t20
+Malawi-Bahrain-2025-07-20-male-T20-1495456,573.0,498.0,471.0,t20
+Malawi-Bahrain-2025-07-25-male-T20-1495463,594.0,510.0,435.0,t20
+Malawi-Botswana-2025-10-04-male-T20-1502760,683.0,501.0,459.0,t20
+Malawi-Cameroon-2025-07-20-female-T20-1494126,585.0,503.0,526.0,t20
+Malawi-Germany-2025-07-05-male-T20-1492880,621.0,563.0,538.0,t20
+Malawi-Germany-2025-07-10-male-T20-1492888,883.0,572.0,713.0,t20
+Malawi-Ghana-2026-03-25-male-T20-1526845,673.0,529.0,441.0,t20
+Malawi-Kenya-2025-09-28-male-T20-1502750,694.0,640.0,504.0,t20
+Malawi-Lesotho-2025-07-23-female-T20-1494132,695.0,497.0,472.0,t20
+Malawi-Namibia-2025-09-30-male-T20-1502753,602.0,498.0,539.0,t20
+Malawi-Nigeria-2025-09-26-male-T20-1502744,560.0,399.0,457.0,t20
+Malawi-Nigeria-2026-06-14-female-T20-1539501,638.0,474.0,451.0,t20
+Malawi-Rwanda-2025-07-19-male-T20-1495455,596.0,459.0,479.0,t20
+Malawi-Rwanda-2025-07-22-male-T20-1495458,638.0,493.0,541.0,t20
+Malawi-Rwanda-2026-08-12-male-T20-1547091,594.0,492.0,499.0,t20
+Malawi-Rwanda-2026-08-14-male-T20-1547094,646.0,513.0,525.0,t20
+Malawi-Rwanda-2026-08-16-male-T20-1547097,663.0,525.0,424.0,t20
+Malawi-Sierra Leone-2025-07-24-female-T20-1494139,524.0,401.0,393.0,t20
+Malawi-Tanzania-2026-03-24-male-T20-1526840,567.0,520.0,393.0,t20
+Malawi-Zambia-2026-04-10-female-T20-1528335,739.0,662.0,660.0,t20
+Malawi-Zambia-2026-08-11-male-T20-1547090,688.0,659.0,658.0,t20
+Malaysia-Bahrain-2026-03-07-male-T20-1527157,750.0,629.0,618.0,t20
+Malaysia-Bahrain-2026-03-10-male-T20-1527159,696.0,554.0,520.0,t20
+Malaysia-Bhutan-2026-01-20-female-T20-1519145,677.0,640.0,586.0,t20
+Malaysia-Bhutan-2026-01-24-female-T20-1519148,536.0,520.0,515.0,t20
+Malaysia-Bhutan-2026-01-27-female-T20-1519151,531.0,409.0,461.0,t20
+Malaysia-China-2026-05-07-female-T20-1534321,441.0,311.0,283.0,t20
+Malaysia-Hong Kong-2026-01-26-female-T20-1519150,549.0,380.0,471.0,t20
+Malaysia-Hong Kong-2026-05-28-female-T20-1536403,745.0,638.0,434.0,t20
+Malaysia-Hong Kong-2026-06-07-male-T20-1538453,779.0,594.0,468.0,t20
+Malaysia-Indonesia-2025-12-15-female-T20-1513756,807.0,561.0,460.0,t20
+Malaysia-Indonesia-2026-05-02-male-T20-1533391,755.0,495.0,547.0,t20
+Malaysia-Indonesia-2026-05-04-male-T20-1533392,604.0,445.0,462.0,t20
+Malaysia-Indonesia-2026-06-06-female-T20-1536628,553.0,466.0,455.0,t20
+Malaysia-Kuwait-2026-06-03-female-T20-1536612,578.0,448.0,502.0,t20
+Malaysia-Myanmar-2025-12-18-female-T20-1513762,647.0,475.0,389.0,t20
+Malaysia-Nepal-2025-10-02-female-T20-1505114,617.0,517.0,446.0,t20
+Malaysia-Nepal-2025-10-04-female-T20-1505115,499.0,443.0,443.0,t20
+Malaysia-Nepal-2025-10-05-female-T20-1505116,583.0,376.0,446.0,t20
+Malaysia-Nepal-2025-10-07-female-T20-1505117,550.0,386.0,458.0,t20
+Malaysia-Nepal-2025-10-08-female-T20-1505118,608.0,470.0,469.0,t20
+Malaysia-Nepal-2026-05-20-female-T20-1536409,791.0,656.0,659.0,t20
+Malaysia-Nepal-2026-05-22-female-T20-1536410,599.0,415.0,384.0,t20
+Malaysia-Philippines-2025-12-09-male-T20-1513825,915.0,480.0,422.0,t20
+Malaysia-Qatar-2025-10-09-male-T20-1503453,694.0,456.0,463.0,t20
+Malaysia-Singapore-2025-07-23-male-T20-1494099,812.0,559.0,575.0,t20
+Malaysia-Singapore-2026-06-04-female-T20-1536620,580.0,561.0,500.0,t20
+Malaysia-Thailand-2025-12-19-female-T20-1513764,504.0,465.0,438.0,t20
+Malaysia-Thailand-2026-05-27-female-T20-1536401,565.0,462.0,414.0,t20
+Malaysia-Thailand-2026-05-31-female-T20-1536408,501.0,417.0,434.0,t20
+Malaysia-United Arab Emirates-2025-10-10-male-T20-1503456,605.0,384.0,429.0,t20
+Mali-Botswana-2026-05-24-male-T20-1535417,459.0,432.0,424.0,t20
+Mali-Rwanda-2026-05-26-male-T20-1535422,616.0,564.0,589.0,t20
+Mali-Sierra Leone-2026-05-30-male-T20-1535431,633.0,453.0,394.0,t20
+Malta-Austria-2026-05-16-male-T20-1534041,666.0,450.0,459.0,t20
+Malta-Cyprus-2026-06-19-female-T20-1540324,613.0,456.0,489.0,t20
+Malta-Gibraltar-2026-05-07-male-T20-1531681,746.0,505.0,654.0,t20
+Malta-Gibraltar-2026-05-07-male-T20-1531682,859.0,618.0,807.0,t20
+Malta-Gibraltar-2026-05-08-male-T20-1531684,742.0,626.0,683.0,t20
+Malta-Gibraltar-2026-05-09-male-T20-1531873,752.0,580.0,553.0,t20
+Malta-Guernsey-2026-05-17-male-T20-1534042,638.0,486.0,365.0,t20
+Malta-Switzerland-2026-05-23-male-T20-1534059,769.0,702.0,586.0,t20
+Mexico-Brazil-2026-04-03-male-T20-1529379,655.0,496.0,530.0,t20
+Mexico-Brazil-2026-04-05-male-T20-1529382,698.0,637.0,595.0,t20
+Mexico-Cayman Islands-2026-03-09-male-T20-1525169,547.0,291.0,322.0,t20
+Mexico-Costa Rica-2026-04-02-male-T20-1529377,673.0,586.0,589.0,t20
+Mexico-Panama-2026-08-06-male-T20-1545655,499.0,499.0,499.0,t20
+Mexico-Peru-2026-08-08-male-T20-1545659,464.0,464.0,464.0,t20
+Mexico-Suriname-2026-03-08-male-T20-1525167,704.0,535.0,535.0,t20
+Mexico-Suriname-2026-03-15-male-T20-1525176,739.0,657.0,632.0,t20
+Mongolia-Thailand-2026-06-03-female-T20-1536614,471.0,458.0,423.0,t20
+Mozambique-Botswana-2025-07-21-female-T20-1494128,529.0,343.0,305.0,t20
+Mozambique-Botswana-2026-04-07-female-T20-1528322,666.0,601.0,396.0,t20
+Mozambique-Brazil-2026-04-07-female-T20-1528324,569.0,435.0,386.0,t20
+Mozambique-Brazil-2026-04-10-female-T20-1528334,504.0,452.0,429.0,t20
+Mozambique-Cameroon-2025-07-26-female-T20-1494142,672.0,594.0,526.0,t20
+Mozambique-Eswatini-2025-07-23-female-T20-1494133,687.0,640.0,636.0,t20
+Mozambique-Eswatini-2026-06-06-male-T20-1538216,841.0,747.0,719.0,t20
+Mozambique-Eswatini-2026-06-07-male-T20-1538219,841.0,700.0,684.0,t20
+Mozambique-Lesotho-2026-04-08-female-T20-1528327,785.0,665.0,585.0,t20
+Mozambique-Lesotho-2026-06-02-male-T20-1538211,732.0,555.0,542.0,t20
+Mozambique-Lesotho-2026-06-04-male-T20-1538214,771.0,347.0,462.0,t20
+Mozambique-Lesotho-2026-06-06-male-T20-1538217,692.0,670.0,606.0,t20
+Mozambique-Malawi-2026-04-09-female-T20-1528329,586.0,526.0,485.0,t20
+Mozambique-Malawi-2026-04-11-female-T20-1528338,732.0,603.0,586.0,t20
+Mozambique-Zambia-2026-04-06-female-T20-1528319,610.0,610.0,610.0,t20
+Myanmar-Bhutan-2025-12-23-male-T20-1515010,569.0,489.0,393.0,t20
+Myanmar-Indonesia-2025-11-06-male-T20-1508269,432.0,340.0,307.0,t20
+Myanmar-Indonesia-2025-11-11-male-T20-1508275,557.0,337.0,417.0,t20
+Myanmar-Indonesia-2025-11-13-male-T20-1508279,500.0,352.0,149.0,t20
+Myanmar-Indonesia-2025-12-19-female-T20-1513763,616.0,484.0,517.0,t20
+Myanmar-Kuwait-2026-05-30-female-T20-1538634,501.0,324.0,316.0,t20
+Myanmar-Kuwait-2026-05-31-female-T20-1538635,563.0,416.0,320.0,t20
+Myanmar-Mongolia-2026-06-09-female-T20-1536641,597.0,465.0,466.0,t20
+Myanmar-Singapore-2025-11-30-female-T20-1510315,586.0,543.0,545.0,t20
+Myanmar-Singapore-2025-12-17-female-T20-1513760,793.0,571.0,571.0,t20
+Myanmar-Thailand-2025-12-15-female-T20-1513755,582.0,500.0,500.0,t20
+Myanmar-Thailand-2026-06-07-female-T20-1536636,481.0,467.0,467.0,t20
+Myanmar-Timor-Leste-2025-11-12-male-T20-1508277,727.0,563.0,558.0,t20
+Myanmar-Timor-Leste-2025-11-14-male-T20-1508280,690.0,506.0,513.0,t20
+Namibia-Hong Kong-2026-06-22-male-T20-1539743,942.0,354.0,529.0,t20
+Namibia-Ireland-2026-01-26-female-T20-1515226,662.0,543.0,419.0,t20
+Namibia-Kenya-2025-09-26-male-T20-1502743,782.0,635.0,587.0,t20
+Namibia-Netherlands-2026-02-10-male-T20-1512728,656.0,515.0,512.0,t20
+Namibia-Nigeria-2025-09-28-male-T20-1502747,879.0,420.0,543.0,t20
+Namibia-Nigeria-2026-06-20-male-T20-1539741,646.0,401.0,446.0,t20
+Namibia-Nigeria-2026-06-23-male-T20-1539744,843.0,562.0,563.0,t20
+Namibia-Papua New Guinea-2025-11-15-female-T20-1510281,653.0,518.0,387.0,t20
+Namibia-Papua New Guinea-2026-01-24-female-T20-1515221,623.0,368.0,424.0,t20
+Namibia-Scotland-2025-11-17-female-T20-1510283,615.0,305.0,357.0,t20
+Namibia-Scotland-2025-11-25-female-T20-1510299,575.0,459.0,408.0,t20
+Namibia-Scotland-2026-04-15-male-T20-1529145,592.0,530.0,507.0,t20
+Namibia-Sierra Leone-2025-09-03-female-T20-1498716,727.0,608.0,681.0,t20
+Namibia-South Africa-2026-08-28-male-T20-1549524,911.0,618.0,636.0,t20
+Namibia-Tanzania-2025-10-02-male-T20-1502755,742.0,563.0,563.0,t20
+Namibia-Tanzania-2025-11-20-female-T20-1510287,501.0,333.0,360.0,t20
+Namibia-Uganda-2025-11-21-female-T20-1510291,595.0,461.0,399.0,t20
+Namibia-Uganda-2026-07-22-female-T20-1544601,662.0,492.0,480.0,t20
+Namibia-United States of America-2026-01-20-female-T20-1515215,743.0,464.0,533.0,t20
+Namibia-Zimbabwe-2025-09-06-female-T20-1498726,567.0,374.0,542.0,t20
+Namibia-Zimbabwe-2025-09-16-male-T20-1502165,649.0,521.0,553.0,t20
+Namibia-Zimbabwe-2025-09-18-male-T20-1502166,868.0,715.0,702.0,t20
+Namibia-Zimbabwe-2025-10-04-male-T20-1502762,643.0,437.0,481.0,t20
+Namibia-Zimbabwe-2026-09-03-male-T20-1549528,655.0,451.0,437.0,t20
+Nepal-Bhutan-2026-06-04-female-T20-1536623,840.0,783.0,611.0,t20
+Nepal-China-2026-05-27-female-T20-1536402,599.0,483.0,538.0,t20
+Nepal-China-2026-05-31-female-T20-1536407,404.0,333.0,318.0,t20
+Nepal-China-2026-05-31-male-T20-1538440,873.0,800.0,846.0,t20
+Nepal-Italy-2026-02-12-male-T20-1512735,573.0,247.0,302.0,t20
+Nepal-Italy-2026-04-19-female-T20-1531153,731.0,641.0,643.0,t20
+Nepal-Kuwait-2025-10-08-male-T20-1503452,683.0,572.0,482.0,t20
+Nepal-Malaysia-2026-05-30-female-T20-1536406,665.0,604.0,495.0,t20
+Nepal-Malaysia-2026-06-04-male-T20-1538449,975.0,892.0,681.0,t20
+Nepal-Oman-2025-10-15-male-T20-1503466,817.0,575.0,644.0,t20
+Nepal-Qatar-2025-10-13-male-T20-1503463,918.0,557.0,661.0,t20
+Nepal-Rwanda-2026-04-28-female-T20-1531164,769.0,702.0,533.0,t20
+Nepal-Samoa-2025-10-17-male-T20-1503470,694.0,399.0,435.0,t20
+Nepal-Thailand-2026-01-18-female-T20-1515211,679.0,440.0,467.0,t20
+Nepal-United Arab Emirates-2025-10-12-male-T20-1503460,659.0,451.0,515.0,t20
+Nepal-United Arab Emirates-2026-04-20-male-T20-1531694,556.0,512.0,397.0,t20
+Nepal-United States of America-2026-04-26-female-T20-1531161,554.0,406.0,452.0,t20
+Nepal-Vanuatu-2026-04-30-female-T20-1531167,717.0,537.0,532.0,t20
+Nepal-West Indies-2025-09-27-male-T20-1489968,647.0,481.0,422.0,t20
+Nepal-West Indies-2025-09-29-male-T20-1489969,791.0,626.0,624.0,t20
+Nepal-West Indies-2025-09-30-male-T20-1489970,609.0,217.0,245.0,t20
+Nepal-West Indies-2026-02-15-male-T20-1512743,636.0,379.0,406.0,t20
+Netherlands-Bangladesh-2025-08-30-male-T20-1498662,628.0,300.0,433.0,t20
+Netherlands-Bangladesh-2025-09-01-male-T20-1498663,569.0,433.0,341.0,t20
+Netherlands-Bangladesh-2026-02-01-female-T20-1515235,571.0,365.0,359.0,t20
+Netherlands-Bangladesh-2026-05-31-female-T20-1535593,683.0,510.0,456.0,t20
+Netherlands-Bangladesh-2026-06-14-female-T20-1490681,557.0,382.0,347.0,t20
+Netherlands-Germany-2025-08-23-female-T20-1498211,788.0,602.0,701.0,t20
+Netherlands-Germany-2025-08-27-female-T20-1498216,529.0,348.0,440.0,t20
+Netherlands-Guernsey-2025-07-09-male-T20-1490478,646.0,221.0,394.0,t20
+Netherlands-Ireland-2025-08-21-female-T20-1498208,516.0,458.0,433.0,t20
+Netherlands-Ireland-2025-08-26-female-T20-1498215,712.0,504.0,583.0,t20
+Netherlands-Italy-2025-08-20-female-T20-1498206,654.0,423.0,423.0,t20
+Netherlands-Namibia-2025-11-26-female-T20-1510303,700.0,406.0,574.0,t20
+Netherlands-Nepal-2026-01-22-female-T20-1515217,636.0,403.0,436.0,t20
+Netherlands-Pakistan-2026-02-07-male-T20-1512719,744.0,509.0,502.0,t20
+Netherlands-Scotland-2025-11-28-female-T20-1510308,740.0,592.0,522.0,t20
+Netherlands-Scotland-2026-01-20-female-T20-1515214,690.0,518.0,483.0,t20
+Netherlands-Scotland-2026-05-28-female-T20-1535591,669.0,483.0,487.0,t20
+Netherlands-Thailand-2026-01-26-female-T20-1515227,845.0,615.0,622.0,t20
+Netherlands-Zimbabwe-2026-01-18-female-T20-1515208,668.0,432.0,387.0,t20
+New Zealand-Australia-2025-10-01-male-T20-1491714,724.0,244.0,395.0,t20
+New Zealand-Australia-2025-10-04-male-T20-1491716,817.0,556.0,526.0,t20
+New Zealand-Bangladesh-2026-04-27-male-T20-1528275,664.0,408.0,357.0,t20
+New Zealand-England-2025-10-23-male-T20-1491719,128.0,104.0,79.0,t20
+New Zealand-England-2026-02-27-male-T20-1512767,732.0,528.0,549.0,t20
+New Zealand-England-2026-05-20-female-T20-1496545,619.0,392.0,348.0,t20
+New Zealand-England-2026-05-23-female-T20-1496546,657.0,487.0,419.0,t20
+New Zealand-England-2026-05-25-female-T20-1496547,577.0,445.0,436.0,t20
+New Zealand-England-2026-06-27-female-T20-1490704,559.0,234.0,416.0,t20
+New Zealand-India-2026-01-23-male-T20-1490235,711.0,509.0,359.0,t20
+New Zealand-India-2026-01-25-male-T20-1490236,725.0,522.0,528.0,t20
+New Zealand-India-2026-01-28-male-T20-1490237,833.0,483.0,439.0,t20
+New Zealand-Ireland-2026-06-19-female-T20-1490689,652.0,511.0,430.0,t20
+New Zealand-South Africa-2025-07-16-male-T20-1478866,706.0,536.0,472.0,t20
+New Zealand-South Africa-2025-07-26-male-T20-1478871,635.0,347.0,431.0,t20
+New Zealand-South Africa-2026-02-14-male-T20-1512742,697.0,449.0,311.0,t20
+New Zealand-South Africa-2026-03-15-female-T20-1491705,740.0,563.0,523.0,t20
+New Zealand-South Africa-2026-03-15-male-T20-1491735,464.0,412.0,387.0,t20
+New Zealand-South Africa-2026-03-17-male-T20-1491736,788.0,620.0,597.0,t20
+New Zealand-South Africa-2026-03-25-female-T20-1491709,809.0,701.0,539.0,t20
+New Zealand-Sri Lanka-2026-02-25-male-T20-1512764,859.0,543.0,511.0,t20
+New Zealand-Sri Lanka-2026-06-16-female-T20-1490683,613.0,487.0,506.0,t20
+New Zealand-West Indies-2025-11-06-male-T20-1491724,876.0,512.0,576.0,t20
+New Zealand-West Indies-2025-11-09-male-T20-1491725,867.0,651.0,633.0,t20
+New Zealand-West Indies-2026-06-13-female-T20-1490680,679.0,281.0,261.0,t20
+New Zealand-Zimbabwe-2025-07-24-male-T20-1478870,844.0,621.0,674.0,t20
+New Zealand-Zimbabwe-2026-02-25-female-T20-1491699,593.0,372.0,378.0,t20
+New Zealand-Zimbabwe-2026-02-27-female-T20-1491700,655.0,444.0,459.0,t20
+Nigeria-Botswana-2025-10-02-male-T20-1502756,733.0,504.0,580.0,t20
+Nigeria-Brazil-2026-06-11-female-T20-1539493,482.0,398.0,432.0,t20
+Nigeria-Brazil-2026-06-15-female-T20-1539503,492.0,283.0,250.0,t20
+Nigeria-Ghana-2026-03-22-female-T20-1526697,481.0,361.0,426.0,t20
+Nigeria-Hong Kong-2026-06-18-male-T20-1539739,672.0,519.0,524.0,t20
+Nigeria-Hong Kong-2026-06-21-male-T20-1539742,644.0,546.0,472.0,t20
+Nigeria-Kenya-2025-07-27-male-T20-1494584,643.0,469.0,552.0,t20
+Nigeria-Kenya-2025-09-30-male-T20-1502754,597.0,435.0,457.0,t20
+Nigeria-Malawi-2026-06-10-female-T20-1539491,686.0,583.0,444.0,t20
+Nigeria-Namibia-2025-09-01-female-T20-1498713,576.0,263.0,346.0,t20
+Nigeria-Rwanda-2025-12-06-male-T20-1513089,614.0,536.0,495.0,t20
+Nigeria-Rwanda-2025-12-13-male-T20-1513301,680.0,456.0,509.0,t20
+Nigeria-Rwanda-2025-12-14-male-T20-1513304,648.0,456.0,426.0,t20
+Nigeria-Rwanda-2026-03-24-female-T20-1526699,628.0,559.0,380.0,t20
+Nigeria-Rwanda-2026-03-28-female-T20-1528293,750.0,688.0,579.0,t20
+Nigeria-Sierra Leone-2025-08-31-female-T20-1498707,590.0,393.0,431.0,t20
+Nigeria-Sierra Leone-2025-09-06-female-T20-1498724,655.0,617.0,597.0,t20
+Nigeria-Sierra Leone-2025-12-05-male-T20-1513297,670.0,538.0,553.0,t20
+Nigeria-Sierra Leone-2025-12-11-male-T20-1513298,660.0,570.0,566.0,t20
+Nigeria-United Arab Emirates-2025-07-21-male-T20-1494118,596.0,478.0,536.0,t20
+Nigeria-Zambia-2025-12-04-male-T20-1513086,634.0,634.0,634.0,t20
+Nigeria-Zambia-2025-12-08-male-T20-1513094,794.0,655.0,649.0,t20
+Nigeria-Zambia-2025-12-12-male-T20-1513299,703.0,655.0,646.0,t20
+Nigeria-Zimbabwe-2025-09-03-female-T20-1498718,595.0,425.0,415.0,t20
+Norway-Austria-2025-08-10-male-T20-1496826,667.0,515.0,507.0,t20
+Norway-Austria-2026-06-12-male-T20-1539467,606.0,474.0,485.0,t20
+Norway-Austria-2026-06-14-male-T20-1539470,533.0,458.0,330.0,t20
+Norway-Austria-2026-08-30-female-T20-1549206,653.0,580.0,553.0,t20
+Norway-Bulgaria-2025-10-12-female-T20-1506190,655.0,629.0,558.0,t20
+Norway-Czech Republic-2026-06-28-female-T20-1539517,518.0,421.0,484.0,t20
+Norway-Denmark-2025-08-31-female-T20-1499027,469.0,416.0,421.0,t20
+Norway-France-2025-08-08-male-T20-1496822,669.0,528.0,511.0,t20
+Norway-France-2026-04-05-male-T20-1528299,844.0,498.0,677.0,t20
+Norway-France-2026-04-09-male-T20-1528307,679.0,588.0,536.0,t20
+Norway-Gibraltar-2026-07-14-male-T20-1543378,678.0,463.0,390.0,t20
+Norway-Hungary-2025-08-17-male-T20-1498192,691.0,450.0,551.0,t20
+Norway-Luxembourg-2026-06-26-female-T20-1539512,495.0,275.0,307.0,t20
+Norway-Luxembourg-2026-06-27-female-T20-1539515,599.0,410.0,491.0,t20
+Norway-Romania-2025-10-11-female-T20-1506188,473.0,391.0,391.0,t20
+Norway-Sweden-2025-08-09-male-T20-1496823,763.0,505.0,507.0,t20
+Norway-Sweden-2026-06-11-male-T20-1539464,676.0,473.0,521.0,t20
+Norway-Turkey-2025-10-11-female-T20-1506186,703.0,678.0,616.0,t20
+Oman-Australia-2026-02-20-male-T20-1512758,640.0,478.0,468.0,t20
+Oman-Bahrain-2026-05-30-female-T20-1538637,609.0,534.0,515.0,t20
+Oman-Bahrain-2026-06-03-male-T20-1538446,717.0,591.0,601.0,t20
+Oman-China-2026-06-03-female-T20-1536617,584.0,544.0,424.0,t20
+Oman-Denmark-2026-02-03-female-T20-1520970,628.0,584.0,477.0,t20
+Oman-Denmark-2026-02-04-female-T20-1520971,634.0,463.0,417.0,t20
+Oman-Denmark-2026-02-06-female-T20-1520972,614.0,398.0,437.0,t20
+Oman-Denmark-2026-02-07-female-T20-1520973,633.0,563.0,459.0,t20
+Oman-Malaysia-2026-06-08-male-T20-1538454,662.0,647.0,639.0,t20
+Oman-Nepal-2026-06-07-male-T20-1538452,655.0,476.0,365.0,t20
+Oman-Papua New Guinea-2025-10-10-male-T20-1503458,716.0,554.0,500.0,t20
+Oman-Philippines-2026-06-07-female-T20-1536639,647.0,638.0,638.0,t20
+Oman-Qatar-2025-10-12-male-T20-1503459,764.0,540.0,646.0,t20
+Oman-Qatar-2025-12-07-female-T20-1514511,664.0,538.0,538.0,t20
+Oman-Qatar-2025-12-10-female-T20-1514513,570.0,459.0,431.0,t20
+Oman-Qatar-2026-02-09-female-T20-1522984,659.0,605.0,609.0,t20
+Oman-Qatar-2026-02-10-female-T20-1522985,579.0,368.0,334.0,t20
+Oman-Qatar-2026-02-12-female-T20-1522986,662.0,375.0,402.0,t20
+Oman-Saudi Arabia-2025-12-13-female-T20-1514518,726.0,472.0,500.0,t20
+Oman-Singapore-2026-06-01-male-T20-1538442,289.0,289.0,289.0,t20
+Oman-United Arab Emirates-2025-12-12-female-T20-1514515,537.0,457.0,412.0,t20
+Oman-United Arab Emirates-2025-12-19-female-T20-1514529,466.0,435.0,356.0,t20
+Oman-United Arab Emirates-2026-06-04-female-T20-1536622,436.0,423.0,262.0,t20
+Oman-Zimbabwe-2026-02-09-male-T20-1512726,712.0,514.0,383.0,t20
+Pakistan-Australia-2026-01-29-male-T20-1519636,796.0,672.0,619.0,t20
+Pakistan-Australia-2026-01-31-male-T20-1519637,794.0,607.0,671.0,t20
+Pakistan-Australia-2026-02-01-male-T20-1519638,776.0,725.0,689.0,t20
+Pakistan-Bangladesh-2025-07-20-male-T20-1491903,614.0,374.0,323.0,t20
+Pakistan-Bangladesh-2025-07-24-male-T20-1491905,800.0,571.0,404.0,t20
+Pakistan-Bangladesh-2025-09-25-male-T20-1496936,810.0,599.0,613.0,t20
+Pakistan-England-2026-02-24-male-T20-1512763,858.0,576.0,556.0,t20
+Pakistan-Hong Kong-2026-09-07-female-T20-1548901,888.0,747.0,760.0,t20
+Pakistan-India-2025-09-14-male-T20-1496925,686.0,519.0,477.0,t20
+Pakistan-India-2025-09-21-male-T20-1496933,629.0,395.0,312.0,t20
+Pakistan-India-2025-09-28-male-T20-1496938,787.0,552.0,554.0,t20
+Pakistan-India-2026-09-05-female-T20-1548899,583.0,416.0,436.0,t20
+Pakistan-Ireland-2025-08-08-female-T20-1476993,676.0,434.0,526.0,t20
+Pakistan-Ireland-2026-05-31-female-T20-1528540,710.0,477.0,483.0,t20
+Pakistan-Namibia-2026-02-18-male-T20-1512753,798.0,485.0,686.0,t20
+Pakistan-Netherlands-2026-06-27-female-T20-1490702,752.0,531.0,504.0,t20
+Pakistan-Oman-2025-09-12-male-T20-1496923,713.0,511.0,473.0,t20
+Pakistan-South Africa-2026-02-10-female-T20-1477597,783.0,669.0,686.0,t20
+Pakistan-South Africa-2026-02-13-female-T20-1477598,575.0,427.0,315.0,t20
+Pakistan-South Africa-2026-02-16-female-T20-1477599,594.0,464.0,468.0,t20
+Pakistan-South Africa-2026-06-17-female-T20-1490687,778.0,556.0,488.0,t20
+Pakistan-Sri Lanka-2026-02-28-male-T20-1512768,922.0,523.0,450.0,t20
+Pakistan-Sri Lanka-2026-07-31-female-T20-1540543,675.0,586.0,512.0,t20
+Pakistan-Sri Lanka-2026-08-02-female-T20-1540544,643.0,453.0,416.0,t20
+Pakistan-Thailand-2026-09-01-female-T20-1548895,783.0,680.0,504.0,t20
+Pakistan-United Arab Emirates-2025-08-30-male-T20-1497874,950.0,716.0,723.0,t20
+Pakistan-United Arab Emirates-2025-09-04-male-T20-1497877,695.0,482.0,400.0,t20
+Pakistan-United Arab Emirates-2025-09-17-male-T20-1496929,773.0,647.0,650.0,t20
+Pakistan-United States of America-2026-02-10-male-T20-1512730,858.0,685.0,581.0,t20
+Pakistan-West Indies-2025-07-31-male-T20-1472525,755.0,494.0,466.0,t20
+Pakistan-West Indies-2025-08-02-male-T20-1472526,775.0,589.0,505.0,t20
+Pakistan-West Indies-2025-08-03-male-T20-1472527,641.0,348.0,437.0,t20
+Pakistan-West Indies-2026-06-03-female-T20-1528542,385.0,267.0,224.0,t20
+Pakistan-Zimbabwe-2025-11-23-male-T20-1502051,825.0,524.0,627.0,t20
+Pakistan-Zimbabwe-2026-05-12-female-T20-1534074,778.0,596.0,674.0,t20
+Pakistan-Zimbabwe-2026-05-14-female-T20-1534075,612.0,426.0,442.0,t20
+Pakistan-Zimbabwe-2026-05-15-female-T20-1534076,743.0,603.0,603.0,t20
+Panama-Bermuda-2026-06-25-male-T20-1539735,580.0,511.0,317.0,t20
+Panama-Brazil-2026-06-22-male-T20-1539732,627.0,480.0,381.0,t20
+Panama-Brazil-2026-08-07-male-T20-1545656,588.0,531.0,572.0,t20
+Panama-Mexico-2025-10-30-male-T20-1507418,208.0,205.0,205.0,t20
+Papua New Guinea-Cook Islands-2026-05-10-male-T20-1532645,786.0,492.0,527.0,t20
+Papua New Guinea-Indonesia-2026-05-14-male-T20-1532653,740.0,600.0,560.0,t20
+Papua New Guinea-Japan-2025-09-09-female-T20-1499785,619.0,492.0,488.0,t20
+Papua New Guinea-Namibia-2025-11-28-female-T20-1510307,631.0,542.0,418.0,t20
+Papua New Guinea-Netherlands-2025-11-25-female-T20-1510300,675.0,491.0,549.0,t20
+Papua New Guinea-Philippines-2025-09-10-female-T20-1499790,786.0,677.0,689.0,t20
+Papua New Guinea-Samoa-2025-10-09-male-T20-1503455,672.0,528.0,495.0,t20
+Papua New Guinea-Scotland-2025-11-26-female-T20-1510304,645.0,294.0,247.0,t20
+Papua New Guinea-South Korea-2026-05-09-male-T20-1532642,627.0,576.0,369.0,t20
+Papua New Guinea-Tanzania-2025-11-30-female-T20-1510312,711.0,615.0,605.0,t20
+Papua New Guinea-Thailand-2025-11-17-female-T20-1510284,558.0,321.0,259.0,t20
+Papua New Guinea-Thailand-2025-11-21-female-T20-1510290,727.0,502.0,494.0,t20
+Papua New Guinea-Thailand-2026-08-11-female-T20-1549209,605.0,549.0,546.0,t20
+Papua New Guinea-United Arab Emirates-2025-11-20-female-T20-1510286,464.0,329.0,335.0,t20
+Papua New Guinea-United States of America-2026-01-26-female-T20-1515225,611.0,348.0,339.0,t20
+Papua New Guinea-Vanuatu-2026-05-17-male-T20-1532660,754.0,674.0,674.0,t20
+Peru-Panama-2026-08-08-male-T20-1545658,353.0,353.0,353.0,t20
+Philippines-China-2026-06-06-female-T20-1536629,522.0,477.0,477.0,t20
+Philippines-Fiji-2025-09-13-female-T20-1499797,537.0,519.0,360.0,t20
+Philippines-Indonesia-2025-07-06-male-T20-1490870,708.0,467.0,487.0,t20
+Philippines-Indonesia-2025-12-11-male-T20-1513829,746.0,605.0,676.0,t20
+Philippines-Malaysia-2025-12-17-female-T20-1513759,536.0,483.0,431.0,t20
+Philippines-Samoa-2025-09-09-female-T20-1499787,539.0,474.0,357.0,t20
+Philippines-Saudi Arabia-2026-06-04-female-T20-1536625,762.0,532.0,428.0,t20
+Philippines-Singapore-2025-12-10-male-T20-1513827,712.0,535.0,477.0,t20
+Philippines-South Korea-2025-07-10-male-T20-1490877,922.0,727.0,592.0,t20
+Philippines-South Korea-2025-07-12-male-T20-1490879,876.0,628.0,650.0,t20
+Philippines-South Korea-2026-05-12-male-T20-1532647,671.0,546.0,472.0,t20
+Philippines-South Korea-2026-05-16-male-T20-1532657,564.0,400.0,374.0,t20
+Portugal-Belgium-2026-09-04-female-T20-1551072,341.0,341.0,337.0,t20
+Portugal-Czech Republic-2026-08-20-male-T20-1545677,673.0,378.0,565.0,t20
+Portugal-Czech Republic-2026-09-04-female-T20-1551073,519.0,503.0,499.0,t20
+Portugal-Czech Republic-2026-09-05-female-T20-1551077,691.0,602.0,577.0,t20
+Portugal-Finland-2026-07-03-male-T20-1543356,815.0,636.0,535.0,t20
+Portugal-Finland-2026-07-04-male-T20-1543358,615.0,337.0,335.0,t20
+Portugal-France-2026-04-06-male-T20-1528302,609.0,259.0,330.0,t20
+Portugal-France-2026-04-08-male-T20-1528306,722.0,637.0,565.0,t20
+Portugal-France-2026-04-09-male-T20-1528308,797.0,596.0,520.0,t20
+Portugal-Israel-2026-08-14-male-T20-1545661,621.0,477.0,431.0,t20
+Portugal-Norway-2026-04-06-male-T20-1528301,753.0,424.0,411.0,t20
+Portugal-Norway-2026-04-08-male-T20-1528305,693.0,565.0,428.0,t20
+Portugal-Spain-2026-08-21-male-T20-1545683,695.0,564.0,503.0,t20
+Portugal-Sweden-2026-07-01-male-T20-1540317,710.0,525.0,508.0,t20
+Qatar-Bahrain-2025-12-16-female-T20-1514523,633.0,554.0,517.0,t20
+Qatar-Bahrain-2026-02-11-male-T20-1522994,758.0,353.0,427.0,t20
+Qatar-Bahrain-2026-02-13-male-T20-1522995,672.0,463.0,338.0,t20
+Qatar-Bahrain-2026-02-14-male-T20-1522996,654.0,387.0,308.0,t20
+Qatar-Bahrain-2026-02-15-male-T20-1522997,696.0,517.0,519.0,t20
+Qatar-Bhutan-2026-06-06-female-T20-1536631,460.0,295.0,235.0,t20
+Qatar-Hong Kong-2025-11-12-male-T20-1510724,837.0,657.0,547.0,t20
+Qatar-Nepal-2026-06-03-female-T20-1536615,468.0,383.0,366.0,t20
+Qatar-Oman-2025-12-18-female-T20-1514528,532.0,458.0,448.0,t20
+Qatar-Oman-2026-02-13-female-T20-1522987,420.0,363.0,376.0,t20
+Qatar-Oman-2026-02-14-female-T20-1522988,726.0,687.0,515.0,t20
+Qatar-Saudi Arabia-2025-07-19-male-T20-1494766,675.0,357.0,407.0,t20
+Qatar-Saudi Arabia-2025-07-22-male-T20-1494768,882.0,683.0,702.0,t20
+Qatar-United Arab Emirates-2025-10-08-male-T20-1503451,544.0,421.0,382.0,t20
+Romania-Austria-2025-07-25-male-T20-1495654,659.0,426.0,479.0,t20
+Romania-Austria-2025-10-09-female-T20-1506181,246.0,246.0,246.0,t20
+Romania-Austria-2025-10-18-male-T20-1506436,758.0,534.0,546.0,t20
+Romania-Austria-2025-10-19-male-T20-1506438,828.0,560.0,587.0,t20
+Romania-Austria-2026-07-26-male-T20-1546379,681.0,433.0,453.0,t20
+Romania-Bulgaria-2025-10-10-female-T20-1506185,613.0,573.0,282.0,t20
+Romania-Bulgaria-2026-05-08-male-T20-1534590,695.0,453.0,455.0,t20
+Romania-Bulgaria-2026-05-09-male-T20-1534591,661.0,469.0,306.0,t20
+Romania-Bulgaria-2026-05-09-male-T20-1534592,505.0,319.0,350.0,t20
+Romania-Bulgaria-2026-05-10-male-T20-1534594,773.0,635.0,536.0,t20
+Romania-Czech Republic-2025-08-21-male-T20-1499012,757.0,486.0,465.0,t20
+Romania-Czech Republic-2025-08-22-male-T20-1499013,759.0,494.0,462.0,t20
+Romania-Czech Republic-2025-08-22-male-T20-1499014,652.0,407.0,512.0,t20
+Romania-Greece-2026-08-28-female-T20-1549200,248.0,245.0,194.0,t20
+Romania-Isle of Man-2026-08-26-female-T20-1549195,446.0,417.0,409.0,t20
+Romania-Luxembourg-2025-07-26-male-T20-1495657,879.0,715.0,404.0,t20
+Romania-Switzerland-2026-06-19-male-T20-1540309,701.0,529.0,536.0,t20
+Romania-Switzerland-2026-06-21-male-T20-1540315,797.0,460.0,482.0,t20
+Romania-Turkey-2025-10-10-female-T20-1506184,595.0,523.0,467.0,t20
+Rwanda-Bahrain-2025-07-18-male-T20-1495453,640.0,432.0,349.0,t20
+Rwanda-Bahrain-2025-07-20-male-T20-1495457,561.0,405.0,391.0,t20
+Rwanda-Botswana-2025-07-24-female-T20-1494137,738.0,677.0,692.0,t20
+Rwanda-Botswana-2026-05-30-male-T20-1535433,676.0,625.0,465.0,t20
+Rwanda-Botswana-2026-09-08-male-T20-1552906,754.0,370.0,424.0,t20
+Rwanda-Brazil-2026-06-14-female-T20-1539500,855.0,598.0,597.0,t20
+Rwanda-Brazil-2026-06-18-female-T20-1539507,598.0,484.0,520.0,t20
+Rwanda-Ghana-2026-03-20-female-T20-1526693,458.0,429.0,393.0,t20
+Rwanda-Ivory Coast-2026-05-24-male-T20-1535416,813.0,783.0,761.0,t20
+Rwanda-Kenya-2025-09-06-female-T20-1498725,647.0,500.0,442.0,t20
+Rwanda-Kenya-2026-09-09-male-T20-1552909,787.0,601.0,630.0,t20
+Rwanda-Malawi-2025-07-21-female-T20-1494129,726.0,545.0,388.0,t20
+Rwanda-Malawi-2025-07-23-male-T20-1495460,624.0,419.0,484.0,t20
+Rwanda-Malawi-2025-07-26-male-T20-1495464,610.0,401.0,397.0,t20
+Rwanda-Malawi-2026-06-11-female-T20-1539494,643.0,510.0,465.0,t20
+Rwanda-Malawi-2026-06-15-female-T20-1539504,651.0,471.0,481.0,t20
+Rwanda-Nepal-2026-04-22-female-T20-1531156,730.0,572.0,552.0,t20
+Rwanda-Nigeria-2025-12-09-male-T20-1513095,705.0,497.0,493.0,t20
+Rwanda-Nigeria-2026-06-12-female-T20-1539496,644.0,543.0,587.0,t20
+Rwanda-Nigeria-2026-06-19-female-T20-1539509,786.0,338.0,521.0,t20
+Rwanda-Sierra Leone-2025-07-26-female-T20-1494143,672.0,468.0,526.0,t20
+Rwanda-Sierra Leone-2025-09-04-female-T20-1498722,580.0,490.0,520.0,t20
+Rwanda-Sierra Leone-2025-12-08-male-T20-1513093,771.0,585.0,599.0,t20
+Rwanda-Sierra Leone-2025-12-12-male-T20-1513300,631.0,357.0,429.0,t20
+Rwanda-Uganda-2025-09-01-female-T20-1498714,685.0,577.0,559.0,t20
+Rwanda-United States of America-2026-04-21-female-T20-1531154,535.0,372.0,326.0,t20
+Rwanda-Vanuatu-2026-04-19-female-T20-1531152,715.0,646.0,612.0,t20
+Rwanda-Vanuatu-2026-04-26-female-T20-1531160,554.0,350.0,360.0,t20
+Rwanda-Zambia-2026-08-15-male-T20-1547095,675.0,529.0,477.0,t20
+Samoa-Cook Islands-2025-09-13-female-T20-1499796,581.0,433.0,484.0,t20
+Samoa-Fiji-2025-09-15-female-T20-1499800,586.0,494.0,482.0,t20
+Samoa-Hong Kong-2025-07-23-male-T20-1494098,680.0,488.0,488.0,t20
+Samoa-Japan-2026-05-16-male-T20-1532656,630.0,552.0,385.0,t20
+Samoa-Malaysia-2025-07-20-male-T20-1494095,681.0,594.0,485.0,t20
+Samoa-Malaysia-2025-07-24-male-T20-1494100,706.0,612.0,567.0,t20
+Samoa-Oman-2025-10-08-male-T20-1503450,609.0,539.0,452.0,t20
+Samoa-Papua New Guinea-2025-09-12-female-T20-1499795,813.0,653.0,558.0,t20
+Samoa-Papua New Guinea-2026-05-13-male-T20-1532650,784.0,705.0,622.0,t20
+Samoa-Philippines-2026-05-10-male-T20-1532643,736.0,632.0,592.0,t20
+Samoa-Qatar-2025-10-16-male-T20-1503468,637.0,451.0,528.0,t20
+Samoa-Singapore-2025-07-22-male-T20-1494097,628.0,564.0,430.0,t20
+Saudi Arabia-China-2026-06-09-female-T20-1536643,443.0,403.0,386.0,t20
+Saudi Arabia-Kuwait-2025-12-18-female-T20-1514526,430.0,386.0,303.0,t20
+Saudi Arabia-Oman-2026-06-06-female-T20-1536633,484.0,470.0,470.0,t20
+Saudi Arabia-Qatar-2025-07-21-male-T20-1494767,845.0,600.0,524.0,t20
+Saudi Arabia-Qatar-2025-07-23-male-T20-1494769,857.0,717.0,666.0,t20
+Saudi Arabia-Qatar-2025-12-15-female-T20-1514521,488.0,419.0,383.0,t20
+Saudi Arabia-United Arab Emirates-2026-06-03-female-T20-1536613,469.0,454.0,441.0,t20
+Scotland-England-2026-02-14-male-T20-1512741,715.0,425.0,481.0,t20
+Scotland-Ireland-2026-01-28-female-T20-1515228,761.0,707.0,695.0,t20
+Scotland-Ireland-2026-06-13-female-T20-1490678,820.0,804.0,619.0,t20
+Scotland-Italy-2026-02-09-male-T20-1512725,799.0,608.0,619.0,t20
+Scotland-Jersey-2025-07-11-male-T20-1490479,765.0,686.0,514.0,t20
+Scotland-Namibia-2026-04-17-male-T20-1529146,733.0,479.0,483.0,t20
+Scotland-Namibia-2026-04-18-male-T20-1529147,673.0,456.0,464.0,t20
+Scotland-Nepal-2026-01-26-female-T20-1515224,802.0,579.0,704.0,t20
+Scotland-Nepal-2026-02-17-male-T20-1512751,735.0,538.0,529.0,t20
+Scotland-Netherlands-2025-07-08-male-T20-1490476,792.0,560.0,380.0,t20
+Scotland-Netherlands-2026-06-03-female-T20-1535595,540.0,437.0,325.0,t20
+Scotland-New Zealand-2026-06-23-female-T20-1490695,705.0,527.0,509.0,t20
+Scotland-Papua New Guinea-2025-11-14-female-T20-1510279,596.0,427.0,288.0,t20
+Scotland-Sri Lanka-2026-06-26-female-T20-1490701,655.0,604.0,640.0,t20
+Scotland-Tanzania-2025-11-21-female-T20-1510292,680.0,520.0,617.0,t20
+Scotland-Thailand-2025-11-30-female-T20-1510311,737.0,646.0,501.0,t20
+Scotland-Uganda-2025-11-20-female-T20-1510288,688.0,447.0,364.0,t20
+Scotland-United States of America-2026-02-01-female-T20-1515236,842.0,696.0,591.0,t20
+Serbia-Bulgaria-2025-11-01-male-T20-1506442,553.0,441.0,439.0,t20
+Serbia-Bulgaria-2026-06-27-female-T20-1541617,614.0,582.0,557.0,t20
+Serbia-Croatia-2026-09-06-female-T20-1551070,568.0,560.0,555.0,t20
+Serbia-Estonia-2026-07-14-male-T20-1543377,627.0,437.0,491.0,t20
+Serbia-Gibraltar-2026-07-12-male-T20-1543374,688.0,596.0,523.0,t20
+Serbia-Greece-2025-07-08-female-T20-1490858,774.0,737.0,500.0,t20
+Serbia-Luxembourg-2026-06-26-male-T20-1539476,682.0,565.0,493.0,t20
+Serbia-Luxembourg-2026-06-27-male-T20-1539479,580.0,438.0,441.0,t20
+Serbia-Romania-2026-07-08-male-T20-1543364,592.0,318.0,415.0,t20
+Seychelles-Ghana-2026-03-24-male-T20-1526842,502.0,475.0,459.0,t20
+Seychelles-Malawi-2026-03-28-male-T20-1526850,607.0,576.0,569.0,t20
+Sierra Leone-Cameroon-2026-05-24-male-T20-1535418,775.0,631.0,673.0,t20
+Sierra Leone-Eswatini-2025-07-21-female-T20-1494130,736.0,691.0,656.0,t20
+Sierra Leone-Mozambique-2025-07-20-female-T20-1494127,718.0,514.0,520.0,t20
+Sierra Leone-Nigeria-2025-12-07-male-T20-1513091,445.0,367.0,292.0,t20
+Sierra Leone-Rwanda-2025-12-04-male-T20-1513087,571.0,489.0,410.0,t20
+Sierra Leone-Rwanda-2026-05-28-male-T20-1535426,558.0,342.0,396.0,t20
+Sierra Leone-Zambia-2025-12-09-male-T20-1513096,664.0,552.0,451.0,t20
+Sierra Leone-Zimbabwe-2025-09-01-female-T20-1498711,523.0,359.0,351.0,t20
+Singapore-Cambodia-2025-08-13-female-T20-1498203,645.0,429.0,474.0,t20
+Singapore-Cambodia-2025-08-14-female-T20-1498204,732.0,428.0,482.0,t20
+Singapore-Cambodia-2025-08-16-female-T20-1498205,581.0,536.0,405.0,t20
+Singapore-Hong Kong-2026-06-03-male-T20-1538447,486.0,290.0,254.0,t20
+Singapore-Indonesia-2025-07-02-female-T20-1490225,204.0,203.0,203.0,t20
+Singapore-Indonesia-2025-07-03-female-T20-1490226,449.0,419.0,381.0,t20
+Singapore-Indonesia-2026-06-03-female-T20-1536618,417.0,344.0,345.0,t20
+Singapore-Indonesia-2026-06-25-male-T20-1541808,814.0,352.0,654.0,t20
+Singapore-Kuwait-2026-06-06-female-T20-1536634,476.0,409.0,378.0,t20
+Singapore-Malaysia-2025-07-19-male-T20-1494092,661.0,548.0,579.0,t20
+Singapore-Malaysia-2025-12-13-male-T20-1513833,670.0,596.0,552.0,t20
+Singapore-Myanmar-2025-11-27-female-T20-1510313,288.0,218.0,243.0,t20
+Singapore-Myanmar-2025-11-29-female-T20-1510314,490.0,437.0,427.0,t20
+Singapore-Samoa-2025-07-18-male-T20-1494091,762.0,739.0,643.0,t20
+Singapore-Thailand-2025-12-11-male-T20-1513828,760.0,541.0,619.0,t20
+Singapore-Thailand-2026-06-23-male-T20-1541806,732.0,434.0,551.0,t20
+Singapore-Uzbekistan-2026-06-22-male-T20-1541804,250.0,250.0,250.0,t20
+Slovenia-Austria-2026-05-17-male-T20-1534044,838.0,634.0,683.0,t20
+Slovenia-Guernsey-2026-05-20-male-T20-1534050,748.0,580.0,581.0,t20
+Slovenia-Malta-2026-05-22-male-T20-1534057,560.0,485.0,376.0,t20
+Slovenia-Sweden-2026-05-19-male-T20-1534047,570.0,392.0,410.0,t20
+South Africa-Australia-2025-08-12-male-T20-1478899,851.0,575.0,520.0,t20
+South Africa-Australia-2025-08-16-male-T20-1478900,823.0,588.0,524.0,t20
+South Africa-Canada-2026-02-09-male-T20-1512727,756.0,475.0,473.0,t20
+South Africa-England-2025-09-10-male-T20-1448357,489.0,314.0,361.0,t20
+South Africa-India-2025-12-11-male-T20-1479577,808.0,466.0,383.0,t20
+South Africa-India-2025-12-14-male-T20-1479578,617.0,446.0,439.0,t20
+South Africa-India-2026-02-22-male-T20-1512761,852.0,549.0,527.0,t20
+South Africa-India-2026-04-27-female-T20-1527257,748.0,591.0,613.0,t20
+South Africa-Ireland-2025-12-05-female-T20-1477591,824.0,546.0,329.0,t20
+South Africa-Ireland-2025-12-07-female-T20-1477592,661.0,483.0,442.0,t20
+South Africa-Namibia-2025-10-11-male-T20-1487824,645.0,499.0,379.0,t20
+South Africa-Namibia-2026-09-04-male-T20-1549529,802.0,552.0,516.0,t20
+South Africa-Netherlands-2026-06-25-female-T20-1490700,691.0,388.0,479.0,t20
+South Africa-New Zealand-2025-07-22-male-T20-1478869,597.0,386.0,442.0,t20
+South Africa-New Zealand-2026-03-04-male-T20-1512771,708.0,349.0,319.0,t20
+South Africa-New Zealand-2026-03-17-female-T20-1491706,773.0,523.0,574.0,t20
+South Africa-New Zealand-2026-03-20-female-T20-1491707,609.0,432.0,419.0,t20
+South Africa-New Zealand-2026-03-20-male-T20-1491737,567.0,447.0,432.0,t20
+South Africa-New Zealand-2026-03-22-female-T20-1491708,701.0,494.0,575.0,t20
+South Africa-New Zealand-2026-03-22-male-T20-1491738,692.0,543.0,581.0,t20
+South Africa-New Zealand-2026-03-25-male-T20-1491739,692.0,446.0,477.0,t20
+South Africa-Pakistan-2025-10-28-male-T20-1501895,928.0,780.0,556.0,t20
+South Africa-Pakistan-2025-10-31-male-T20-1501896,634.0,354.0,504.0,t20
+South Africa-Pakistan-2025-11-01-male-T20-1501897,737.0,462.0,543.0,t20
+South Africa-Zimbabwe-2026-09-01-male-T20-1549527,860.0,642.0,573.0,t20
+South Africa-Zimbabwe-2026-09-06-male-T20-1549530,838.0,632.0,624.0,t20
+South Korea-Cook Islands-2026-05-08-male-T20-1532639,390.0,377.0,345.0,t20
+South Korea-Indonesia-2025-07-09-male-T20-1490875,523.0,478.0,410.0,t20
+South Korea-Indonesia-2025-07-13-male-T20-1490881,532.0,476.0,416.0,t20
+South Korea-Philippines-2025-07-07-male-T20-1490871,589.0,532.0,532.0,t20
+South Korea-Philippines-2025-07-09-male-T20-1490874,818.0,470.0,492.0,t20
+Spain-Croatia-2025-12-06-male-T20-1514474,702.0,685.0,613.0,t20
+Spain-Croatia-2025-12-07-male-T20-1514476,810.0,743.0,610.0,t20
+Spain-Luxembourg-2026-08-17-male-T20-1545671,848.0,636.0,623.0,t20
+Sri Lanka-Bangladesh-2025-07-16-male-T20-1485510,638.0,391.0,247.0,t20
+Sri Lanka-Bangladesh-2025-09-20-male-T20-1496932,775.0,469.0,424.0,t20
+Sri Lanka-Bangladesh-2026-04-28-female-T20-1528282,650.0,447.0,428.0,t20
+Sri Lanka-Bangladesh-2026-04-30-female-T20-1528283,513.0,334.0,304.0,t20
+Sri Lanka-Bangladesh-2026-05-02-female-T20-1528284,519.0,434.0,391.0,t20
+Sri Lanka-England-2026-01-30-male-T20-1507719,690.0,457.0,473.0,t20
+Sri Lanka-England-2026-02-01-male-T20-1507720,628.0,372.0,338.0,t20
+Sri Lanka-India-2025-12-21-female-T20-1513735,468.0,260.0,231.0,t20
+Sri Lanka-India-2025-12-23-female-T20-1513736,588.0,474.0,382.0,t20
+Sri Lanka-India-2025-12-26-female-T20-1513737,640.0,528.0,383.0,t20
+Sri Lanka-Indonesia-2026-09-02-female-T20-1548896,790.0,675.0,662.0,t20
+Sri Lanka-Ireland-2026-02-08-male-T20-1512724,751.0,532.0,475.0,t20
+Sri Lanka-Oman-2026-02-12-male-T20-1512734,727.0,499.0,467.0,t20
+Sri Lanka-Pakistan-2025-09-23-male-T20-1496934,700.0,472.0,386.0,t20
+Sri Lanka-Pakistan-2025-11-22-male-T20-1502050,574.0,399.0,370.0,t20
+Sri Lanka-Pakistan-2025-11-27-male-T20-1502053,744.0,449.0,336.0,t20
+Sri Lanka-Pakistan-2025-11-29-male-T20-1502054,716.0,502.0,561.0,t20
+Sri Lanka-Pakistan-2026-01-07-male-T20-1514480,666.0,528.0,497.0,t20
+Sri Lanka-Pakistan-2026-01-11-male-T20-1514482,687.0,484.0,418.0,t20
+Sri Lanka-Pakistan-2026-08-04-female-T20-1540545,598.0,445.0,516.0,t20
+Sri Lanka-West Indies-2026-06-11-male-T20-1538307,728.0,441.0,375.0,t20
+Sri Lanka-West Indies-2026-06-13-male-T20-1538308,843.0,613.0,642.0,t20
+Sri Lanka-West Indies-2026-06-14-male-T20-1538309,805.0,657.0,668.0,t20
+Sri Lanka-West Indies-2026-06-21-female-T20-1490693,579.0,496.0,525.0,t20
+Sri Lanka-Zimbabwe-2025-09-06-male-T20-1492824,624.0,483.0,401.0,t20
+Sri Lanka-Zimbabwe-2026-02-19-male-T20-1512756,736.0,537.0,559.0,t20
+St Helena-Ghana-2026-03-27-male-T20-1526846,499.0,288.0,319.0,t20
+St Helena-Seychelles-2026-03-25-male-T20-1526843,574.0,359.0,406.0,t20
+Suriname-Argentina-2026-03-12-male-T20-1525173,598.0,521.0,292.0,t20
+Suriname-Cayman Islands-2026-03-11-male-T20-1525170,508.0,371.0,368.0,t20
+Suriname-Cayman Islands-2026-03-14-male-T20-1525175,442.0,414.0,389.0,t20
+Sweden-Austria-2025-08-08-male-T20-1496821,823.0,710.0,699.0,t20
+Sweden-Austria-2026-06-13-male-T20-1539469,705.0,574.0,570.0,t20
+Sweden-Denmark-2025-08-30-female-T20-1499024,660.0,631.0,547.0,t20
+Sweden-Denmark-2026-08-28-female-T20-1548659,531.0,392.0,425.0,t20
+Sweden-Finland-2025-08-31-female-T20-1499030,556.0,443.0,389.0,t20
+Sweden-Finland-2026-06-12-male-T20-1539466,778.0,644.0,632.0,t20
+Sweden-France-2025-08-10-male-T20-1496825,726.0,550.0,562.0,t20
+Sweden-Germany-2026-08-29-female-T20-1548661,373.0,191.0,282.0,t20
+Sweden-Hungary-2025-08-17-male-T20-1498191,670.0,496.0,465.0,t20
+Sweden-Indonesia-2026-04-09-male-T20-1529790,713.0,530.0,556.0,t20
+Sweden-Indonesia-2026-04-11-male-T20-1529792,837.0,531.0,462.0,t20
+Sweden-Indonesia-2026-04-13-male-T20-1529793,769.0,594.0,559.0,t20
+Sweden-Indonesia-2026-04-13-male-T20-1529794,828.0,730.0,706.0,t20
+Sweden-Malta-2026-05-20-male-T20-1534052,667.0,523.0,447.0,t20
+Sweden-Norway-2025-08-17-male-T20-1496827,783.0,507.0,555.0,t20
+Sweden-Norway-2025-08-29-female-T20-1499022,590.0,551.0,506.0,t20
+Sweden-Portugal-2026-07-01-male-T20-1540318,544.0,411.0,348.0,t20
+Sweden-Portugal-2026-07-02-male-T20-1540319,798.0,519.0,689.0,t20
+Switzerland-Cyprus-2026-05-20-male-T20-1534051,862.0,626.0,647.0,t20
+Switzerland-Estonia-2025-07-19-female-T20-1494579,609.0,531.0,579.0,t20
+Switzerland-Estonia-2025-08-02-male-T20-1494773,809.0,561.0,480.0,t20
+Switzerland-Estonia-2025-08-03-male-T20-1494774,840.0,761.0,639.0,t20
+Switzerland-Estonia-2025-08-03-male-T20-1494775,939.0,479.0,514.0,t20
+Switzerland-Germany-2026-07-10-female-T20-1544138,397.0,277.0,277.0,t20
+Switzerland-Germany-2026-07-12-female-T20-1544141,628.0,536.0,350.0,t20
+Switzerland-Guernsey-2025-08-30-male-T20-1498691,212.0,179.0,132.0,t20
+Switzerland-Jersey-2026-05-16-male-T20-1534040,585.0,453.0,285.0,t20
+Switzerland-Luxembourg-2025-09-12-female-T20-1500864,420.0,366.0,366.0,t20
+Tanzania-Bahrain-2025-07-10-male-T20-1492887,727.0,474.0,572.0,t20
+Tanzania-Canada-2025-11-05-female-T20-1506670,641.0,496.0,541.0,t20
+Tanzania-Eswatini-2026-03-25-male-T20-1526844,743.0,567.0,519.0,t20
+Tanzania-Germany-2025-07-07-male-T20-1492883,637.0,419.0,358.0,t20
+Tanzania-Hong Kong-2026-07-27-female-T20-1544607,571.0,374.0,369.0,t20
+Tanzania-Kenya-2025-09-01-female-T20-1498712,749.0,617.0,620.0,t20
+Tanzania-Namibia-2025-09-04-female-T20-1498721,480.0,360.0,351.0,t20
+Tanzania-Namibia-2026-07-21-female-T20-1544600,528.0,318.0,332.0,t20
+Tanzania-Namibia-2026-07-25-female-T20-1544605,429.0,289.0,307.0,t20
+Tanzania-Netherlands-2025-11-23-female-T20-1510293,625.0,442.0,399.0,t20
+Tanzania-Rwanda-2025-09-03-female-T20-1498715,579.0,428.0,349.0,t20
+Tanzania-Seychelles-2026-03-27-male-T20-1526848,732.0,445.0,423.0,t20
+Tanzania-St Helena-2026-03-28-male-T20-1526849,817.0,713.0,732.0,t20
+Tanzania-Uganda-2025-08-31-female-T20-1498710,497.0,356.0,382.0,t20
+Tanzania-Uganda-2025-09-06-female-T20-1498723,652.0,516.0,542.0,t20
+Tanzania-Uganda-2025-09-28-male-T20-1502748,704.0,420.0,471.0,t20
+Tanzania-Uganda-2025-11-28-female-T20-1510306,511.0,447.0,447.0,t20
+Tanzania-United Arab Emirates-2025-11-26-female-T20-1510301,524.0,373.0,371.0,t20
+Thailand-Bahrain-2025-11-27-male-T20-1512000,395.0,256.0,268.0,t20
+Thailand-Bahrain-2025-11-30-male-T20-1512002,563.0,457.0,363.0,t20
+Thailand-Bhutan-2026-02-26-male-T20-1523000,708.0,566.0,502.0,t20
+Thailand-China-2026-05-30-female-T20-1536405,598.0,494.0,468.0,t20
+Thailand-Hong Kong-2026-05-26-female-T20-1536399,519.0,484.0,361.0,t20
+Thailand-Hong Kong-2026-08-28-female-T20-1548891,811.0,735.0,580.0,t20
+Thailand-Indonesia-2025-12-09-male-T20-1513824,698.0,569.0,587.0,t20
+Thailand-Indonesia-2025-12-18-female-T20-1513761,704.0,590.0,429.0,t20
+Thailand-Japan-2026-06-09-female-T20-1536640,693.0,588.0,510.0,t20
+Thailand-Malaysia-2025-11-24-male-T20-1511998,137.0,116.0,85.0,t20
+Thailand-Malaysia-2025-12-12-male-T20-1513831,577.0,481.0,493.0,t20
+Thailand-Malaysia-2026-02-14-female-T20-1522068,750.0,601.0,604.0,t20
+Thailand-Namibia-2025-11-14-female-T20-1510280,686.0,497.0,542.0,t20
+Thailand-Namibia-2025-11-23-female-T20-1510296,634.0,386.0,496.0,t20
+Thailand-Nepal-2026-06-10-female-T20-1536644,595.0,570.0,560.0,t20
+Thailand-Netherlands-2025-11-20-female-T20-1510285,687.0,553.0,429.0,t20
+Thailand-Papua New Guinea-2026-08-10-female-T20-1549208,534.0,482.0,407.0,t20
+Thailand-Philippines-2025-12-13-male-T20-1513832,854.0,572.0,491.0,t20
+Thailand-Scotland-2025-11-15-female-T20-1510282,688.0,497.0,534.0,t20
+Thailand-Scotland-2026-01-24-female-T20-1515220,624.0,501.0,500.0,t20
+Thailand-Singapore-2025-12-16-female-T20-1513758,923.0,831.0,835.0,t20
+Thailand-Singapore-2026-06-26-male-T20-1541810,562.0,454.0,457.0,t20
+Thailand-Tanzania-2025-11-25-female-T20-1510297,654.0,592.0,425.0,t20
+Thailand-Zimbabwe-2026-01-20-female-T20-1515213,590.0,439.0,362.0,t20
+Timor-Leste-Indonesia-2025-11-06-male-T20-1508270,420.0,420.0,420.0,t20
+Timor-Leste-Indonesia-2025-11-08-male-T20-1508272,369.0,363.0,354.0,t20
+Timor-Leste-Indonesia-2025-11-11-male-T20-1508276,415.0,377.0,402.0,t20
+Timor-Leste-Indonesia-2025-11-13-male-T20-1508278,515.0,412.0,416.0,t20
+Timor-Leste-Myanmar-2025-11-07-male-T20-1508271,465.0,458.0,458.0,t20
+Timor-Leste-Myanmar-2025-11-09-male-T20-1508274,419.0,349.0,299.0,t20
+Turkey-Bulgaria-2025-07-08-female-T20-1490859,634.0,469.0,428.0,t20
+Turkey-Bulgaria-2025-07-10-male-T20-1491605,723.0,475.0,538.0,t20
+Turkey-Bulgaria-2025-07-12-male-T20-1491608,1141.0,927.0,775.0,t20
+Turkey-Bulgaria-2025-10-09-female-T20-1506182,843.0,682.0,551.0,t20
+Turkey-Estonia-2026-07-13-male-T20-1543376,734.0,674.0,611.0,t20
+Turkey-France-2026-07-29-male-T20-1546387,613.0,555.0,536.0,t20
+Turkey-Gibraltar-2025-07-11-male-T20-1491606,792.0,601.0,519.0,t20
+Turkey-Gibraltar-2025-07-12-male-T20-1491609,829.0,685.0,529.0,t20
+Turkey-Greece-2025-07-07-female-T20-1490854,535.0,482.0,458.0,t20
+Turkey-Greece-2025-07-09-female-T20-1490861,722.0,677.0,632.0,t20
+Turkey-Guernsey-2026-08-28-female-T20-1549201,614.0,502.0,495.0,t20
+Turkey-Israel-2026-07-28-male-T20-1546384,724.0,671.0,464.0,t20
+Turkey-Norway-2026-07-10-male-T20-1543370,653.0,527.0,449.0,t20
+Turkey-Romania-2026-07-26-male-T20-1546380,507.0,383.0,319.0,t20
+Turkey-Serbia-2025-07-07-female-T20-1490856,434.0,357.0,357.0,t20
+Uganda-Canada-2025-10-23-female-T20-1506666,638.0,525.0,491.0,t20
+Uganda-Canada-2025-10-24-female-T20-1506667,586.0,434.0,434.0,t20
+Uganda-Canada-2025-10-26-female-T20-1506668,688.0,611.0,383.0,t20
+Uganda-Kenya-2025-07-21-male-T20-1494103,745.0,630.0,363.0,t20
+Uganda-Malawi-2025-10-02-male-T20-1502758,595.0,515.0,542.0,t20
+Uganda-Namibia-2026-07-27-female-T20-1544608,570.0,453.0,344.0,t20
+Uganda-Namibia-2026-07-30-female-T20-1544612,592.0,428.0,348.0,t20
+Uganda-Netherlands-2025-11-30-female-T20-1510309,530.0,444.0,386.0,t20
+Uganda-Nigeria-2025-07-18-male-T20-1494116,491.0,293.0,369.0,t20
+Uganda-Nigeria-2025-07-22-male-T20-1494583,693.0,544.0,548.0,t20
+Uganda-Nigeria-2025-10-04-male-T20-1502761,676.0,585.0,504.0,t20
+Uganda-Papua New Guinea-2025-11-23-female-T20-1510294,632.0,539.0,439.0,t20
+Uganda-Sierra Leone-2026-09-09-male-T20-1552908,532.0,242.0,275.0,t20
+Uganda-Tanzania-2026-07-24-female-T20-1544603,654.0,503.0,512.0,t20
+Uganda-Tanzania-2026-07-28-female-T20-1544610,228.0,133.0,125.0,t20
+Uganda-Thailand-2025-11-26-female-T20-1510302,553.0,464.0,388.0,t20
+Uganda-United Arab Emirates-2025-07-19-male-T20-1494108,682.0,509.0,506.0,t20
+Uganda-United Arab Emirates-2025-07-27-male-T20-1494111,737.0,618.0,564.0,t20
+Uganda-United Arab Emirates-2025-11-25-female-T20-1510298,505.0,477.0,403.0,t20
+Uganda-Zimbabwe-2025-09-04-female-T20-1498719,636.0,352.0,503.0,t20
+Uganda-Zimbabwe-2025-09-26-male-T20-1502745,694.0,474.0,467.0,t20
+United Arab Emirates-Bahrain-2025-12-18-female-T20-1514527,705.0,694.0,630.0,t20
+United Arab Emirates-China-2026-06-07-female-T20-1536637,362.0,337.0,337.0,t20
+United Arab Emirates-India-2025-09-10-male-T20-1496921,549.0,462.0,426.0,t20
+United Arab Emirates-Malaysia-2026-06-10-female-T20-1536646,531.0,450.0,470.0,t20
+United Arab Emirates-Namibia-2025-11-30-female-T20-1510310,640.0,551.0,507.0,t20
+United Arab Emirates-Nepal-2026-04-21-male-T20-1531695,681.0,457.0,462.0,t20
+United Arab Emirates-Netherlands-2025-11-21-female-T20-1510289,706.0,511.0,514.0,t20
+United Arab Emirates-New Zealand-2026-02-10-male-T20-1512729,657.0,296.0,428.0,t20
+United Arab Emirates-Nigeria-2025-07-26-male-T20-1494113,734.0,336.0,472.0,t20
+United Arab Emirates-Oman-2025-09-15-male-T20-1496926,729.0,607.0,577.0,t20
+United Arab Emirates-Oman-2025-10-13-male-T20-1503462,552.0,433.0,443.0,t20
+United Arab Emirates-Oman-2025-11-16-male-T20-1509859,668.0,507.0,481.0,t20
+United Arab Emirates-Philippines-2026-06-09-female-T20-1536642,784.0,685.0,688.0,t20
+United Arab Emirates-Qatar-2025-12-13-female-T20-1514517,782.0,454.0,447.0,t20
+United Arab Emirates-Samoa-2025-10-15-male-T20-1503465,812.0,453.0,571.0,t20
+United Arab Emirates-Saudi Arabia-2025-12-16-female-T20-1514524,771.0,564.0,596.0,t20
+United Arab Emirates-Scotland-2025-11-23-female-T20-1510295,434.0,274.0,317.0,t20
+United Arab Emirates-South Africa-2026-02-18-male-T20-1512752,538.0,391.0,342.0,t20
+United Arab Emirates-Sri Lanka-2026-08-29-female-T20-1548892,493.0,455.0,391.0,t20
+United Arab Emirates-Thailand-2025-11-28-female-T20-1510305,801.0,787.0,733.0,t20
+United Arab Emirates-Thailand-2026-06-13-female-T20-1536651,590.0,513.0,513.0,t20
+United Arab Emirates-Zimbabwe-2025-10-05-female-T20-1503565,714.0,523.0,401.0,t20
+United Arab Emirates-Zimbabwe-2025-10-06-female-T20-1503566,661.0,514.0,467.0,t20
+United States of America-Italy-2026-04-24-female-T20-1531159,749.0,588.0,518.0,t20
+United States of America-Namibia-2026-02-15-male-T20-1512744,682.0,354.0,379.0,t20
+United States of America-Nepal-2026-04-18-female-T20-1531151,569.0,377.0,448.0,t20
+United States of America-Netherlands-2026-01-28-female-T20-1515230,563.0,328.0,435.0,t20
+United States of America-Netherlands-2026-02-13-male-T20-1512739,814.0,546.0,509.0,t20
+United States of America-Rwanda-2026-05-01-female-T20-1531168,292.0,227.0,256.0,t20
+United States of America-Thailand-2026-01-30-female-T20-1515233,840.0,662.0,652.0,t20
+United States of America-Vanuatu-2026-04-22-female-T20-1531157,740.0,605.0,662.0,t20
+United States of America-Vanuatu-2026-04-27-female-T20-1531163,676.0,518.0,493.0,t20
+Uzbekistan-Thailand-2026-06-25-male-T20-1541807,453.0,388.0,365.0,t20
+Vanuatu-Fiji-2025-09-12-female-T20-1499794,635.0,575.0,455.0,t20
+Vanuatu-Fiji-2026-05-08-male-T20-1532638,675.0,578.0,478.0,t20
+Vanuatu-Indonesia-2025-09-09-female-T20-1499786,638.0,555.0,545.0,t20
+Vanuatu-Indonesia-2026-05-16-male-T20-1532655,809.0,678.0,649.0,t20
+Vanuatu-Italy-2026-04-21-female-T20-1531155,555.0,494.0,504.0,t20
+Vanuatu-Italy-2026-04-28-female-T20-1531165,551.0,438.0,468.0,t20
+Vanuatu-Japan-2025-09-13-female-T20-1499799,560.0,457.0,456.0,t20
+Vanuatu-Nepal-2026-04-24-female-T20-1531158,656.0,569.0,586.0,t20
+Vanuatu-Papua New Guinea-2025-09-15-female-T20-1499803,648.0,384.0,411.0,t20
+Vanuatu-Samoa-2026-05-12-male-T20-1532646,603.0,446.0,451.0,t20
+West Indies-Australia-2025-07-20-male-T20-1472520,779.0,608.0,583.0,t20
+West Indies-Australia-2025-07-22-male-T20-1472521,724.0,538.0,536.0,t20
+West Indies-Australia-2025-07-25-male-T20-1472522,748.0,232.0,351.0,t20
+West Indies-Australia-2025-07-26-male-T20-1472523,870.0,706.0,700.0,t20
+West Indies-Australia-2025-07-28-male-T20-1472524,792.0,530.0,497.0,t20
+West Indies-Australia-2026-06-30-female-T20-1490707,614.0,527.0,551.0,t20
+West Indies-Bangladesh-2025-10-27-male-T20-1505125,693.0,477.0,425.0,t20
+West Indies-Bangladesh-2025-10-29-male-T20-1505126,824.0,602.0,516.0,t20
+West Indies-England-2026-02-11-male-T20-1512733,804.0,519.0,472.0,t20
+West Indies-India-2026-03-01-male-T20-1512770,725.0,395.0,348.0,t20
+West Indies-Ireland-2026-06-01-female-T20-1528541,607.0,442.0,486.0,t20
+West Indies-Ireland-2026-06-27-female-T20-1490703,585.0,495.0,477.0,t20
+West Indies-Italy-2026-02-19-male-T20-1512755,795.0,662.0,429.0,t20
+West Indies-New Zealand-2025-11-05-male-T20-1491723,748.0,598.0,588.0,t20
+West Indies-New Zealand-2025-11-10-male-T20-1491726,122.0,85.0,60.0,t20
+West Indies-New Zealand-2025-11-13-male-T20-1491727,690.0,558.0,454.0,t20
+West Indies-Pakistan-2026-05-29-female-T20-1528539,748.0,510.0,452.0,t20
+West Indies-Scotland-2026-02-07-male-T20-1512720,775.0,556.0,492.0,t20
+West Indies-Scotland-2026-06-18-female-T20-1490688,764.0,552.0,656.0,t20
+West Indies-South Africa-2026-01-27-male-T20-1477609,701.0,348.0,449.0,t20
+West Indies-South Africa-2026-01-29-male-T20-1477610,795.0,395.0,562.0,t20
+West Indies-South Africa-2026-01-31-male-T20-1477611,524.0,249.0,346.0,t20
+West Indies-South Africa-2026-02-26-male-T20-1512765,750.0,456.0,345.0,t20
+West Indies-Sri Lanka-2026-02-28-female-T20-1523981,420.0,369.0,213.0,t20
+West Indies-Sri Lanka-2026-03-01-female-T20-1523982,739.0,542.0,492.0,t20
+West Indies-Sri Lanka-2026-03-03-female-T20-1523983,525.0,323.0,351.0,t20
+West Indies-Zimbabwe-2026-02-23-male-T20-1512762,895.0,570.0,530.0,t20
+Zambia-Lesotho-2026-04-07-female-T20-1528323,396.0,350.0,353.0,t20
+Zambia-Malawi-2026-04-09-female-T20-1528331,509.0,489.0,383.0,t20
+Zambia-Malawi-2026-08-15-male-T20-1547096,801.0,680.0,684.0,t20
+Zambia-Rwanda-2025-12-05-male-T20-1513088,551.0,451.0,465.0,t20
+Zambia-Rwanda-2025-12-07-male-T20-1513092,604.0,476.0,375.0,t20
+Zambia-Rwanda-2025-12-11-male-T20-1513097,849.0,782.0,688.0,t20
+Zambia-Rwanda-2026-08-11-male-T20-1547089,622.0,567.0,511.0,t20
+Zambia-Rwanda-2026-08-12-male-T20-1547092,854.0,547.0,565.0,t20
+Zambia-Sierra Leone-2025-12-06-male-T20-1513090,658.0,421.0,390.0,t20
+Zambia-Sierra Leone-2025-12-13-male-T20-1513302,811.0,706.0,707.0,t20
+Zambia-Sierra Leone-2025-12-14-male-T20-1513303,780.0,531.0,616.0,t20
+Zimbabwe-Australia-2026-02-13-male-T20-1512737,721.0,465.0,518.0,t20
+Zimbabwe-Bangladesh-2026-07-15-male-T20-1538301,781.0,589.0,643.0,t20
+Zimbabwe-Bangladesh-2026-07-19-male-T20-1538303,679.0,464.0,519.0,t20
+Zimbabwe-Botswana-2025-09-28-male-T20-1502749,802.0,576.0,734.0,t20
+Zimbabwe-India-2026-07-23-male-T20-1530060,573.0,316.0,348.0,t20
+Zimbabwe-Ireland-2025-07-20-female-T20-1476987,610.0,447.0,381.0,t20
+Zimbabwe-Namibia-2025-08-31-female-T20-1498709,683.0,419.0,446.0,t20
+Zimbabwe-Namibia-2025-09-15-male-T20-1502164,725.0,517.0,612.0,t20
+Zimbabwe-Namibia-2026-08-31-male-T20-1549526,860.0,593.0,699.0,t20
+Zimbabwe-Nepal-2026-01-24-female-T20-1515222,621.0,390.0,324.0,t20
+Zimbabwe-New Zealand-2025-07-18-male-T20-1478867,543.0,426.0,387.0,t20
+Zimbabwe-New Zealand-2026-03-01-female-T20-1491701,507.0,411.0,463.0,t20
+Zimbabwe-Pakistan-2025-11-18-male-T20-1502048,636.0,478.0,496.0,t20
+Zimbabwe-Scotland-2026-01-22-female-T20-1515219,690.0,501.0,533.0,t20
+Zimbabwe-South Africa-2025-07-14-male-T20-1478865,648.0,450.0,509.0,t20
+Zimbabwe-South Africa-2025-07-20-male-T20-1478868,624.0,405.0,427.0,t20
+Zimbabwe-South Africa-2026-03-01-male-T20-1512769,700.0,538.0,610.0,t20
+Zimbabwe-South Africa-2026-08-29-male-T20-1549525,598.0,439.0,464.0,t20
+Zimbabwe-Sri Lanka-2025-09-03-male-T20-1492823,691.0,515.0,614.0,t20
+Zimbabwe-Sri Lanka-2025-09-07-male-T20-1492825,733.0,419.0,327.0,t20
+Zimbabwe-Sri Lanka-2025-11-20-male-T20-1502049,750.0,672.0,588.0,t20
+Zimbabwe-Sri Lanka-2025-11-25-male-T20-1502052,563.0,376.0,509.0,t20
+Zimbabwe-Tanzania-2025-09-30-male-T20-1502751,864.0,607.0,742.0,t20
