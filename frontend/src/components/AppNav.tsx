@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { IconBall } from "./icons";
 import StatusBadge from "./StatusBadge";
 
 const LINKS = [
@@ -18,9 +18,14 @@ export default function AppNav() {
     <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-5 md:px-8 h-14 flex items-center justify-between gap-6">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-accent">
-            <IconBall size={20} />
-          </span>
+          <Image
+            src="/brand/new-x1-nav-icon.png"
+            alt=""
+            width={32}
+            height={32}
+            className="shrink-0 rounded-md"
+            unoptimized
+          />
           <span className="font-bold tracking-[0.08em] text-[15px] text-fg">NEW_X1</span>
           <span className="hidden md:block w-px h-4 bg-line" />
           <span className="hidden md:block mono-label text-fg-mute !tracking-[0.22em]">
