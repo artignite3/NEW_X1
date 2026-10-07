@@ -282,8 +282,10 @@ def map_matches(matches_data):
                 "fantasy_enabled":
                     True,
 
+                # True squad availability is determined later by squad_fetcher;
+                # the backend re-derives this from upcoming_squads.json.
                 "has_squad":
-                    True,
+                    False,
 
                 "match_started":
                     False,

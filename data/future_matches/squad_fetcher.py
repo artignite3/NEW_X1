@@ -162,6 +162,15 @@ def main():
         "squads": {}
     }
 
+    # Merge with the existing squads file instead of replacing it — a partial
+    # quota-limited run must never wipe squads fetched for other matches.
+    if os.path.exists(SQUADS_PATH):
+        try:
+            with open(SQUADS_PATH, "r", encoding="utf-8") as f:
+                squads_out["squads"] = json.load(f).get("squads", {})
+        except (json.JSONDecodeError, OSError):
+            pass
+
     for match in matches_to_process:
 
         series_id = match.get(

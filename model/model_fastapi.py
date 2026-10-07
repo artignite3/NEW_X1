@@ -74,19 +74,35 @@ def health():
 
     ollama_ok = False
     try:
-        import ollama
-        ollama.list()
-        ollama_ok = True
+        from model.llm_inference import ollama_available
+        ollama_ok = ollama_available()
     except Exception:
         ollama_ok = False
 
-    return {"status": "ok", "models": models, "ollama": ollama_ok}
+    return {"status": "ok" if all(models.values()) else "degraded", "models": models, "ollama": ollama_ok}
 
 
 @app.get("/matches")
 def matches():
-    """All known upcoming fixtures (client filters by date)."""
-    return {"matches": get_matches_json()}
+    """All known upcoming fixtures (client filters by date).
+
+    has_squad is re-derived from the actual squads file — the schedule fetcher
+    cannot know it at schedule time, and the UI status dot must be truthful.
+    """
+    from model.team_generator import get_squads_json
+
+    try:
+        squads_json = get_squads_json()
+    except FileNotFoundError:
+        squads_json = {}
+
+    out = []
+    for m in get_matches_json():
+        m = dict(m)
+        entry = squads_json.get(str(m.get("match_id")), {})
+        m["has_squad"] = bool(entry.get("available_squads") or entry.get("team1_squad"))
+        out.append(m)
+    return {"matches": out}
 
 
 @app.get("/match_squads")
@@ -131,19 +147,16 @@ def match_squads(match_id: str):
 @app.get("/teams")
 def teams():
     """Distinct team names known to the platform (for the Custom Simulator)."""
-    names = set()
-    for m in get_matches_json():
-        if m.get("team1"):
-            names.add(m["team1"])
-        if m.get("team2"):
-            names.add(m["team2"])
-
-    from model.team_generator import _build_datewise_index, _norm_team
-    for key in _build_datewise_index():
-        names.add(key.title())
-
-    venues = sorted({m.get("venue") for m in get_matches_json() if m.get("venue")})
-    return {"teams": sorted(n for n in names if n), "venues": venues}
+    names, venues = set(), set()
+    for fmt in ("t20", "odi", "test"):
+        for matches in get_fantasy(fmt).values():
+            for stats in matches.values():
+                if stats.get("team"):
+                    suffix = " Women" if stats.get("gender") == "female" else ""
+                    names.add(stats["team"] + suffix)
+                if stats.get("venue"):
+                    venues.add(stats["venue"])
+    return {"teams": sorted(names), "venues": sorted(venues)}
 
 
 @app.get("/venues")
@@ -173,7 +186,8 @@ def explain_team(request_data: dict):
     Body: {"explain_token": "<token from /generate_best_team response>"}
     """
     token = request_data.get("explain_token")
-    if not token or token not in _EXPLAIN_CACHE:
+    import time
+    if not token or token not in _EXPLAIN_CACHE or time.time() - _EXPLAIN_CACHE[token]["created"] > 3600:
         raise HTTPException(
             status_code=404,
             detail="Explain token not found or expired. Re-run /generate_best_team.",
