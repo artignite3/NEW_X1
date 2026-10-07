@@ -1,5 +1,7 @@
 # NEW_X1 — Runbook
 
+8 October deployment update: use [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for the current staging/production setup, artifact seeding, scheduled worker, Supabase and recovery instructions. The legacy local commands below are retained for reference; production sync must use `python -m pipeline.worker` with private remote releases. `main` now includes the step-by-step pushed changes. No public deployment is yet verified.
+
 All commands run from the repo root on Windows (Git Bash). Python: `env/Scripts/python.exe`.
 
 ## 0. Setup (clean machine)

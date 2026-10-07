@@ -1,6 +1,8 @@
 # NEW_X1 — updated verdict and remaining work
 
-**Updated 8 October 2026. Implementation is paused at the user's request.** The filename is retained so existing links continue to work. The original report is preserved in [the 7 October historical audit](archive/VERDICT_2026-10-07.md).
+**Paused audit recorded 8 October 2026; deployment implementation subsequently resumed at the user's request.** This document retains the audit findings at that checkpoint. See [current progress](IMPLEMENTATION_PROGRESS.md) and the [deployment guide](DEPLOYMENT_GUIDE.md) for subsequent work. The filename is retained so existing links continue to work. The original report is preserved in [the 7 October historical audit](archive/VERDICT_2026-10-07.md).
+
+**Subsequent verified change:** commit `47041e4` fixes both deployment defects recorded below, implements tested release/recovery code, passes 111 local tests, and restores/boots actual artifacts with valid strict generation in all formats. Updated installed Python dependencies report no known vulnerabilities. This does not establish a live deployment, real Supabase activation, completed remote AWS recovery or a successful hosted CI run. The remaining scientific/data gates below stay open.
 
 **Verdict: the core local application works, several release-blocking defects are fixed, and account integration plus the full pipeline runner are implemented in code. Public production readiness is incomplete. The current working directory contains an unfinished deployment draft with two reproduced defects.** Passing the existing suite does not validate that draft or establish a successful cloud deployment.
 
