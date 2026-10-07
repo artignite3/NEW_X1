@@ -91,7 +91,9 @@ export default function AccountPanel() {
         })}>Continue with Google</Button>
         <form className="space-y-3 max-w-md" onSubmit={(event) => { event.preventDefault(); void act(async () => {
           if (Date.now() < resendAt) return;
-          const { error } = await auth.auth.signInWithOtp(channel === "email" ? { email: address.trim() } : { phone: address.trim() });
+          const { error } = await auth.auth.signInWithOtp(channel === "email"
+            ? { email: address.trim(), options: { emailRedirectTo: `${location.origin}/account` } }
+            : { phone: address.trim() });
           if (error) throw error;
           setSent(true); setResendAt(Date.now() + 60000); setSeconds(60); setMessage("Code sent. Check your messages.");
         }); }}>
