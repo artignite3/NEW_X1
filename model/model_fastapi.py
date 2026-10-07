@@ -47,6 +47,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Venue registry: collapses historical spelling variants of the same ground
+# ("Wankhede Stadium" vs "Wankhede Stadium, Mumbai") onto one canonical form.
+# Built lazily on first venue call — building scans the fantasy datasets.
+from intelligence import venue_registry as _vreg  # noqa: E402
+
+
+def _build_venue_registry():
+    from model.team_generator import get_fantasy
+    return _vreg.VenueRegistry.from_fantasy(
+        {fmt: get_fantasy(fmt) for fmt in ("t20", "odi", "test")}
+    )
+
+
+_vreg.configure(_build_venue_registry)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GET endpoints
@@ -146,7 +161,7 @@ def match_squads(match_id: str):
 
 @app.get("/teams")
 def teams():
-    """Distinct team names known to the platform (for the Custom Simulator)."""
+    """Distinct team names + canonical venues (Custom Simulator datalists)."""
     names, venues = set(), set()
     for fmt in ("t20", "odi", "test"):
         for matches in get_fantasy(fmt).values():
@@ -156,12 +171,24 @@ def teams():
                     names.add(stats["team"] + suffix)
                 if stats.get("venue"):
                     venues.add(stats["venue"])
-    return {"teams": sorted(names), "venues": sorted(venues)}
+
+    # Case-fold dedupe for team labels; registry dedupe for venues
+    by_cf = {}
+    for n in names:
+        by_cf.setdefault(n.casefold(), n)
+    deduped_teams = sorted(by_cf.values())
+
+    return {
+        "teams": deduped_teams,
+        "venues": _vreg.dedupe_venues(venues),
+        "venue_stats": _vreg.registry_stats(),
+    }
 
 
 @app.get("/venues")
 def venues():
-    return {"venues": sorted({m.get("venue") for m in get_matches_json() if m.get("venue")})}
+    raw = {m.get("venue") for m in get_matches_json() if m.get("venue")}
+    return {"venues": _vreg.dedupe_venues(raw)}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

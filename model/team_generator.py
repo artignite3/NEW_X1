@@ -32,6 +32,7 @@ import pulp
 from model.name_resolver import PlayerNameResolver
 from model.predict_model import predict_squad
 from intelligence.pitch_analyzer import get_venue_profile, pitch_multiplier
+from intelligence.venue_registry import canonical_venue
 from intelligence.weather_fetcher import fetch_venue_weather, weather_multiplier
 
 BASE = Path(__file__).resolve().parent.parent
@@ -427,10 +428,29 @@ def solve_xi(stats_df: pd.DataFrame,
     lp = pulp.LpProblem("NEW_X1_Optimization", pulp.LpMaximize)
     x = {i: pulp.LpVariable(f"x_{i}", cat="Binary") for i in range(n)}
     objective = pulp.lpSum((mu[i] - risk_aversion * var[i]) * x[i] for i in range(n))
+
+    # Pairwise covariance terms (correlation-aware risk). Kept only for pairs
+    # whose covariance is meaningful: sub-threshold pairs are estimation noise
+    # from <=65 aligned samples, and every kept pair costs one binary plus three
+    # constraints. Unpruned, CBC 2.10 thrashes in branch-and-bound past its time
+    # limit once n >= ~22 (O(n^2) pairs, dense degenerate LP relaxation).
+    COV_PRUNE_RATIO = 0.10
+    offdiag = [
+        abs(float(cov_matrix.iloc[i, j]))
+        for i in range(n) for j in range(i + 1, n)
+        if len(cov_matrix) == n
+    ]
+    cov_cap = max(offdiag) if offdiag else 0.0
+    pair_budget = 0
     for i in range(n):
         for j in range(i + 1, n):
             covariance = float(cov_matrix.iloc[i, j]) if len(cov_matrix) == n else 0.0
-            if risk_aversion and abs(covariance) > 1e-8:
+            if (
+                risk_aversion
+                and cov_cap > 0
+                and abs(covariance) >= COV_PRUNE_RATIO * cov_cap
+            ):
+                pair_budget += 1
                 pair = pulp.LpVariable(f"pair_{i}_{j}", cat="Binary")
                 lp += pair <= x[i]
                 lp += pair <= x[j]
@@ -466,8 +486,12 @@ def solve_xi(stats_df: pd.DataFrame,
                 lp += pulp.lpSum(x[i] for i in t_idx) >= 1
                 lp += pulp.lpSum(x[i] for i in t_idx) <= 7
 
-    lp.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=5, threads=1))
-    status = pulp.LpStatus[lp.status]
+    try:
+        lp.solve(pulp.PULP_CBC_CMD(msg=False, timeLimit=10, threads=1))
+        status = pulp.LpStatus[lp.status]
+    except pulp.PulpSolverError as e:
+        print(f"[WARN] CBC solver failed: {e}")
+        return [], "SolverError"
     selected = [players[i] for i in range(n) if (x[i].value() or 0) > 0.5] if status == "Optimal" else []
     return selected, status
 
@@ -501,7 +525,7 @@ def generate_best_team(payload: dict) -> dict:
     if match_id:
         pool, meta = pool_from_match_squads(match_id, fmt)
         date = validate_date(payload.get("date") or meta["date"])
-        venue = payload.get("venue") or meta["venue"] or "Neutral Venue"
+        venue = canonical_venue(payload.get("venue") or meta["venue"] or "Neutral Venue")
         team1, team2 = meta["squads"]["team1_name"], meta["squads"]["team2_name"]
     else:
         if not team1 or not team2:
@@ -510,7 +534,7 @@ def generate_best_team(payload: dict) -> dict:
             raise ValueError("The two teams must differ")
         date = validate_date(payload.get("date") or (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"))
         pool = pool_from_custom_teams(team1, team2, fmt, date)
-        venue = payload.get("venue") or "Neutral Venue"
+        venue = canonical_venue(payload.get("venue") or "Neutral Venue")
 
     today = datetime.now().strftime("%Y-%m-%d")
     if mode == "prediction" and date <= today:
