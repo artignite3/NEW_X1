@@ -110,7 +110,7 @@ export default function AccountPanel() {
             : { phone: address.trim(), token: code, type: "sms" });
           if (error) throw error;
           setCode(""); setSent(false);
-        }); }}><label className="block text-sm">Verification code<input required pattern="[0-9]{6}" maxLength={6} inputMode="numeric"
+        }); }}><label className="block text-sm">Verification code<input required pattern="[0-9]{6,8}" maxLength={8} inputMode="numeric"
           autoComplete="one-time-code" className={inputStyle} value={code} onChange={(event) => setCode(event.target.value)} /></label>
           <Button disabled={busy} type="submit">Verify and sign in</Button></form>}
       </>}
