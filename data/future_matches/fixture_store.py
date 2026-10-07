@@ -46,8 +46,9 @@ def read_valid(path: Path) -> dict:
     return validate_feed(json.loads(path.read_text(encoding="utf-8")))
 
 
-def publish(payload: dict, primary: Path = PRIMARY, backup: Path = BACKUP) -> None:
+def publish(payload: dict, primary: Path | None = None, backup: Path | None = None) -> None:
     """Keep the old valid feed before atomically making a new one visible."""
+    primary, backup = Path(primary or PRIMARY), Path(backup or BACKUP)
     validate_feed(payload)
     primary.parent.mkdir(parents=True, exist_ok=True)
     if primary.exists():
@@ -68,8 +69,9 @@ def publish(payload: dict, primary: Path = PRIMARY, backup: Path = BACKUP) -> No
     os.replace(temporary, primary)
 
 
-def load(primary: Path = PRIMARY, backup: Path = BACKUP, today: date | None = None) -> dict:
+def load(primary: Path | None = None, backup: Path | None = None, today: date | None = None) -> dict:
     """Only verified, future records are served; provenance reveals fallback."""
+    primary, backup = Path(primary or PRIMARY), Path(backup or BACKUP)
     today = today or date.today()
     failures = []
     for path, fallback in ((primary, False), (backup, True)):

@@ -31,8 +31,9 @@ def read_valid(path):
     return validate(json.loads(Path(path).read_text(encoding="utf-8")))
 
 
-def publish(payload, primary=PRIMARY, backup=BACKUP):
-    primary, backup = Path(primary), Path(backup)
+def publish(payload, primary=None, backup=None):
+    primary, backup = Path(primary or PRIMARY), Path(backup or BACKUP)
+    primary.parent.mkdir(parents=True, exist_ok=True)
     validate(payload)
     previous = None
     if primary.exists():
@@ -62,7 +63,8 @@ def publish(payload, primary=PRIMARY, backup=BACKUP):
     os.replace(temp, primary)
 
 
-def load(primary=PRIMARY, backup=BACKUP):
+def load(primary=None, backup=None):
+    primary, backup = Path(primary or PRIMARY), Path(backup or BACKUP)
     failures = []
     for path, fallback in ((Path(primary), False), (Path(backup), True)):
         try:

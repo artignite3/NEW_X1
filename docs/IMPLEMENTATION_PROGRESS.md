@@ -1,6 +1,6 @@
 # NEW_X1 implementation progress
 
-Started 8 October 2026. Each independently verified step is committed and pushed to `main` before the next step begins. **Implementation paused at the user's request on 8 October.** The [updated verdict](VERDICT_AND_NEXT_VERSION_2026-10-07.md) records the current audit; the original report is retained under `docs/archive`.
+Started 8 October 2026. Each independently verified step is committed and pushed to `main` before the next step begins. **Deployment work resumed at the user's request on 8 October.** The [updated verdict](VERDICT_AND_NEXT_VERSION_2026-10-07.md) retains the paused audit; subsequent progress is recorded here. The user is creating Supabase/Render accounts and will perform external activation manually.
 
 | Step | Scope | Status |
 |---|---|---|
@@ -8,7 +8,8 @@ Started 8 October 2026. Each independently verified step is committed and pushed
 | 1b | Correct request modes, gender resolution, fixture API access and misleading intelligence labels; reconcile tests | Complete: 73 self-contained tests passed; frontend lint/build passed; all three real formats return prediction mode and valid strict teams |
 | 2 | Supabase login, access checks, saved analyses and shared explanations | Code verified: 85 tests, frontend lint/build and zero production npm audit findings; live Supabase/RLS/Google/OTP activation pending project configuration |
 | 3a | Isolated full scheduled pipeline, bounded stages and provider request budget | Code verified: 93 tests; ingestion failure stops publication, optional provider failure is reported, previous squads retained |
-| 3b | Reproducible deployment and durable artifact releases | Paused: uncommitted draft, not pushed; readiness returns HTTP 500 and actual-artifact validation rejects supported cold-start missing values |
+| 3b | Durable artifact release, restore, isolated worker and serving refresh | Code verified: 111 tests; both paused defects fixed; actual artifact release restored and booted; valid strict T20/ODI/Test generation; Python audit reports no known vulnerabilities |
+| 3c | Container/hosting definitions, CI and beginner deployment guide | In progress; actual cloud activation pending accounts |
 | 4 | Failure/restore/operational verification | Pending |
 | 5 | Public beta on configured accounts/domain | Pending external account configuration |
 | 6 | Product expansion after release gates | Pending |
@@ -18,3 +19,5 @@ Production OTP delivery and a live deployment require configured provider accoun
 Commits pushed before the next step: `50001a7` (1a), `a2824fe` (1b), `7e6c461` (2), `d68e4e2` (3a). Step 2 introduces JSON explanation persistence, owner-filtered account APIs, the Supabase SQL migration and Account UI. The deployment backend defaults to required authentication; the existing local `.env` explicitly selects development mode. Next.js was patched to 16.3.6. Five development-only ESLint glob-chain advisories remain without a compatible published fix; runtime npm audit is clean. Full uncertainty calibration, registry identities, the 30-innings scoring target and full-dataset idempotency remain open beyond the immediate product fixes.
 
 Paused audit checks: 93 Python tests passed; frontend lint/build passed; production npm audit reported zero vulnerabilities; all three real models loaded; `pip check` passed. These results do not validate the unfinished deployment draft. Docker's Linux engine was unavailable; hosted CI, real Supabase policies/providers, remote release restoration and cloud scheduling remain unverified. No application-code corrections were made during the pause.
+
+Resumed verification: local object-store publication/restoration with all actual runtime files succeeded. The serving entrypoint booted the restored release; readiness returned HTTP 200. Strict generation passed for T20 151576 (5.14s), ODI 169910 (9.34s), and Test 172671 (2.64s), with prediction mode preserved and intelligence disabled. These are local sequential observations, not hosted latency guarantees. Release/recovery tests cover corruption, both-invalid refusal, competing publishers, failed workers, rollback, immutable blobs, frozen publication inputs, busy capacity and bounded cache retention. Updated audited dependencies; `pip check` passes and pip-audit reports no known vulnerabilities in this installed environment. Actual AWS permissions/network, Linux/container execution, hosted CI and live Supabase remain unverified.

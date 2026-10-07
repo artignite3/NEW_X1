@@ -82,14 +82,16 @@ def _model_stamp(path):
     return digest
 
 
-def load_model(fmt: str):
+def load_model(fmt: str, *, allow_backup: bool = True):
     """Only a complete, schema-compatible model pair can be used."""
     errors = []
     if fmt == "t20":
         primary_model = MODEL_ARTIFACTS / "ProductUI_Model"
         primary_meta = MODEL_ARTIFACTS / "ProductUI_Model_meta.pkl"
-        for model_path, meta_path, source in ((primary_model, primary_meta, "current"),
-                                              (last_good(primary_model), last_good(primary_meta), "last_good")):
+        candidates = [(primary_model, primary_meta, "current")]
+        if allow_backup:
+            candidates.append((last_good(primary_model), last_good(primary_meta), "last_good"))
+        for model_path, meta_path, source in candidates:
             try:
                 meta = joblib.load(meta_path)
                 validate_model_metadata(meta)
@@ -104,7 +106,10 @@ def load_model(fmt: str):
                 errors.append(f"{source}: {type(error).__name__}")
     else:
         primary = MODEL_ARTIFACTS / f"tribe_{fmt}.pkl"
-        for path, source in ((primary, "current"), (last_good(primary), "last_good")):
+        candidates = [(primary, "current")]
+        if allow_backup:
+            candidates.append((last_good(primary), "last_good"))
+        for path, source in candidates:
             try:
                 bundle = joblib.load(path)
                 validate_model_metadata(bundle)

@@ -39,7 +39,8 @@ from model.team_generator import (  # noqa: E402
     validate_date,
 )
 
-app = FastAPI(title="NEW_X1 Cricket Intelligence API", version="2.0")
+from pipeline.serving import runtime_guard, public_status, STATE, release_is_fresh  # noqa: E402
+app = FastAPI(title="NEW_X1 Cricket Intelligence API", version="2.0", dependencies=[Depends(runtime_guard)])
 from model.api_schemas import GenerateRequest, ExplainRequest, SaveAnalysisRequest  # noqa: E402
 from model.auth import Principal, require_user, auth_config  # noqa: E402
 from model.user_store import UserStore  # noqa: E402
@@ -121,10 +122,25 @@ def health():
     healthy = (all(models.values()) and all(source == "current" for source in model_sources.values())
                and all(source != "last_good" for group in (feature_sources, fantasy_sources) for source in group.values())
                and not feed["warning"] and not squads["warning"])
-    return {"status": "ok" if healthy else "degraded", "models": models, "ollama": ollama_ok,
+    release = public_status()
+    healthy = healthy and not release["fallback_used"] and not release["refresh_error"] and release["last_pipeline_status"] not in {"failed", "degraded"}
+    return {"status": "ok" if healthy else "degraded", "models": models, "ollama": ollama_ok, "release": release,
             "sources": sources, "data_checked_on_request": True,
             "fixtures": {k: feed[k] for k in ("source", "fetched_at", "fallback_used", "warning")},
             "squads": {k: squads[k] for k in ("fetched_at", "fallback_used", "warning")}}
+
+
+@app.get("/live")
+def live():
+    return {"status": "alive"}
+
+
+@app.get("/ready")
+def ready():
+    auth_config()  # Raises a controlled 503 for missing/invalid deployed settings.
+    if not STATE["release_id"] or not release_is_fresh():
+        raise HTTPException(status_code=503, detail="A recent verified artifact release is required")
+    return {"status": "ready", "release": public_status()}
 
 
 @app.get("/matches")
@@ -234,6 +250,10 @@ def generate_best_team_endpoint(request_data: GenerateRequest, user: Principal =
         store = UserStore(user)
         store.consume_quota()
         result = generate_best_team(request_data.model_dump(exclude_none=True))
+        result.setdefault("data_provenance", {}).update(
+            artifact_release_id=STATE["release_id"],
+            artifact_release_created_at=STATE.get("created_at"),
+        )
         token = result["explain_token"]
         cached = _EXPLAIN_CACHE.get(token)
         if cached is None:
