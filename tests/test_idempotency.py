@@ -62,7 +62,7 @@ class IngestionIdempotencyTests(unittest.TestCase):
         (self.base / "data" / "raw").mkdir(parents=True)
         self._write_zip(runs_a=120, runs_b=118)
         self._patch = mock.patch.multiple(
-            ingestor, BASE_DIR=self.base, ARCHIVES={"t20": "t20s"},
+            ingestor, BASE_DIR=self.base, ARCHIVES={"t20": "t20s"}, data_root=lambda: self.base / "data",
         )
         self._patch.start()
 

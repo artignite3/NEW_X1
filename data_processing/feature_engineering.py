@@ -30,7 +30,9 @@ warnings.filterwarnings("ignore")
 
 # ─────────────────────────────────────────────
 BASE = Path(__file__).resolve().parent.parent
-DATA_PROCESSED = BASE / "data" / "processed"
+sys.path.insert(0, str(BASE))
+from project_paths import data_root
+DATA_PROCESSED = data_root() / "processed"
 DATA_PROCESSED.mkdir(parents=True, exist_ok=True)
 
 FORMATS = {

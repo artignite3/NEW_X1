@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from data_processing.safe_publish import promote, last_good
-from feature_engineering import (flatten_json, add_ts_features, add_context_features,
+from data_processing.feature_engineering import (flatten_json, add_ts_features, add_context_features,
     FORMATS, DATA_PROCESSED, RAW_STATS, TRAIN_CUTOFF, FEATURE_SCHEMA_VERSION)
 
 logging.basicConfig(level=logging.INFO)

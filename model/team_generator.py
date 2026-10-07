@@ -36,8 +36,9 @@ from intelligence.venue_registry import canonical_venue
 from intelligence.weather_fetcher import fetch_venue_weather, weather_multiplier
 
 BASE = Path(__file__).resolve().parent.parent
-DATA_PROCESSED = BASE / "data" / "processed"
-FUTURE_MATCHES = BASE / "data" / "future_matches"
+from project_paths import data_root
+DATA_PROCESSED = data_root() / "processed"
+FUTURE_MATCHES = data_root() / "future_matches"
 
 # ── Caches (process-level, warmed on first use per format) ───────────────────
 _FANTASY_CACHE: Dict[str, dict] = {}

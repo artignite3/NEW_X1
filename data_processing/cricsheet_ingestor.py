@@ -12,6 +12,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
+from project_paths import data_root
 from data_processing.safe_publish import promote
 from model.calculator_t20 import calculate_fantasy_points_t20
 from model.calculate_odi import calculate_fantasy_points_odi
@@ -126,7 +127,7 @@ def match_records(match, source_id, fmt):
 
 
 def ingest_format(fmt):
-    processed = BASE_DIR / "data" / "processed"
+    processed = data_root() / "processed"
     output = processed / f"player_fantasy_points_{fmt}.json"
     manifest_path = processed / f"ingestion_{fmt}.json"
     existing_valid = True
@@ -144,7 +145,7 @@ def ingest_format(fmt):
     previous = manifest.get("members", {}) if compatible else {}
     members = {}
     updated = 0
-    with zipfile.ZipFile(BASE_DIR / "data" / "raw" / f"{ARCHIVES[fmt]}_json.zip") as archive:
+    with zipfile.ZipFile(data_root() / "raw" / f"{ARCHIVES[fmt]}_json.zip") as archive:
         for item in archive.infolist():
             if not item.filename.endswith(".json"):
                 continue

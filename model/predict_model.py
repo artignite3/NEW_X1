@@ -32,8 +32,9 @@ warnings.filterwarnings("ignore")
 # Paths
 # ─────────────────────────────────────────────
 BASE = Path(__file__).resolve().parent.parent
-DATA_PROCESSED  = BASE / "data" / "processed"
-MODEL_ARTIFACTS = BASE / "model_artifacts"
+from project_paths import data_root, model_root
+DATA_PROCESSED = data_root() / "processed"
+MODEL_ARTIFACTS = model_root()
 OUTPUTS         = BASE / "outputs"
 OUTPUTS.mkdir(parents=True, exist_ok=True)
 

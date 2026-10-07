@@ -19,7 +19,9 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception: pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-RAW_DIR = BASE_DIR / "data" / "raw"
+sys.path.insert(0, str(BASE_DIR))
+from project_paths import data_root
+RAW_DIR = data_root() / "raw"
 CRICKSHEET_DIR = RAW_DIR / "cricksheet_data"
 ADDITIONAL_DIR = RAW_DIR / "additional_data"
 

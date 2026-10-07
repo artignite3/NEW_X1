@@ -30,7 +30,11 @@ load_dotenv()
 
 API_KEY = os.getenv("CRICKET_DATA_API_KEY")
 BASE = "https://api.cricapi.com/v1"
-HERE = os.path.dirname(os.path.abspath(__file__))
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from project_paths import data_root
+HERE = str(data_root() / "future_matches")
 MATCHES_FILE = os.path.join(HERE, "upcoming_matches.json")
 
 FORMAT_MAP = {"t20": "T20", "t20i": "T20", "odi": "ODI", "test": "TEST"}
@@ -165,7 +169,7 @@ def main():
         print(f"    {m['date']}  {m['match_type']:4s}  {m['team1']} vs {m['team2']}")
     print(f"  imminent international fixtures: {len(matches)}")
 
-    from fixture_store import load as load_matches, publish
+    from data.future_matches.fixture_store import load as load_matches, publish
     prior = load_matches()
     old = prior["matches"]
     new_ids = {str(m["match_id"]) for m in matches}
@@ -177,7 +181,7 @@ def main():
     ]
 
     payload = {
-        "fetched_at": datetime.now().isoformat() if matches else prior["fetched_at"] or datetime.now().isoformat(),
+        "fetched_at": datetime.now(timezone.utc).isoformat() if matches else prior["fetched_at"] or datetime.now(timezone.utc).isoformat(),
         "source": "cricketdata.org (cricapi free tier)" if matches else (prior["source"] or "cricketdata.org (empty result)"),
         "match_count": len(merged),
         "window": "tomorrow onward",
@@ -192,7 +196,7 @@ def main():
 
     if args.try_squads and matches:
         try:
-            from squad_store import load as load_squads
+            from data.future_matches.squad_store import load as load_squads
             squads = load_squads()["squads"]
         except (OSError, ValueError):
             squads = {}
@@ -217,8 +221,8 @@ def main():
             time.sleep(0.5)
 
         if not plan_locked:
-            from squad_store import publish as publish_squads
-            publish_squads({"fetched_at": datetime.now().isoformat(), "squads": squads})
+            from data.future_matches.squad_store import publish as publish_squads
+            publish_squads({"fetched_at": datetime.now(timezone.utc).isoformat(), "squads": squads})
             print(f"[OK] squads available for {len(squads)} matches")
 
 

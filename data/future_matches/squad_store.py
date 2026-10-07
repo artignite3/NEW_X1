@@ -5,7 +5,8 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-PRIMARY = Path(__file__).resolve().parent / "upcoming_squads.json"
+from project_paths import data_root
+PRIMARY = data_root() / "future_matches" / "upcoming_squads.json"
 BACKUP = PRIMARY.with_name("upcoming_squads.last_good.json")
 
 

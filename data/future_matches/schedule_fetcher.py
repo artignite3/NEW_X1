@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+from pathlib import Path
 import json
 import logging
 from plotly import data
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from collections import Counter
 from soupsieve import match
@@ -66,11 +68,9 @@ PROJECT_ROOT = os.path.abspath(
     )
 )
 
-OUTPUT_DIR = os.path.join(
-    PROJECT_ROOT,
-    "data",
-    "future_matches"
-)
+sys.path.insert(0, PROJECT_ROOT)
+from project_paths import data_root
+OUTPUT_DIR = str(data_root() / "future_matches")
 
 OUTPUT_FILE = os.path.join(
     OUTPUT_DIR,
@@ -359,7 +359,7 @@ def save_matches(matches):
     output = {
 
         "fetched_at":
-            datetime.now().isoformat(),
+            datetime.now(timezone.utc).isoformat(),
 
         "source":
             "Cricbuzz via RapidAPI",
@@ -371,7 +371,7 @@ def save_matches(matches):
             matches
     }
 
-    from fixture_store import publish
+    from data.future_matches.fixture_store import publish
     publish(output)
 
     logger.info(

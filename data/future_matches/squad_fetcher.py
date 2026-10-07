@@ -1,351 +1,124 @@
+"""Quota-bounded squad refresh; provider failures preserve verified entries."""
+import argparse
 import os
+import sys
+from pathlib import Path
+from datetime import datetime, timezone
 import requests
 from dotenv import load_dotenv
-import time
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from data.future_matches.fixture_store import load as load_matches
+from data.future_matches.squad_store import load as load_squads, publish
 
 load_dotenv()
-
-RAPID_API_KEY = os.getenv("RAPID_API_KEY")
-
 SERIES_SQUAD_CACHE = {}
 PLAYER_CACHE = {}
+_REQUESTS = 0
+_MAX_REQUESTS = 3
 
-HEADERS = {
-    "X-RapidAPI-Key": RAPID_API_KEY,
-    "X-RapidAPI-Host": "cricbuzz-cricket.p.rapidapi.com"
-}
+
+class RequestBudgetExceeded(RuntimeError):
+    pass
+
+
+def fetch(endpoint):
+    global _REQUESTS
+    if _REQUESTS >= _MAX_REQUESTS:
+        raise RequestBudgetExceeded("Squad request budget reached; existing squads retained")
+    _REQUESTS += 1
+    key = os.getenv("RAPID_API_KEY")
+    if not key:
+        raise ValueError("RAPID_API_KEY is not configured")
+    response = requests.get(f"https://cricbuzz-cricket.p.rapidapi.com/{endpoint}", timeout=20,
+        headers={"X-RapidAPI-Key": key, "X-RapidAPI-Host": "cricbuzz-cricket.p.rapidapi.com"})
+    response.raise_for_status()
+    return response.json()
+
 
 def get_series_squads(series_id):
+    if series_id not in SERIES_SQUAD_CACHE:
+        SERIES_SQUAD_CACHE[series_id] = fetch(f"series/v1/{series_id}/squads")
+    return SERIES_SQUAD_CACHE[series_id]
 
-    if series_id in SERIES_SQUAD_CACHE:
-        return SERIES_SQUAD_CACHE[series_id]
 
-    try:
+def get_squad_players(series_id, squad_id):
+    key = (str(series_id), str(squad_id))
+    if key not in PLAYER_CACHE:
+        PLAYER_CACHE[key] = fetch(f"series/v1/{series_id}/squads/{squad_id}")
+    return PLAYER_CACHE[key]
 
-        url = (
-            f"https://cricbuzz-cricket.p.rapidapi.com/"
-            f"series/v1/{series_id}/squads"
-        )
 
-        response = requests.get(
-            url,
-            headers=HEADERS,
-            timeout=20
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        SERIES_SQUAD_CACHE[series_id] = data
-
-        return data
-
-    except Exception as e:
-
-        print(
-            f"Squad list error: {e}"
-        )
-
-        return None
-def get_squad_players(
-    series_id,
-    squad_id
-):
-
-    key = (
-        str(series_id),
-        str(squad_id)
-    )
-
-    if key in PLAYER_CACHE:
-        return PLAYER_CACHE[key]
-
-    try:
-
-        url = (
-            f"https://cricbuzz-cricket.p.rapidapi.com/"
-            f"series/v1/{series_id}/squads/{squad_id}"
-        )
-
-        response = requests.get(
-            url,
-            headers=HEADERS,
-            timeout=20
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        PLAYER_CACHE[key] = data
-
-        return data
-
-    except Exception as e:
-
-        print(
-            f"Player fetch error: {e}"
-        )
-
-        return None
-
-    try:
-
-        url = (
-            f"https://cricbuzz-cricket.p.rapidapi.com/"
-            f"series/v1/{series_id}/squads/{squad_id}"
-        )
-
-        response = requests.get(
-            url,
-            headers=HEADERS,
-            timeout=20
-        )
-
-        response.raise_for_status()
-
-        return response.json()
-
-    except Exception as e:
-
-        print(
-            f"Player fetch error: {e}"
-        )
-
-        return None
-    
 def normalize_role(role):
-
     role = str(role).lower()
-
-    if "wk" in role:
-        return "WK"
-
-    if "allround" in role:
-        return "AR"
-
-    if "bowler" in role:
-        return "BOWL"
-
+    if "wk" in role or "keeper" in role: return "WK"
+    if "allround" in role: return "AR"
+    if "bowl" in role: return "BOWL"
     return "BAT"
-    
-def main():
-    # Optional: restrict to specific match ids to conserve RapidAPI quota, e.g.
-    #   python squad_fetcher.py --ids 148404,148405
-    import argparse
 
-    parser = argparse.ArgumentParser(description="Fetch squads for upcoming matches")
-    parser.add_argument(
-        "--ids",
-        default="",
-        help="Comma-separated match_ids to fetch (default: all matches in upcoming_matches.json)",
-    )
-    args = parser.parse_args()
 
-    id_filter = {i.strip() for i in args.ids.split(",") if i.strip()}
-
-    from fixture_store import load as load_matches
-    matches_data = load_matches()
-    if matches_data["warning"]:
-        print(f"[WARN] {matches_data['warning']}")
-    if not matches_data["matches"]:
-        raise SystemExit("No verified upcoming fixtures to fetch squads for")
-
-    matches_to_process = [
-        m for m in matches_data["matches"]
-        if not id_filter or str(m.get("match_id")) in id_filter
-    ]
-
-    squads_out = {
-        "fetched_at": "",
-        "squads": {}
-    }
-
-    # Merge with the existing squads file instead of replacing it — a partial
-    # quota-limited run must never wipe squads fetched for other matches.
-    from squad_store import load as load_squads
-    squads_out["squads"] = load_squads()["squads"]
-
-    for match in matches_to_process:
-
-        series_id = match.get(
-            "series_id"
-        )
-
-        match_id = match.get(
-            "match_id"
-        )
-
-        squads_json = get_series_squads(
-            series_id
-        )
-
-        if (
-            not squads_json
-            or "squads" not in squads_json
-        ):
-
-            squads_out["squads"][
-                str(match_id)
-            ] = {
-
-                "match_id": match_id,
-
-                "series": match["series"],
-
-                "team1": {
-                    "team_name": match["team1"],
-                    "players": []
-                },
-
-                "team2": {
-                    "team_name": match["team2"],
-                    "players": []
-                }
-            }
-
+def refresh_match(match, existing):
+    from model.team_generator import _teams_match, has_usable_match_squads
+    series = match.get("series_id")
+    if not series:
+        return None
+    data = get_series_squads(series)
+    blocks = []
+    for block in data.get("squads", []):
+        label = block.get("squadType", "")
+        if block.get("isHeader") or not block.get("squadId"):
             continue
-
-        all_squads = []
-
-        for squad in squads_json[
-            "squads"
-        ]:
-
-            if squad.get("isHeader"):
-                continue
-
-            squad_id = squad.get(
-                "squadId"
-            )
-
-            if not squad_id:
-                continue
-
-            players_json = (
-                get_squad_players(
-                    series_id,
-                    squad_id
-                )
-            )
-
-            players = []
-
-            if players_json:
-
-                for player in players_json.get(
-                    "player",
-                    []
-                ):
-
-                    if player.get(
-                        "isHeader"
-                    ):
-                        continue
-
-                    players.append({
-
-                        "player_id":
-                            str(
-                                player.get(
-                                    "id",
-                                    ""
-                                )
-                            ),
-
-                        "player_name":
-                            player.get(
-                                "name",
-                                ""
-                            ),
-
-                        "role":
-                            normalize_role(
-                                player.get(
-                                    "role",
-                                    ""
-                                )
-                            ),
-
-                        "batting_style":
-                            player.get(
-                                "battingStyle",
-                                "Unknown"
-                            ),
-
-                        "bowling_style":
-                            player.get(
-                                "bowlingStyle",
-                                "Unknown"
-                            ),
-
-                        "is_confirmed":
-                            True,
-
-                        "injury_status":
-                            "UNKNOWN",
-
-                        "squad_source":
-                            "cricbuzz"
-                    })
-
-            all_squads.append({
-
-                "team_name":
-                    squad.get(
-                        "squadType",
-                        ""
-                    ),
-
-                "team_id":
-                    squad.get(
-                        "teamId"
-                    ),
-
-                "players":
-                    players
-            })
-
-        squads_out["squads"][
-            str(match_id)
-        ] = {
-
-            "match_id":
-                match_id,
-
-            "series":
-                match["series"],
-
-            "series_id":
-                series_id,
-
-            "format":
-                match["match_type"],
-
-            "team1":
-                match["team1"],
-
-            "team2":
-                match["team2"],
-
-            "available_squads":
-                all_squads
-        }
-
-        print(
-            f"{match['team1']} vs "
-            f"{match['team2']} -> "
-            f"{len(all_squads)} squads"
-        )
-        squads_out["fetched_at"] = __import__("datetime").datetime.now().isoformat()
-        from squad_store import publish
-        publish(squads_out)
-
-        print(
-            f"Saved {len(squads_out['squads'])} matches"
-        )
+        if not any(_teams_match(label, team) for team in (match["team1"], match["team2"])):
+            continue
+        response = get_squad_players(series, block["squadId"])
+        players = [{"player_id": str(p.get("id", "")), "player_name": p.get("name", ""),
+                    "role": normalize_role(p.get("role", "")), "batting_style": p.get("battingStyle", ""),
+                    "bowling_style": p.get("bowlingStyle", ""), "injury_status": "UNKNOWN",
+                    "squad_source": "cricbuzz", "is_confirmed": False}
+                   for p in response.get("player", []) if not p.get("isHeader") and p.get("name")]
+        blocks.append({"team_name": label, "team_id": block.get("teamId"), "players": players})
+    entry = {"match_id": match["match_id"], "series_id": series, "series": match.get("series", ""),
+             "team1": match["team1"], "team2": match["team2"], "format": match["match_type"],
+             "fetched_at": datetime.now(timezone.utc).isoformat(), "available_squads": blocks}
+    return entry if has_usable_match_squads(match, entry) else None
 
 
-if __name__ == "__main__":
-    main()
+def main():
+    global _REQUESTS, _MAX_REQUESTS
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ids", default="")
+    parser.add_argument("--max-requests", type=int, default=3)
+    args = parser.parse_args()
+    if args.max_requests < 1: raise SystemExit("Request budget must be positive")
+    _REQUESTS, _MAX_REQUESTS = 0, args.max_requests
+    matches = load_matches()["matches"]
+    if not matches: raise SystemExit("No verified upcoming fixtures")
+    selected = set(filter(None, (i.strip() for i in args.ids.split(","))))
+    prior = load_squads()
+    output = {"squads": dict(prior["squads"]), "fetched_at": prior["fetched_at"]}
+    incomplete = False
+    changed = False
+    for match in sorted(matches, key=lambda m: m["date"]):
+        identity = str(match["match_id"])
+        if selected and identity not in selected: continue
+        try:
+            entry = refresh_match(match, output["squads"].get(identity))
+            if entry:
+                output["squads"][identity] = entry
+                output["fetched_at"] = datetime.now(timezone.utc).isoformat()
+                changed = True
+            else:
+                incomplete = True
+        except RequestBudgetExceeded:
+            incomplete = True
+            print("[WARN] Squad request budget reached; remaining entries retained")
+            break
+        except (requests.RequestException, ValueError, TypeError, KeyError):
+            incomplete = True
+            print(f"[WARN] Squad provider unavailable for {identity}; existing entry retained")
+    if changed: publish(output)
+    print(f"Squad refresh: {_REQUESTS} provider calls, {len(output['squads'])} retained match entries")
+    if incomplete: raise SystemExit(3)
+
+
+if __name__ == "__main__": main()

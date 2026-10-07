@@ -7,7 +7,8 @@ import shutil
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+from project_paths import data_root
+HERE = data_root() / "future_matches"
 PRIMARY = HERE / "upcoming_matches.json"
 BACKUP = HERE / "upcoming_matches.last_good.json"
 VALID_FORMATS = {"T20", "ODI", "TEST"}
