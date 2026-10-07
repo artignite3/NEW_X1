@@ -7,11 +7,20 @@ Configuration is read from .env (OLLAMA_BASE_URL, OLLAMA_MODEL).
 """
 
 import os
+import time
 from typing import List, Tuple
 
 try:
+    import httpx
     import ollama
-    _client = ollama.Client(host=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"))
+    # Hard timeout: a hung/unreachable Ollama must never stall API responses.
+    # Use 127.0.0.1 — 'localhost' can resolve to ::1 and hang on TCP connect.
+    _raw_host = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
+    _host = _raw_host.replace("localhost", "127.0.0.1")
+    _client = ollama.Client(
+        host=_host,
+        timeout=httpx.Timeout(60.0, connect=3.0),
+    )
     HAS_OLLAMA = True
 except ImportError:
     _client = None
@@ -19,17 +28,27 @@ except ImportError:
 
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
 
+# Availability probe cache — avoids re-stalling on every explanation call
+_avail_cache: tuple[float, bool] = (0.0, False)
+_AVAIL_TTL = 60.0
+
 
 def ollama_available() -> bool:
     """True when the Ollama server is reachable and the model is pulled."""
-    if not HAS_OLLAMA:
-        return False
-    try:
-        models = _client.list()
-        names = [m.get("model", "") for m in models.get("models", [])]
-        return any(OLLAMA_MODEL in n for n in names) or len(names) > 0
-    except Exception:
-        return False
+    global _avail_cache
+    now = time.time()
+    if now - _avail_cache[0] < _AVAIL_TTL:
+        return _avail_cache[1]
+    ok = False
+    if HAS_OLLAMA:
+        try:
+            models = _client.list()
+            names = [m.get("model", "") for m in models.get("models", [])]
+            ok = any(OLLAMA_MODEL in n for n in names) or len(names) > 0
+        except Exception:
+            ok = False
+    _avail_cache = (now, ok)
+    return ok
 
 
 def generate_player_explanation(

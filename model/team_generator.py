@@ -170,6 +170,29 @@ def _norm_team(label: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", (label or "").lower()).strip()
 
 
+# Generic tokens that must not drive team matching ("India Squad" ~ "India",
+# but "India Women" must not match "India" in a men's fixture)
+_TEAM_STOP_TOKENS = {"squad", "xi", "one", "off", "test", "odi", "t20", "t20i", "second"}
+
+
+def _team_tokens(label: str) -> set:
+    return {
+        t for t in _norm_team(label).split()
+        if t and t not in _TEAM_STOP_TOKENS
+    }
+
+
+def _teams_match(a: str, b: str) -> bool:
+    """Token-overlap team matching, robust to 'Hong Kong, China' vs 'Hong Kong Squad'."""
+    ta, tb = _team_tokens(a), _team_tokens(b)
+    if not ta or not tb:
+        return False
+    overlap = ta & tb
+    if not overlap:
+        return False
+    return ta <= tb or tb <= ta or len(overlap) >= min(len(ta), len(tb))
+
+
 def _map_role(raw: Optional[str]) -> Optional[str]:
     if not raw:
         return None
@@ -178,11 +201,7 @@ def _map_role(raw: Optional[str]) -> Optional[str]:
 
 def _pick_squad_for_team(available_squads: List[dict], team: str, fmt: str) -> Optional[dict]:
     """Chooses the right squad block for a team, preferring format-matching ones."""
-    t_norm = _norm_team(team)
-    candidates = [
-        s for s in available_squads
-        if t_norm and t_norm in _norm_team(s.get("team_name", ""))
-    ]
+    candidates = [s for s in available_squads if _teams_match(s.get("team_name", ""), team)]
     if not candidates:
         return None
 
@@ -205,7 +224,12 @@ def get_match_info(match_id) -> Optional[dict]:
 
 
 def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
-    """Builds the player pool from Cricbuzz squads for an upcoming fixture."""
+    """
+    Builds the player pool from Cricbuzz squads for an upcoming fixture.
+    Handles both stored schemas:
+      - available_squads: [{team_name, players: [...]}, ...]
+      - direct:           {team1: {team_name, players}, team2: {...}}
+    """
     squads_json = get_squads_json()
     entry = squads_json.get(str(match_id))
     if not entry:
@@ -213,29 +237,48 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
 
     match = get_match_info(match_id) or entry
     team1, team2 = match.get("team1") or entry.get("team1"), match.get("team2") or entry.get("team2")
+    team1_label = team1.get("team_name") if isinstance(team1, dict) else team1
+    team2_label = team2.get("team_name") if isinstance(team2, dict) else team2
     venue = match.get("venue", "")
     date = match.get("date", "")
     fmt = normalize_format(fmt or match.get("match_type", "t20"))
 
+    # Flatten the two schemas into per-team player lists
+    per_team: Dict[str, List[dict]] = {team1_label: [], team2_label: []}
+    if isinstance(entry.get("available_squads"), list):
+        for team_label in (team1_label, team2_label):
+            block = _pick_squad_for_team(entry["available_squads"], team_label, fmt)
+            per_team[team_label] = (block or {}).get("players", [])
+    else:
+        for team_label, key in ((team1_label, "team1"), (team2_label, "team2")):
+            node = entry.get(key)
+            if isinstance(node, dict):
+                per_team[team_label] = node.get("players", [])
+
     pool = []
-    squads_out = {"team1_name": team1, "team2_name": team2, "team1": [], "team2": []}
-    for team_label, key in ((team1, "team1"), (team2, "team2")):
-        block = _pick_squad_for_team(entry.get("available_squads", []), team_label, fmt)
+    squads_out = {"team1_name": team1_label, "team2_name": team2_label, "team1": [], "team2": []}
+    for team_label, key in ((team1_label, "team1"), (team2_label, "team2")):
         seen = set()
-        for p in (block or {}).get("players", []):
-            name = (p.get("player_name") or "").strip()
+        for p in per_team[team_label]:
+            name = (p.get("player_name") or p.get("name") or "").strip() if isinstance(p, dict) else str(p).strip()
             if not name or name in seen:
                 continue
             seen.add(name)
             player = {
                 "display_name": name,
-                "role": _map_role(p.get("role")),
+                "role": _map_role(p.get("role")) if isinstance(p, dict) else None,
                 "team": team_label,
-                "injury_status": (p.get("injury_status") or "UNKNOWN").upper(),
+                "injury_status": (p.get("injury_status") or "UNKNOWN").upper() if isinstance(p, dict) else "UNKNOWN",
                 "source": "cricbuzz_squad",
             }
             pool.append(player)
             squads_out[key].append(player)
+
+    if len(pool) < 2:
+        raise ValueError(
+            f"Squad data for match {match_id} is incomplete ({len(pool)} players). "
+            "Re-run data/future_matches/squad_fetcher.py to refresh squads."
+        )
     return pool, {"match": match, "venue": venue, "date": date, "squads": squads_out}
 
 

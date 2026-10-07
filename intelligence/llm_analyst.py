@@ -28,9 +28,9 @@ def generate_team_report(cached: dict, drivers_by_player: Dict[str, List[dict]])
 
     use_llm = llm_inference.ollama_available()
 
-    jobs = []  # (fantasy_key, entry, is_selected)
-    for key, p in players.items():
-        jobs.append((key, p, key in set(selected_keys)))
+    # LLM narration is reserved for the selected XI — the bench gets driver
+    # chips only (11 calls instead of 31 keeps CPU-only Ollama responsive).
+    jobs = [(k, players[k], True) for k in selected_keys if k in players]
 
     explanations: Dict[str, str] = {}
 
