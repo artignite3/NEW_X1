@@ -7,7 +7,7 @@ This no-card setup publishes the Next.js interface on Cloudflare Pages and serve
 1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open **Workers & Pages → Create → Pages → Direct Upload**. The current project name is `new-x1`, giving `https://new-x1.pages.dev`.
 2. In `frontend/.env.local`, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's public values. You may set `NEXT_PUBLIC_API_BASE` to the current tunnel origin to make the API work for all visitors immediately. Set `NEXT_PUBLIC_PHONE_AUTH_ENABLED=false` until phone login is ready. This file is ignored by Git.
 3. Run `npm ci` once, then `npm run build:static` in `frontend`. Zip the *contents* of `frontend/out`, with `index.html` at the zip root. Upload that zip to the Pages project and select **Save and deploy**. A Git push alone does not update a Direct Upload project.
-4. Check `/`, `/simulator`, `/account`, and `/settings` on `https://new-x1.pages.dev`. Before enabling live sign-in, set Supabase Auth's Site URL to this Pages URL and add `https://new-x1.pages.dev/account` to the allowed redirects.
+4. Check `/`, `/simulator`, `/account`, and `/settings` on `https://new-x1.pages.dev`. Supabase Auth's Site URL is set to this Pages URL, with `https://new-x1.pages.dev/account` allowed as a redirect; the localhost account redirect remains for development. A fresh Google sign-in on the deployed site completed on 10 October 2026. Reused OAuth callbacks can report `flow_state_already_used`; start a new sign-in from `/account` instead of reopening the old callback.
 
 ## Start the laptop API and tunnel
 
