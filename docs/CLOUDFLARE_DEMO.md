@@ -32,4 +32,21 @@ OpenSSH remembers the SSH server key on first use; a changed key stops the conne
 
 The API process binds only to `127.0.0.1`; the selected tunnel makes it reachable externally. Anyone who learns the tunnel address can request public API routes. Supabase authentication remains required for account-protected operations. This temporary setup is unsuitable as an always-on production service.
 
+## Keep fixture data current
+
+The launcher starts the API and tunnel; it does not fetch new cricket data. From the checkout that holds your `.env` and `data` directory, run the fixture fetcher when the feed is stale:
+
+```powershell
+Set-Location 'D:\Personal Coding\Data Science and ML\NEW_X1'
+.\env\Scripts\python.exe data/future_matches/schedule_fetcher.py
+```
+
+The API reads the updated file on the next `/matches` or `/health` request. If the provider fails, the API keeps serving only still-future matches from the verified last-good snapshot and reports the warning. Squads have a separate feed; refreshing fixtures does not refresh squads. The squad fetcher uses a bounded provider-request budget:
+
+```powershell
+.\env\Scripts\python.exe data/future_matches/squad_fetcher.py --max-requests 3
+```
+
+Check `/health` afterward. A partial squad refresh can still leave matches without usable squads. This laptop setup has no automatic daily sync, so rerun the refresh while the laptop is online.
+
 Sources: [Cloudflare static Next.js guide](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/), [Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/), [cloudflared downloads](https://developers.cloudflare.com/tunnel/downloads/).
