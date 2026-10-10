@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/", label: "Fixtures" },
   { href: "/simulator", label: "Simulator" },
   { href: "/account", label: "Account" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export default function AppNav() {

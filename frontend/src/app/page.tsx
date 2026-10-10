@@ -1,34 +1,32 @@
-import { connection } from "next/server";
+"use client";
+
+import { useEffect, useState } from "react";
 import AppNav from "@/components/AppNav";
 import FixturesBoard from "@/components/FixturesBoard";
+import { getMatches } from "@/lib/api";
 import type { Match } from "@/lib/types";
 
-interface FixtureFeed { matches: Match[]; warning: string | null; }
+export default function Home() {
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [warning, setWarning] = useState<string | null>(null);
 
-async function loadUpcomingMatches(): Promise<FixtureFeed> {
-  const base = process.env.API_INTERNAL_BASE ?? process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
-  try {
-    const response = await fetch(`${base}/matches`, {
-      cache: "no-store", signal: AbortSignal.timeout(8000),
+  useEffect(() => {
+    let active = true;
+    getMatches().then((feed) => {
+      if (!active) return;
+      setMatches(Array.isArray(feed.matches) ? feed.matches : []);
+      setWarning(feed.warning ?? null);
+    }).catch((error) => {
+      if (active) setWarning(error instanceof Error ? error.message : "Fixtures are temporarily unavailable.");
     });
-    if (!response.ok) throw new Error("Fixture API unavailable");
-    const feed = await response.json();
-    if (!Array.isArray(feed.matches)) throw new Error("Invalid fixture response");
-    return { matches: feed.matches, warning: typeof feed.warning === "string" ? feed.warning : null };
-  } catch {
-    return { matches: [], warning: "Fixtures are temporarily unavailable. Please try again shortly." };
-  }
-}
-
-export default async function Home() {
-  await connection();
-  const feed = await loadUpcomingMatches();
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
       <AppNav />
       <main className="flex-1 w-full max-w-7xl mx-auto px-5 md:px-8 py-8 md:py-10">
-        <FixturesBoard matches={feed.matches} feedWarning={feed.warning} />
+        <FixturesBoard matches={matches} feedWarning={warning} />
       </main>
       <footer className="border-t border-line-soft">
         <div className="max-w-7xl mx-auto px-5 md:px-8 h-12 flex items-center justify-between">
