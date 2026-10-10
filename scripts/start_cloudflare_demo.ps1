@@ -1,0 +1,51 @@
+param(
+    [Parameter(Mandatory = $true)][string]$ArtifactsRoot,
+    [Parameter(Mandatory = $true)][string]$SiteOrigin,
+    [int]$Port = 8000
+)
+
+$ErrorActionPreference = 'Stop'
+$projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$artifacts = (Resolve-Path -LiteralPath $ArtifactsRoot).Path
+$python = Join-Path $artifacts 'env\Scripts\python.exe'
+if (-not (Test-Path -LiteralPath $python)) { throw "Python environment missing: $python" }
+if (-not (Test-Path -LiteralPath (Join-Path $artifacts 'model_artifacts'))) { throw 'Model artifacts are missing.' }
+if (-not (Test-Path -LiteralPath (Join-Path $artifacts 'data\processed'))) { throw 'Processed data is missing.' }
+$cloudflared = Get-Command cloudflared -ErrorAction SilentlyContinue
+$cloudflaredPath = if ($cloudflared) { $cloudflared.Source } else { 'C:\Program Files (x86)\cloudflared\cloudflared.exe' }
+if (-not (Test-Path -LiteralPath $cloudflaredPath)) { throw 'Install cloudflared before starting this demo.' }
+$siteUri = [Uri]$SiteOrigin
+if ($siteUri.Scheme -ne 'https' -or $siteUri.AbsoluteUri.TrimEnd('/') -ne $siteUri.GetLeftPart([System.UriPartial]::Authority)) {
+    throw 'SiteOrigin must be an HTTPS origin with no path, query or fragment.'
+}
+
+$env:APP_ENV = 'staging'
+$env:CORS_ORIGINS = "$($siteUri.GetLeftPart([System.UriPartial]::Authority)),http://localhost:3000,http://127.0.0.1:3000"
+$env:NEW_X1_DATA_ROOT = Join-Path $artifacts 'data'
+$env:NEW_X1_MODEL_ROOT = Join-Path $artifacts 'model_artifacts'
+$envFile = Join-Path $artifacts '.env'
+$arguments = '-m uvicorn model.model_fastapi:app --host 127.0.0.1 --port ' + $Port
+if (Test-Path -LiteralPath $envFile) { $arguments += ' --env-file "' + $envFile + '"' }
+$logDir = Join-Path $projectRoot 'outputs'
+New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+$api = Start-Process -FilePath $python -ArgumentList $arguments -WorkingDirectory $projectRoot `
+    -RedirectStandardOutput (Join-Path $logDir 'cloudflare_api.out.log') `
+    -RedirectStandardError (Join-Path $logDir 'cloudflare_api.err.log') `
+    -WindowStyle Hidden -PassThru
+
+try {
+    $ready = $false
+    for ($i = 0; $i -lt 30; $i++) {
+        if ($api.HasExited) { throw 'API exited during startup. Check outputs/cloudflare_api.err.log.' }
+        try {
+            $response = Invoke-WebRequest -Uri "http://127.0.0.1:$Port/live" -TimeoutSec 2
+            if ($response.StatusCode -eq 200) { $ready = $true; break }
+        } catch { Start-Sleep -Seconds 1 }
+    }
+    if (-not $ready) { throw 'API did not start within 30 seconds. Check outputs/cloudflare_api.err.log.' }
+    Write-Host "API ready on http://127.0.0.1:$Port"
+    Write-Host 'Cloudflare will print a temporary HTTPS URL. Paste it into the website Settings page.'
+    & $cloudflaredPath tunnel --url "http://127.0.0.1:$Port"
+} finally {
+    if (-not $api.HasExited) { Stop-Process -Id $api.Id -ErrorAction SilentlyContinue }
+}
