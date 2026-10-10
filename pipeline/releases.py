@@ -19,7 +19,7 @@ REQUIRED = tuple([
 ] + ["data/future_matches/upcoming_matches.json", "data/future_matches/upcoming_squads.json",
      "model_artifacts/ProductUI_Model", "model_artifacts/ProductUI_Model_meta.pkl",
      "model_artifacts/tribe_odi.pkl", "model_artifacts/tribe_test.pkl"])
-OPTIONAL = tuple(f"data/processed/ingestion_{fmt}.json" for fmt in ("t20", "odi", "test"))
+OPTIONAL = tuple(f"data/processed/ingestion_{fmt}.json" for fmt in ("t20", "odi", "test")) + ("data/venue_history.json",)
 ALLOWED = set(REQUIRED + OPTIONAL)
 
 

@@ -1,16 +1,13 @@
 """
-NEW_X1 — Intelligence Layer: Pitch & Venue Analyzer (PAF Score)
-Provides explicitly labelled curated T20 priors. Other formats and unknown
-venues receive neutral adjustments until format-specific evidence is available.
-
-Categories:
-  - BATTING: High avg 1st innings score (> 175 in T20), high boundary % (multiplier: 1.10 for batters)
-  - BOWLING: Low avg score (< 145 in T20), high wickets per match (multiplier: 1.15 for bowlers)
-  - SPIN FRIENDLY: High spin wicket ratio (multiplier: 1.15 for spinners)
-  - NEUTRAL: Balanced conditions (multiplier: 1.0)
+NEW_X1 — Intelligence Layer: Pitch & Venue Analyzer (PAF Score).
+Date-safe historical reports take priority when sufficient evidence exists.
+They are descriptive and apply neutral multipliers. The curated T20 priors
+remain a labelled fallback; unsupported venue/format combinations are neutral.
 """
 
 from typing import Dict, Any
+
+from intelligence.venue_history import report as historical_report
 
 # Curated pitch baseline profiles for prominent venues
 VENUE_PROFILES = {
@@ -90,7 +87,8 @@ VENUE_PROFILES = {
 }
 
 
-def get_venue_profile(venue_name: str, format_type: str = "t20") -> Dict[str, Any]:
+def get_venue_profile(venue_name: str, format_type: str = "t20", *,
+                      as_of: str | None = None, gender: str = "male") -> Dict[str, Any]:
     """
     Return a format-scoped prior without presenting curated numbers as statistics.
     """
@@ -98,6 +96,10 @@ def get_venue_profile(venue_name: str, format_type: str = "t20") -> Dict[str, An
     if not v_clean:
         v_clean = "unknown venue"
     fmt = format_type.lower()
+    if as_of:
+        empirical = historical_report(venue_name, fmt, as_of, gender)
+        if empirical is not None:
+            return empirical
     if fmt == "t20":
         for key, profile in VENUE_PROFILES.items():
             if key in v_clean or v_clean in key:

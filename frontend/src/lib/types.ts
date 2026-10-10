@@ -57,13 +57,37 @@ export interface PitchProfile {
   category: string;
   avg_1st_innings: number | null;
   boundary_pct: number | null;
-  source: "curated_prior" | "unavailable";
+  source: "historical" | "curated_prior" | "unavailable";
   format: string;
   sample_size: number | null;
   batter_mult: number;
   pacer_mult: number;
   spinner_mult: number;
   description: string;
+  bowling_bias?: string;
+  confidence?: "low" | "moderate";
+  scoring_vs_peers_pct?: number;
+  wickets_vs_peers_pct?: number;
+  as_of?: string;
+  snapshot_latest_match?: string;
+  snapshot_fallback?: boolean;
+  last5?: PitchWindow;
+  last10?: PitchWindow;
+  style_evidence?: { pace: { balls: number }; spin: { balls: number } };
+}
+
+export interface PitchWindow {
+  matches: number;
+  same_format_matches: number;
+  avg_1st_innings: number | null;
+  wickets_per_innings: number | null;
+  defended: number;
+  decided_limited_overs: number;
+  low_total_defences: number;
+  runs_per_over: number | null;
+  boundary_pct: number | null;
+  from_date: string | null;
+  to_date: string | null;
 }
 
 export interface GenerationSummary {

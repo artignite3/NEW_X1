@@ -74,6 +74,12 @@ def validate(root):
     squads = read_squads(root / "data/future_matches/upcoming_squads.json")
     summary["fixtures_fetched_at"] = fixtures["fetched_at"]
     summary["squads_fetched_at"] = squads["fetched_at"]
+    venue_path = root / "data" / "venue_history.json"
+    if venue_path.exists():
+        from intelligence.venue_history import validate_snapshot
+        with venue_path.open(encoding="utf-8") as handle:
+            history = validate_snapshot(json.load(handle))
+        summary["venue_history_matches"] = len(history["matches"])
     return summary
 
 

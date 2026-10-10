@@ -1,6 +1,6 @@
 "use client";
 
-import type { PitchProfile, Weather } from "@/lib/types";
+import type { PitchProfile, PitchWindow, Weather } from "@/lib/types";
 import { IconCloud, IconDroplet, IconLayers, IconWind } from "./icons";
 import { Chip, Rivets, SectionLabel } from "./ui";
 
@@ -58,6 +58,22 @@ const PITCH_TONES: Record<string, string> = {
   NEUTRAL: "text-fg-dim border-line",
 };
 
+function HistoryWindow({ title, window }: { title: string; window: PitchWindow }) {
+  return (
+    <div className="border border-line-soft rounded-[4px] p-3">
+      <div className="mono-label text-fg mb-2">{title} · {window.matches} matches</div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Stat label="Runs / over" value={window.runs_per_over?.toFixed(2) ?? "—"} />
+        <Stat label="Boundaries" value={window.boundary_pct === null ? "—" : `${window.boundary_pct}%`} />
+        <Stat label="1st innings*" value={window.avg_1st_innings?.toFixed(0) ?? "—"} />
+        <Stat label="Wickets*" value={window.wickets_per_innings?.toFixed(1) ?? "—"} />
+      </div>
+      <div className="mono-label text-fg-mute mt-2">{window.from_date} to {window.to_date} · *{window.same_format_matches} same-format matches</div>
+      <div className="mono-label text-fg-mute mt-1">Defended {window.defended}/{window.decided_limited_overs} decided limited-over games · {window.low_total_defences} below-peer totals defended</div>
+    </div>
+  );
+}
+
 export function PitchPanel({ pitch }: { pitch: PitchProfile }) {
   return (
     <div className="plate p-5">
@@ -75,7 +91,8 @@ export function PitchPanel({ pitch }: { pitch: PitchProfile }) {
             {pitch.category}
           </span>
           <div className="mono-label text-fg-mute mt-2">
-            {pitch.source === "curated_prior" ? `Curated prior · ${pitch.format.toUpperCase()}` : "Profile unavailable · neutral"}
+            {pitch.source === "historical" ? `Historical venue trend · ${pitch.confidence} confidence` :
+              pitch.source === "curated_prior" ? `Curated prior · ${pitch.format.toUpperCase()}` : "Profile unavailable · neutral"}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4 text-right">
@@ -86,6 +103,21 @@ export function PitchPanel({ pitch }: { pitch: PitchProfile }) {
       </div>
 
       <p className="text-xs text-fg-dim mt-3 leading-relaxed">{pitch.description}</p>
+      {pitch.source === "historical" && (
+        <div className="mt-3 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Chip tone="accent">{pitch.bowling_bias ?? "INSUFFICIENT EVIDENCE"}</Chip>
+            <Chip tone="ok">Scoring vs peers {pitch.scoring_vs_peers_pct! >= 0 ? "+" : ""}{pitch.scoring_vs_peers_pct}%</Chip>
+            <Chip tone="accent">Wickets vs peers {pitch.wickets_vs_peers_pct! >= 0 ? "+" : ""}{pitch.wickets_vs_peers_pct}%</Chip>
+          </div>
+          {pitch.style_evidence && <p className="text-[11px] text-fg-mute">Bowling-style evidence: {pitch.style_evidence.pace.balls} pace and {pitch.style_evidence.spin.balls} spin legal balls in this venue window.</p>}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {pitch.last5 && <HistoryWindow title="Last 5" window={pitch.last5} />}
+            {pitch.last10 && <HistoryWindow title="Last 10" window={pitch.last10} />}
+          </div>
+          <p className="text-[11px] text-fg-mute">As of {pitch.as_of} · Derived from <a className="underline" href="https://cricsheet.org/" target="_blank" rel="noreferrer">Cricsheet data</a> (<a className="underline" href="https://cricsheet.org/licensing/" target="_blank" rel="noreferrer">ODC Attribution licence</a>) · Team adjustments neutral{pitch.snapshot_fallback ? " · Last validated backup in use" : ""}.</p>
+        </div>
+      )}
     </div>
   );
 }

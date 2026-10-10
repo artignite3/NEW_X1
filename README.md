@@ -121,7 +121,7 @@ Optional generation flags: `use_ml` (saved model vs recent-form statistics), `us
 
 - **Name resolver** (`model/name_resolver.py`): bridges Cricbuzz display names and Cricsheet keys. Gender-filtered, ambiguity is refused rather than guessed — a wrong match silently corrupts predictions.
 - **Team generator** (`model/team_generator.py`): orchestrates prediction, league priors for players without history, PAF pitch multipliers, injury multipliers, PSD covariance, and the PuLP solver. Strict constraints are the default; relaxation requires an explicit request flag and is independently validated.
-- **Intelligence layer** (`intelligence/`): Open-Meteo weather with venue geocoding + 30-min cache, curated pitch profiles (PAF), injury status engine, SHAP driver extraction, Ollama analyst.
+- **Intelligence layer** (`intelligence/`): Open-Meteo weather with venue geocoding + 30-min cache, dated Cricsheet-derived venue-history reports with validated fallback to curated pitch profiles or neutral adjustments, injury status engine, SHAP driver extraction, Ollama analyst. Historical reports are descriptive and leave fantasy-point multipliers neutral pending backtests. See [Pitch Control report](docs/PITCH_CONTROL_REPORT_PLAN.md).
 
 ## ⚖️ Hard Rules
 

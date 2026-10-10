@@ -34,7 +34,7 @@ class ProductContractTests(unittest.TestCase):
             self.assertIsNone(profile["avg_1st_innings"])
             self.assertEqual(profile["batter_mult"], 1.)
 
-    def generate(self, mode="prediction", relaxed=False):
+    def generate(self, mode="prediction", relaxed=False, *, intelligence=False, venue=""):
         roles = ["WK"] + ["BAT"] * 4 + ["AR"] * 2 + ["BOWL"] * 4
         if relaxed:
             roles = ["BAT"] * 11
@@ -47,10 +47,19 @@ class ProductContractTests(unittest.TestCase):
              patch.object(generator, "get_fantasy", return_value={}), \
              patch.object(generator, "get_resolver", return_value=resolver), \
              patch.object(generator, "get_league_prior", return_value=(30., 10.)), \
+             patch.object(generator, "fetch_venue_weather", return_value={"available": False, "summary": "Unavailable"}), \
              patch.object(generator, "canonical_venue", side_effect=lambda name: name):
             return generator.generate_best_team({"team1": "Alpha", "team2": "Beta", "format": "t20",
                 "date": "2026-10-12" if mode == "prediction" else "2026-10-06", "mode": mode,
-                "use_ml": False, "use_intelligence": False, "allow_relaxation": relaxed})
+                "venue": venue, "use_ml": False, "use_intelligence": intelligence, "allow_relaxation": relaxed})
+
+    def test_historical_pitch_report_reaches_generation_without_score_adjustment(self):
+        result = self.generate(intelligence=True, venue="Wankhede Stadium")
+        pitch = result["intelligence"]["pitch"]
+        self.assertEqual(pitch["source"], "historical")
+        self.assertEqual(pitch["as_of"], "2026-10-12")
+        self.assertGreaterEqual(pitch["last10"]["matches"], 5)
+        self.assertTrue(all(player["pitch_multiplier"] == 1.0 for player in result["best_team"]))
 
     def test_prediction_and_retrospective_modes_survive_strict_solver(self):
         for mode in ("prediction", "retrospective"):

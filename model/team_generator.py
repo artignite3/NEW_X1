@@ -671,7 +671,8 @@ def generate_best_team(payload: dict) -> dict:
     fallback_var = float(np.median([p["stat_var"] for p in players_with_var])) if players_with_var else prior_var
 
     # ── Intelligence layer ───────────────────────────────────────────────
-    pitch = get_venue_profile(venue, fmt) if use_intelligence else None
+    gender = "female" if "women" in f"{team1} {team2}".lower() else "male"
+    pitch = get_venue_profile(venue, fmt, as_of=date, gender=gender) if use_intelligence else None
     weather = None
     intelligence_warnings = []
     if use_intelligence:

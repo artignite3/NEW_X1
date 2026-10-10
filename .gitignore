@@ -55,4 +55,6 @@ data/future_matches/*.last_good.json
 
 # Local rollback copies of generated data and models
 data/processed/*.last_good
+data/venue_history.json.last_good
+data/venue_history.json.tmp
 model_artifacts/*.last_good

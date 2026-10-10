@@ -48,6 +48,7 @@ def run_sync(skip_download=False, historical_only=False, environment=None):
         if not skip_download:
             stages.append(("data_processing.data_download", (), 1800, 2, True))
         stages.extend([("data_processing.cricsheet_ingestor", (), 1800, 1, True),
+                       ("intelligence.build_venue_history", (), 300, 1, False),
                        ("data_processing.incremental_feature_append", (), 1800, 1, True)])
         if not historical_only:
             stages.extend([("data.future_matches.schedule_fetcher", (), 180, 1, False),
