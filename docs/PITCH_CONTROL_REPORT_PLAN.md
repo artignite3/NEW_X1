@@ -2,7 +2,7 @@
 
 ## Goal and current status
 
-Show a defensible venue-history report when a verified match-day pitch assessment is unavailable. The report is historical evidence, not a claim about the exact strip or weather on match day. The descriptive report, offline snapshot, last-good recovery, API response, and simulator panel are implemented on `codex/pitch-control-report`. Historical evidence does not yet alter fantasy-point multipliers; that requires the independent backtest below.
+Show a defensible venue-history report when a verified match-day pitch assessment is unavailable. The report is historical evidence, not a claim about the exact strip or weather on match day. The descriptive report, offline snapshot, last-good recovery, API response, and simulator panel are implemented on `pitch-control-report`. Historical evidence does not yet alter fantasy-point multipliers; that requires the independent backtest below.
 
 ## Source and identity
 
