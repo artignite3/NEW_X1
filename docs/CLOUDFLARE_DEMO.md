@@ -1,17 +1,17 @@
 # Cloudflare Pages + laptop backend
 
-This no-card setup publishes the Next.js interface on Cloudflare Pages and serves the ML API from this laptop through a temporary Cloudflare Quick Tunnel. The website stays online; ML features work while the laptop and tunnel are running. Quick Tunnels are for demos and their URL changes on restart.
+This no-card setup publishes the Next.js interface on Cloudflare Pages and serves the ML API from this laptop through a temporary HTTPS tunnel. The website stays online; ML features work while the laptop and tunnel are running. Tunnel URLs change on restart.
 
 ## Publish the website
 
-1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open **Workers & Pages → Create → Pages → Connect to Git**. Select GitHub repository `artignite3/NEW_X1` and branch `main`.
-2. Set project root to `frontend`, build command to `npm run build:static`, and output directory to `out`. Set `NODE_VERSION=22` if the default is older.
-3. Under build environment variables, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's Supabase URL and publishable key. Leave `NEXT_PUBLIC_API_BASE` unset because the Quick Tunnel address changes. Set `NEXT_PUBLIC_PHONE_AUTH_ENABLED=false` until phone login is ready.
-4. Deploy and record the assigned `https://<project>.pages.dev` address. On the Cloudflare site, `/`, `/simulator`, `/account`, and `/settings` should all load. Set Supabase Auth's Site URL to the Pages URL and add `https://<project>.pages.dev/account` to the allowed redirects.
+1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open **Workers & Pages → Create → Pages → Direct Upload**. The current project name is `new-x1`, giving `https://new-x1.pages.dev`.
+2. In `frontend/.env.local`, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's public values. You may set `NEXT_PUBLIC_API_BASE` to the current tunnel origin to make the API work for all visitors immediately. Set `NEXT_PUBLIC_PHONE_AUTH_ENABLED=false` until phone login is ready. This file is ignored by Git.
+3. Run `npm ci` once, then `npm run build:static` in `frontend`. Zip the *contents* of `frontend/out`, with `index.html` at the zip root. Upload that zip to the Pages project and select **Save and deploy**. A Git push alone does not update a Direct Upload project.
+4. Check `/`, `/simulator`, `/account`, and `/settings` on `https://new-x1.pages.dev`. Before enabling live sign-in, set Supabase Auth's Site URL to this Pages URL and add `https://new-x1.pages.dev/account` to the allowed redirects.
 
 ## Start the laptop API and tunnel
 
-1. Install Cloudflare's `cloudflared` once. On Windows, `winget install --id Cloudflare.cloudflared --exact --source winget` is one option. Reopen PowerShell so the command is on PATH.
+1. For the Cloudflare tunnel, install `cloudflared` once. On Windows, `winget install --id Cloudflare.cloudflared --exact --source winget` is one option. Reopen PowerShell so the command is on PATH. The `LocalhostRun` fallback uses Windows OpenSSH instead.
 2. Keep `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` configured in the local `.env` beside the model artifacts. The launcher sets `APP_ENV=staging` and allows the exact Pages origin through CORS.
 3. From this repository, start the API and tunnel together:
 
@@ -19,9 +19,17 @@ This no-card setup publishes the Next.js interface on Cloudflare Pages and serve
    .\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot 'D:\Personal Coding\Data Science and ML\NEW_X1' -SiteOrigin 'https://YOUR-PROJECT.pages.dev'
    ```
 
-4. The terminal prints an `https://...trycloudflare.com` address. Open the Pages website's **Settings**, paste that origin, and select **Save and test connection**. Refresh Fixtures after a successful test. Each browser stores its own tunnel URL, so other visitors must enter it on their own devices.
-5. Leave the terminal open. Stopping the command stops the tunnel and API. On the next start, paste the newly assigned URL into Settings.
+4. The terminal prints a temporary HTTPS address. If the current Pages build has no `NEXT_PUBLIC_API_BASE`, open the website's **Settings**, paste the tunnel origin, and select **Save and test connection**. Refresh Fixtures after a successful test. Each browser saves this override separately. To serve the same address automatically to all visitors, put it in `frontend/.env.local` as `NEXT_PUBLIC_API_BASE`, rebuild and redeploy the static site.
+5. Leave the terminal open. Stopping the command stops the tunnel and API. On the next start, paste the newly assigned URL into Settings. The URL baked into a prior static build will be stale until that build is redeployed.
 
-The API process binds only to `127.0.0.1`; Cloudflare makes it reachable externally through the tunnel. Anyone who learns the Quick Tunnel address can request public API routes. Supabase authentication remains required for account-protected operations. This temporary setup is unsuitable as an always-on production service.
+If this network blocks `api.trycloudflare.com`, use the same static Cloudflare Pages site with the account-free [localhost.run](https://localhost.run/) tunnel:
+
+```powershell
+.\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot 'D:\Personal Coding\Data Science and ML\NEW_X1' -SiteOrigin 'https://YOUR-PROJECT.pages.dev' -TunnelProvider LocalhostRun
+```
+
+OpenSSH remembers the SSH server key on first use; a changed key stops the connection. This fallback URL may end in `.lhr.life` or another hostname shown by the tunnel and changes over time. If a browser security interstitial appears, do not bypass it; use the Cloudflare tunnel after your DNS administrator allows it.
+
+The API process binds only to `127.0.0.1`; the selected tunnel makes it reachable externally. Anyone who learns the tunnel address can request public API routes. Supabase authentication remains required for account-protected operations. This temporary setup is unsuitable as an always-on production service.
 
 Sources: [Cloudflare static Next.js guide](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/), [Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/), [cloudflared downloads](https://developers.cloudflare.com/tunnel/downloads/).

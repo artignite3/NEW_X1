@@ -31,7 +31,7 @@ export default function SettingsPage() {
     <main className="w-full max-w-3xl mx-auto px-5 py-8">
       <section className="plate p-6 space-y-4">
         <h1 className="text-2xl font-semibold">Backend connection</h1>
-        <p className="text-fg-dim">Paste the HTTPS address shown by Cloudflare Tunnel. Update it here whenever you restart a Quick Tunnel.</p>
+        <p className="text-fg-dim">Paste the HTTPS address shown by your backend tunnel. Update it here whenever the tunnel address changes.</p>
         <label className="block text-sm text-fg-dim" htmlFor="api-address">Backend address</label>
         <input id="api-address" type="url" value={address} onChange={(event) => setAddress(event.target.value)}
           placeholder="https://example.trycloudflare.com" className="w-full rounded border border-line bg-ink px-3 py-2 text-fg" />

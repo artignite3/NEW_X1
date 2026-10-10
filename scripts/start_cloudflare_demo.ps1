@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$ArtifactsRoot,
     [Parameter(Mandatory = $true)][string]$SiteOrigin,
+    [ValidateSet('Cloudflare', 'LocalhostRun')][string]$TunnelProvider = 'Cloudflare',
     [int]$Port = 8000
 )
 
@@ -11,9 +12,13 @@ $python = Join-Path $artifacts 'env\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw "Python environment missing: $python" }
 if (-not (Test-Path -LiteralPath (Join-Path $artifacts 'model_artifacts'))) { throw 'Model artifacts are missing.' }
 if (-not (Test-Path -LiteralPath (Join-Path $artifacts 'data\processed'))) { throw 'Processed data is missing.' }
-$cloudflared = Get-Command cloudflared -ErrorAction SilentlyContinue
-$cloudflaredPath = if ($cloudflared) { $cloudflared.Source } else { 'C:\Program Files (x86)\cloudflared\cloudflared.exe' }
-if (-not (Test-Path -LiteralPath $cloudflaredPath)) { throw 'Install cloudflared before starting this demo.' }
+if ($TunnelProvider -eq 'Cloudflare') {
+    $cloudflared = Get-Command cloudflared -ErrorAction SilentlyContinue
+    $cloudflaredPath = if ($cloudflared) { $cloudflared.Source } else { 'C:\Program Files (x86)\cloudflared\cloudflared.exe' }
+    if (-not (Test-Path -LiteralPath $cloudflaredPath)) { throw 'Install cloudflared before starting this demo.' }
+} elseif (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
+    throw 'OpenSSH is required for the localhost.run tunnel.'
+}
 $siteUri = [Uri]$SiteOrigin
 if ($siteUri.Scheme -ne 'https' -or $siteUri.AbsoluteUri.TrimEnd('/') -ne $siteUri.GetLeftPart([System.UriPartial]::Authority)) {
     throw 'SiteOrigin must be an HTTPS origin with no path, query or fragment.'
@@ -44,8 +49,14 @@ try {
     }
     if (-not $ready) { throw 'API did not start within 30 seconds. Check outputs/cloudflare_api.err.log.' }
     Write-Host "API ready on http://127.0.0.1:$Port"
-    Write-Host 'Cloudflare will print a temporary HTTPS URL. Paste it into the website Settings page.'
-    & $cloudflaredPath tunnel --url "http://127.0.0.1:$Port"
+    Write-Host 'The tunnel will print a temporary HTTPS URL. Paste it into the website Settings page.'
+    if ($TunnelProvider -eq 'Cloudflare') {
+        & $cloudflaredPath tunnel --url "http://127.0.0.1:$Port"
+    } else {
+        & ssh -T -o StrictHostKeyChecking=accept-new -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 `
+            -R "80:127.0.0.1:$Port" nokey@localhost.run
+    }
+    if ($LASTEXITCODE -ne 0) { throw "$TunnelProvider tunnel failed with exit code $LASTEXITCODE." }
 } finally {
     if (-not $api.HasExited) { Stop-Process -Id $api.Id -ErrorAction SilentlyContinue }
 }
