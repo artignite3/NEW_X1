@@ -2,6 +2,12 @@
 
 NEW_X1 analyzes upcoming cricket fixtures and recommends a playing XI for T20, ODI and Test matches. The [public website](https://new-x1.pages.dev/) is a static Next.js site on Cloudflare Pages. The FastAPI backend and saved ML models run on the operator's laptop and are available to the website only while its HTTPS tunnel is running.
 
+## Project film
+
+[![NEW_X1 launch film preview](frontend/public/launch-preview.gif)](https://new-x1.pages.dev/launch.mp4)
+
+The full launch film plays in the preview above. Select it to watch with sound.
+
 ## Use the live site
 
 Open [new-x1.pages.dev](https://new-x1.pages.dev/). Fixtures show whether provider, series or dated last-match squads are available; an incomplete two-team pool remains pending. The Custom Simulator accepts a manually selected match. If analysis is offline, request that the backend be started by [email](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message](https://wa.me/918982094147).
