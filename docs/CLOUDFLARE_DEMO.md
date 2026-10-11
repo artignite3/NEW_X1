@@ -34,7 +34,7 @@ The publishable Supabase key is designed for browser use; never add a Supabase s
    .\run_all.bat
    ```
 
-   The launcher automatically finds a sibling `NEW_X1` artifact checkout on this laptop. In another layout, pass `--artifacts-root` to `run_all.py`. It verifies all three ML models, tries Cloudflare first, then localhost.run, and retries later without stopping the local API if both fail.
+   The launcher automatically finds a sibling `NEW_X1` artifact checkout on this laptop. In another layout, pass `--artifacts-root` to `run_all.py`. It verifies all three ML models, tries Cloudflare over HTTP/2 first, then localhost.run, and retries later without stopping the local API if both fail. It prints `PUBLIC API` only after the public health check succeeds.
 
 4. The terminal prints a temporary HTTPS address. If the current Pages build has no `NEXT_PUBLIC_API_BASE`, open the website's **Settings**, paste the tunnel origin, and select **Save and test connection**. Refresh Fixtures after a successful test. Each browser saves this override separately. To serve the same address automatically to all visitors, put it in `frontend/.env.local` as `NEXT_PUBLIC_API_BASE`, rebuild and redeploy the static site.
 5. Leave the terminal open. Stopping the command stops the tunnel and API. On the next start, paste the newly assigned URL into Settings. The URL baked into a prior static build will be stale until that build is redeployed.
@@ -47,7 +47,7 @@ To use only the account-free [localhost.run](https://localhost.run/) tunnel inst
 
 OpenSSH remembers the SSH server key on first use; a changed key stops the connection. This fallback URL may end in `.lhr.life` or another hostname shown by the tunnel and changes over time. If a browser security interstitial appears, do not bypass it; use the Cloudflare tunnel after your DNS administrator allows it.
 
-If both tunnel hosts fail DNS resolution, inspect the network's DNS filter or ask its administrator to allow `api.trycloudflare.com` and `localhost.run`. An address of `0.0.0.0` for either host indicates a blocked lookup. You can still verify the models locally with `run_all.bat --local-only`; check `http://127.0.0.1:8000/health`. Do not put `127.0.0.1` or `localhost` in the deployed website's Settings: visitors' browsers would point to their own computers.
+If both tunnel hosts fail DNS resolution, inspect the network's DNS filter or ask its administrator to allow `api.trycloudflare.com` and `localhost.run`. An address of `0.0.0.0` for either host indicates a blocked lookup. Cloudflare Tunnel also needs outbound TCP port 7844; this launcher uses HTTP/2 because QUIC/UDP timed out on this laptop's network. A temporary URL that returns HTTP 530 is not a working backend, so the launcher retries instead of announcing it. You can still verify the models locally with `run_all.bat --local-only`; check `http://127.0.0.1:8000/health`. Do not put `127.0.0.1` or `localhost` in the deployed website's Settings: visitors' browsers would point to their own computers.
 
 The API process binds only to `127.0.0.1`; the selected tunnel makes it reachable externally. Anyone who learns the tunnel address can request public API routes. Supabase authentication remains required for account-protected operations. This temporary setup is unsuitable as an always-on production service.
 

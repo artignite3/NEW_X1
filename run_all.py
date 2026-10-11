@@ -124,7 +124,8 @@ def cloudflared_command(port: int) -> list[str]:
     binary = installed or (str(windows_default) if windows_default.is_file() else None)
     if not binary:
         raise StartupError("cloudflared is not installed or on PATH")
-    return [binary, "tunnel", "--url", f"http://127.0.0.1:{port}"]
+    # This laptop can reach Cloudflare over TCP 7844, while QUIC/UDP times out.
+    return [binary, "tunnel", "--protocol", "http2", "--url", f"http://127.0.0.1:{port}"]
 
 
 def localhost_run_command(port: int) -> list[str]:
@@ -150,12 +151,19 @@ def launch_tunnel(provider: str, port: int, timeout: int = 30) -> Tunnel:
     process = subprocess.Popen(command, cwd=PROJECT_ROOT, stdin=subprocess.DEVNULL,
                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                text=True, encoding="utf-8", errors="replace", bufsize=1)
-    lines: queue.Queue[str] = queue.Queue()
+    lines: queue.Queue[str] = queue.Queue(maxsize=200)
 
     def read_output() -> None:
         assert process.stdout is not None
         for line in process.stdout:
-            lines.put(line.rstrip())
+            try:
+                lines.put_nowait(line.rstrip())
+            except queue.Full:
+                try:
+                    lines.get_nowait()
+                    lines.put_nowait(line.rstrip())
+                except (queue.Empty, queue.Full):
+                    pass
 
     threading.Thread(target=read_output, daemon=True).start()
     deadline = time.monotonic() + timeout
@@ -177,6 +185,33 @@ def launch_tunnel(provider: str, port: int, timeout: int = 30) -> Tunnel:
                   recent[-1] if recent else "no URL received")
     detail = detail[-500:]
     raise StartupError(f"{provider} tunnel unavailable: {detail}")
+
+
+def wait_for_public_api(tunnel: Tunnel, timeout: int = 30) -> dict:
+    """Announce a tunnel only after its public URL serves the loaded models."""
+    deadline = time.monotonic() + timeout
+    last_error = "no public response"
+    while time.monotonic() < deadline:
+        if tunnel.process.poll() is not None:
+            last_error = f"tunnel process exited (code {tunnel.process.returncode})"
+            break
+        try:
+            health = get_health(tunnel.url + "/health", timeout=4)
+            if (health.get("status") == "ok"
+                    and all(health.get("models", {}).get(name) for name in MODEL_FORMATS)):
+                return health
+            last_error = "public health response does not have all three models ready"
+        except (OSError, ValueError, TimeoutError) as exc:
+            last_error = str(exc)
+        time.sleep(1)
+    recent = []
+    while not tunnel.lines.empty():
+        recent.append(tunnel.lines.get_nowait())
+    diagnostic = next((line for line in reversed(recent)
+                       if any(word in line.lower() for word in ("failed", "error", "could not"))),
+                      "")
+    detail = (diagnostic or last_error)[-500:]
+    raise StartupError(f"{tunnel.provider} public API did not become healthy: {detail}")
 
 
 def check_port(port: int) -> None:
@@ -248,18 +283,18 @@ def main() -> int:
                 next_retry = 0.0
             if not args.local_only and tunnel is None and time.monotonic() >= next_retry:
                 for provider in providers:
+                    candidate: Tunnel | None = None
                     try:
                         print(f"Connecting {provider} tunnel...", flush=True)
-                        tunnel = launch_tunnel(provider, args.port)
+                        candidate = launch_tunnel(provider, args.port)
+                        public_health = wait_for_public_api(candidate)
+                        tunnel = candidate
                         print(f"PUBLIC API: {tunnel.url}", flush=True)
                         print(f"Open {origin}/settings and paste this URL, then Save and test connection.", flush=True)
-                        try:
-                            public_health = get_health(tunnel.url + "/health", timeout=8)
-                            print(f"Public API check: {public_health.get('status', 'unknown')}", flush=True)
-                        except (OSError, ValueError, TimeoutError) as exc:
-                            print(f"Public API check could not complete: {exc}", flush=True)
+                        print(f"Public API check: {public_health['status']}", flush=True)
                         break
                     except StartupError as exc:
+                        stop_process(candidate.process if candidate else None)
                         print(exc, flush=True)
                 if tunnel is None:
                     print(f"API remains local; retrying tunnels in {args.retry_seconds}s.", flush=True)

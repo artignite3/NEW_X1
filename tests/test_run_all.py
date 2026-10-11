@@ -3,6 +3,7 @@
 import socket
 import tempfile
 import unittest
+from queue import Queue
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -50,6 +51,17 @@ class LauncherTests(unittest.TestCase):
         with patch.object(run_all, "get_health", return_value={"models": {"t20": True, "odi": False, "test": True}}):
             with self.assertRaisesRegex(run_all.StartupError, "odi"):
                 run_all.wait_for_api(process, 8001)
+
+    def test_public_url_waits_for_healthy_tunnel(self):
+        process = Mock()
+        process.poll.return_value = None
+        tunnel = run_all.Tunnel(process, Queue(), "cloudflare", "https://demo.trycloudflare.com")
+        ready = {"status": "ok", "models": {name: True for name in run_all.MODEL_FORMATS}}
+        with patch.object(run_all, "get_health", side_effect=[OSError("HTTP 530"), ready]) as check:
+            with patch.object(run_all.time, "sleep"):
+                self.assertEqual(run_all.wait_for_public_api(tunnel), ready)
+        self.assertEqual(check.call_count, 2)
+        self.assertEqual(check.call_args.args[0], tunnel.url + "/health")
 
     def test_occupied_port_is_not_reused(self):
         with socket.socket() as listener:
