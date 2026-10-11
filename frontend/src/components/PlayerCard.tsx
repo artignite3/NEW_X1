@@ -19,7 +19,7 @@ export default function PlayerCard({ player, rank, isCaptain, isViceCaptain }: P
 
   return (
     <div
-      className={`plate p-5 flex flex-col gap-3 transition-colors duration-150 h-full ${
+      className={`plate p-4 sm:p-5 flex flex-col gap-3 transition-colors duration-150 h-full ${
         injured ? "opacity-60 border-danger/30" : "hover:border-fg-mute/60"
       }`}
     >

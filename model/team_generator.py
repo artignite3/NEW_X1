@@ -551,6 +551,10 @@ def pool_from_custom_teams(team1: str, team2: str, fmt: str, match_date: str) ->
                 elif day == latest_date:
                     names.add(name)
         if not names:
+            fallback = last_completed_team_squad(label, fmt, match_date)
+            if fallback:
+                names = set(fallback["players"])
+        if not names:
             raise ValueError(f"No completed {fmt.upper()} squad for '{label}' before {match_date}")
         pool.extend({"display_name": n, "role": None, "team": label,
                      "injury_status": "UNKNOWN", "source": "latest_completed_squad"} for n in sorted(names))

@@ -45,49 +45,81 @@ export default function AppNav() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-5 md:px-8 h-14 flex items-center justify-between gap-6">
-        <div className="flex items-center gap-3 min-w-0">
-          <Image
-            src="/brand/new-x1-nav-icon.png"
-            alt=""
-            width={32}
-            height={32}
-            className="shrink-0 rounded-md"
-            unoptimized
-          />
-          <span className="font-bold tracking-[0.08em] text-[15px] text-fg">NEW_X1</span>
-          <span className="hidden md:block w-px h-4 bg-line" />
-          <span className="hidden md:block mono-label text-fg-mute !tracking-[0.22em]">
-            Cricket Performance Intelligence
-          </span>
+    <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/90 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Top bar: Brand + Desktop Nav + Status */}
+        <div className="h-14 flex items-center justify-between gap-3 sm:gap-6">
+          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <Image
+              src="/brand/new-x1-nav-icon.png"
+              alt=""
+              width={30}
+              height={30}
+              className="shrink-0 rounded-md"
+              unoptimized
+            />
+            <span className="font-bold tracking-[0.08em] text-sm sm:text-[15px] text-fg shrink-0">
+              NEW_X1
+            </span>
+            <span className="hidden lg:block w-px h-4 bg-line shrink-0" />
+            <span className="hidden lg:block mono-label text-fg-mute !tracking-[0.2em] truncate">
+              Cricket Performance Intelligence
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Desktop / Tablet inline nav */}
+            <nav className="hidden md:flex items-center gap-1" aria-label="Main navigation">
+              {LINKS.map((l) => {
+                const active = pathname === l.href;
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    className={`relative mono-label px-3 py-2 transition-colors ${
+                      active ? "text-fg" : "text-fg-mute hover:text-fg-dim"
+                    }`}
+                  >
+                    {l.label}
+                    {active && (
+                      <span className="absolute left-3 right-3 -bottom-[11px] h-[2px] bg-accent" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+            <span className="hidden md:block w-px h-4 bg-line mx-1" />
+            <StatusBadge availability={availability} />
+          </div>
         </div>
 
-        <nav className="flex items-center gap-1">
+        {/* Mobile navigation strip (< md) */}
+        <nav
+          className="md:hidden grid grid-cols-4 gap-1 border-t border-line-soft/80 py-1.5 -mx-4 px-3 bg-well/60"
+          aria-label="Mobile navigation"
+        >
           {LINKS.map((l) => {
             const active = pathname === l.href;
             return (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`relative mono-label px-3 py-2 transition-colors ${
-                  active ? "text-fg" : "text-fg-mute hover:text-fg-dim"
+                className={`text-center mono-label !text-[9.5px] !tracking-[0.12em] py-2 px-1 rounded-[4px] transition-colors truncate ${
+                  active
+                    ? "bg-accent/15 text-accent border border-accent/35 font-medium"
+                    : "text-fg-mute hover:text-fg-dim border border-transparent"
                 }`}
               >
                 {l.label}
-                {active && (
-                  <span className="absolute left-3 right-3 -bottom-[13px] h-[2px] bg-accent" />
-                )}
               </Link>
             );
           })}
-          <span className="w-px h-4 bg-line mx-2" />
-          <StatusBadge availability={availability} />
         </nav>
       </div>
+
       {availability.state !== "checking" && availability.state !== "online" && (
-        <div role="status" className="border-t border-warn/30 bg-[#241b10] px-5 py-3 text-sm text-fg-dim">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-2 gap-y-1">
+        <div role="status" className="border-t border-warn/30 bg-[#241b10] px-4 sm:px-6 lg:px-8 py-2.5 text-xs sm:text-sm text-fg-dim">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-2 gap-y-1 leading-relaxed">
             <span className="font-semibold text-warn">Analysis temporarily unavailable.</span>
             <span>{availability.state === "no_models" ? "The backend is online, but its ML models are not ready." : availability.state === "partial_models" ? "The backend is online, but some ML formats are unavailable." : "The website is online, but the laptop backend is offline or disconnected."}</span>
             <span>To request that we start the backend and ML engine,</span>

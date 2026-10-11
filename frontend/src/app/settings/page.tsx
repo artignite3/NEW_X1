@@ -26,19 +26,31 @@ export default function SettingsPage() {
     }
   }
 
-  return <>
-    <AppNav />
-    <main className="w-full max-w-3xl mx-auto px-5 py-8">
-      <section className="plate p-6 space-y-4">
-        <h1 className="text-2xl font-semibold">Backend connection</h1>
-        <p className="text-fg-dim">Paste the HTTPS address shown by your backend tunnel. Update it here whenever the tunnel address changes.</p>
-        <label className="block text-sm text-fg-dim" htmlFor="api-address">Backend address</label>
-        <input id="api-address" type="url" value={address} onChange={(event) => setAddress(event.target.value)}
-          placeholder="https://example.trycloudflare.com" className="w-full rounded border border-line bg-ink px-3 py-2 text-fg" />
-        <Button onClick={connect}>Save and test connection</Button>
-        {message && <p role="status" className="text-sm text-fg-dim">{message}</p>}
-        <p className="text-xs text-fg-mute">This address is saved only in this browser. The backend is available while your laptop and tunnel are running.</p>
-      </section>
-    </main>
-  </>;
+  return (
+    <div className="min-h-screen flex flex-col">
+      <AppNav />
+      <main className="flex-1 w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-10">
+        <section className="plate p-4 sm:p-6 space-y-4">
+          <h1 className="text-xl sm:text-2xl font-semibold">Backend connection</h1>
+          <p className="text-xs sm:text-sm text-fg-dim leading-relaxed">
+            Paste the HTTPS address shown by your backend tunnel. Update it here whenever the tunnel address changes.
+          </p>
+          <label className="block text-sm text-fg-dim" htmlFor="api-address">Backend address</label>
+          <input
+            id="api-address"
+            type="url"
+            value={address}
+            onChange={(event) => setAddress(event.target.value)}
+            placeholder="https://example.trycloudflare.com"
+            className="field w-full px-3 py-2.5 text-sm text-fg"
+          />
+          <Button onClick={connect} className="w-full sm:w-auto">Save and test connection</Button>
+          {message && <p role="status" className="text-xs sm:text-sm text-fg-dim break-words">{message}</p>}
+          <p className="text-xs text-fg-mute leading-relaxed">
+            This address is saved only in this browser. The backend is available while your laptop and tunnel are running.
+          </p>
+        </section>
+      </main>
+    </div>
+  );
 }

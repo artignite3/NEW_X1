@@ -28,7 +28,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from model.team_generator import (  # noqa: E402
     _EXPLAIN_CACHE,
+    _fantasy_history_stamp,
     generate_best_team,
+    get_datewise_json,
     get_fantasy,
     get_match_info,
     get_matches_json,
@@ -61,12 +63,17 @@ app.add_middleware(
 # Built lazily on first venue call — building scans the fantasy datasets.
 from intelligence import venue_registry as _vreg  # noqa: E402
 
+_TEAMS_CACHE: dict = {"stamp": None, "payload": None}
+
 
 def _build_venue_registry():
     from collections import Counter
     counts = Counter()
-    for fmt in ("t20", "odi", "test"):
-        fantasy = get_fantasy(fmt)
+    for fmt in ("test", "odi", "t20"):
+        try:
+            fantasy = get_fantasy(fmt)
+        except FileNotFoundError:
+            continue
         for matches in fantasy.values():
             for stats in matches.values():
                 venue = stats.get("venue")
@@ -227,15 +234,56 @@ def match_squads(match_id: str):
 @app.get("/teams")
 def teams():
     """Distinct team names + canonical venues (Custom Simulator datalists)."""
+    from collections import Counter
+
+    stamp = tuple(_fantasy_history_stamp(fmt) for fmt in ("t20", "odi", "test"))
+    if _TEAMS_CACHE["stamp"] == stamp and _TEAMS_CACHE["payload"] is not None:
+        return _TEAMS_CACHE["payload"]
+
     names, venues = set(), set()
-    for fmt in ("t20", "odi", "test"):
-        for matches in get_fantasy(fmt).values():
+    venue_counts: Counter = Counter()
+    for fmt in ("test", "odi", "t20"):
+        try:
+            fantasy = get_fantasy(fmt)
+        except FileNotFoundError:
+            continue
+        for matches in fantasy.values():
             for stats in matches.values():
                 if stats.get("team"):
                     suffix = " Women" if stats.get("gender") == "female" else ""
                     names.add(stats["team"] + suffix)
-                if stats.get("venue"):
-                    venues.add(stats["venue"])
+                venue = stats.get("venue")
+                if venue:
+                    venues.add(venue)
+                    venue_counts[venue] += 1
+
+    try:
+        datewise = get_datewise_json()
+        for leagues in datewise.values():
+            if not isinstance(leagues, dict):
+                continue
+            for league, fixtures in leagues.items():
+                if not isinstance(fixtures, dict):
+                    continue
+                is_women = "women" in str(league).lower()
+                for info in fixtures.values():
+                    if not isinstance(info, dict):
+                        continue
+                    for field, players in info.items():
+                        if field == "Format" or str(field).endswith("_Second_Squad") or not isinstance(players, list):
+                            continue
+                        if len({str(p).strip() for p in players if str(p).strip()}) < 11:
+                            continue
+                        label = str(field).strip()
+                        if label:
+                            if is_women and "women" not in label.lower():
+                                label = f"{label} Women"
+                            names.add(label)
+    except (OSError, ValueError, TypeError):
+        pass
+
+    if venue_counts and _vreg._REGISTRY is None:
+        _vreg._REGISTRY = _vreg.VenueRegistry(venue_counts)
 
     # Case-fold dedupe for team labels; registry dedupe for venues
     by_cf = {}
@@ -243,11 +291,14 @@ def teams():
         by_cf.setdefault(n.casefold(), n)
     deduped_teams = sorted(by_cf.values())
 
-    return {
+    payload = {
         "teams": deduped_teams,
         "venues": _vreg.dedupe_venues(venues),
         "venue_stats": _vreg.registry_stats(),
     }
+    _TEAMS_CACHE["stamp"] = stamp
+    _TEAMS_CACHE["payload"] = payload
+    return payload
 
 
 @app.get("/venues")

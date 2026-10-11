@@ -18,7 +18,8 @@ def runtime_guard(request: Request):
         yield
         return
     # Single-analysis beta capacity also protects format caches from concurrent eviction.
-    if not SNAPSHOT_LOCK.acquire(timeout=1):
+    timeout = 1 if request.url.path == "/generate_best_team" else 5
+    if not SNAPSHOT_LOCK.acquire(timeout=timeout):
         raise HTTPException(status_code=503, detail="Analysis service is busy. Please retry shortly.", headers={"Retry-After": "3"})
     try: yield
     finally: SNAPSHOT_LOCK.release()
@@ -44,6 +45,11 @@ def apply_release(root, manifest, recovery):
         setattr(teams, name, None)
     teams._DATEWISE_SOURCE = "unavailable"
     venue_registry._REGISTRY = None
+    try:
+        from model import model_fastapi
+        model_fastapi._TEAMS_CACHE.update(stamp=None, payload=None)
+    except Exception:
+        pass
     fixture_store.HERE = root / "data/future_matches"
     fixture_store.PRIMARY = fixture_store.HERE / "upcoming_matches.json"
     fixture_store.BACKUP = fixture_store.HERE / "upcoming_matches.last_good.json"

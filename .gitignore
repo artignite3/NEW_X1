@@ -58,3 +58,6 @@ data/processed/*.last_good
 data/venue_history.json.last_good
 data/venue_history.json.tmp
 model_artifacts/*.last_good
+video_launch_data/*.last_good
+.history
+video_launch

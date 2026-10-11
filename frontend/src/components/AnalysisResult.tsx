@@ -62,75 +62,86 @@ export default function AnalysisResult({ result }: Props) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div className="flex items-center gap-3 flex-wrap">
-        <Button disabled={saving || saveMessage === "Saved to your account."} onClick={async () => {
-          setSaving(true);
-          try {
-            await saveAnalysis(result.explain_token, `${request.team1} vs ${request.team2} · ${request.date}`.slice(0, 120));
-            setSaveMessage("Saved to your account.");
-          } catch (error) {
-            setSaveMessage(error instanceof Error ? error.message : "Unable to save. Please retry.");
-          } finally { setSaving(false); }
-        }}>{saving ? "Saving…" : "Save analysis"}</Button>
-        <span className="text-sm text-fg-dim" role="status">{saveMessage}</span>
+        <Button
+          className="w-full sm:w-auto"
+          disabled={saving || saveMessage === "Saved to your account."}
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await saveAnalysis(result.explain_token, `${request.team1} vs ${request.team2} · ${request.date}`.slice(0, 120));
+              setSaveMessage("Saved to your account.");
+            } catch (error) {
+              setSaveMessage(error instanceof Error ? error.message : "Unable to save. Please retry.");
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          {saving ? "Saving…" : "Save analysis"}
+        </Button>
+        {saveMessage && <span className="text-xs sm:text-sm text-fg-dim" role="status">{saveMessage}</span>}
       </div>
       {/* ── Match header ─────────────────────────────────────────────── */}
-      <Panel className="p-6 reveal">
-        <div className="flex flex-wrap justify-between gap-x-10 gap-y-5">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2.5 mb-3">
+      <Panel className="p-4 sm:p-6 reveal">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between gap-x-8 gap-y-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
               <SectionLabel accent>Optimal XI</SectionLabel>
               <Chip>{request.format.toUpperCase()}</Chip>
               <Chip tone="accent">{engineLabel}</Chip>
             </div>
-            <h2 className="text-[22px] font-semibold text-fg leading-tight">
+            <h2 className="text-lg sm:text-[22px] font-semibold text-fg leading-snug break-words">
               {request.team1}
-              <span className="text-fg-mute font-normal mx-2.5">vs</span>
+              <span className="text-fg-mute font-normal mx-2">vs</span>
               {request.team2}
             </h2>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-fg-mute">
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <IconPin size={13} />
-                <span className="truncate max-w-xs md:max-w-md">{request.venue}</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-fg-mute">
+              <span className="inline-flex items-center gap-1.5 text-xs min-w-0 max-w-full">
+                <IconPin size={13} className="shrink-0" />
+                <span className="truncate">{request.venue}</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 text-xs">
+              <span className="inline-flex items-center gap-1.5 text-xs shrink-0">
                 <IconCalendar size={13} />
                 <span className="mono-value">{request.date}</span>
               </span>
             </div>
           </div>
 
-          <div className="text-right">
-            <div className="mono-value text-4xl leading-none font-medium text-accent tabular-nums">
-              {total.toFixed(0)}
+          <div className="w-full sm:w-auto sm:text-right border-t sm:border-t-0 border-line-soft pt-3.5 sm:pt-0">
+            <div className="flex sm:block items-baseline justify-between gap-3">
+              <div className="mono-label text-fg-mute sm:hidden">Projected Team Points</div>
+              <div className="mono-value text-3xl sm:text-4xl leading-none font-medium text-accent tabular-nums">
+                {total.toFixed(0)}
+              </div>
             </div>
-            <div className="mono-label text-fg-mute mt-1.5">Projected Team Points</div>
-            <div className="mt-3 flex items-center justify-end gap-3 text-xs">
+            <div className="mono-label text-fg-mute mt-1.5 hidden sm:block">Projected Team Points</div>
+            <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center sm:justify-end gap-x-2.5 gap-y-1 text-xs">
               <span className="text-fg-mute">Captain</span>
-              <span className="text-fg font-medium">{summary.captain}</span>
+              <span className="text-fg font-medium truncate max-w-[160px] sm:max-w-none">{summary.captain}</span>
               <span className="w-px h-3.5 bg-line" />
               <span className="text-fg-mute">VC</span>
-              <span className="text-fg-dim">{summary.vice_captain}</span>
+              <span className="text-fg-dim truncate max-w-[160px] sm:max-w-none">{summary.vice_captain}</span>
             </div>
           </div>
         </div>
 
         {/* Instrumentation strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-line-soft border border-line-soft rounded-md overflow-hidden mt-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-px bg-line-soft border border-line-soft rounded-md overflow-hidden mt-5">
           <Metric icon={<IconUsers size={13} />} label="Team Split" value={Object.entries(summary.team_split).map(([t, n]) => `${n} ${t}`).join(" / ")} />
           <Metric icon={<IconShield size={13} />} label="Role Mix" value={(["WK", "BAT", "AR", "BOWL"] as const).filter((r) => summary.role_counts[r] > 0).map((r) => `${summary.role_counts[r]} ${r}`).join(" · ")} />
           <Metric icon={<IconTarget size={13} />} label="Solver" value={`${summary.solver_status} · squad ${summary.squad_size}`} />
           <Metric icon={<IconShield size={13} />} label="Constraints" value={`${summary.constraint_mode.replaceAll("_", " ")} · ${result.validation.valid ? "verified" : "invalid"}`} />
-          <Metric icon={<IconTerminal size={13} />} label="Resolution" value={`${name_resolution.resolved}/${summary.squad_size} matched`} />
+          <Metric icon={<IconTerminal size={13} />} label="Resolution" value={`${name_resolution.resolved}/${summary.squad_size} matched`} className="sm:col-span-2 md:col-span-2 xl:col-span-1" />
         </div>
       </Panel>
 
       {(result.data_provenance.warnings.length > 0 ||
         Object.values(result.data_provenance).some((value) => value === "last_good")) && (
-        <div className="flex items-start gap-2.5 text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-4 py-3">
+        <div className="flex items-start gap-2.5 text-xs sm:text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-3.5 sm:px-4 py-3">
           <IconAlert size={15} className="shrink-0 mt-0.5" />
-          <span>
+          <span className="min-w-0 break-words">
             {Object.values(result.data_provenance).some((value) => value === "last_good") ? "Using verified backup data. " : "Data warning. "}
             {result.data_provenance.warnings.join(" ")}
           </span>
@@ -141,12 +152,12 @@ export default function AnalysisResult({ result }: Props) {
       {intelligence.enabled && (intelligence.weather || intelligence.pitch) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {intelligence.weather && (
-            <div className="reveal" style={{ animationDelay: "80ms" }}>
+            <div className="reveal min-w-0" style={{ animationDelay: "80ms" }}>
               <WeatherPanel weather={intelligence.weather} />
             </div>
           )}
           {intelligence.pitch && (
-            <div className="reveal" style={{ animationDelay: "140ms" }}>
+            <div className="reveal min-w-0" style={{ animationDelay: "140ms" }}>
               <PitchPanel pitch={intelligence.pitch} />
             </div>
           )}
@@ -159,9 +170,9 @@ export default function AnalysisResult({ result }: Props) {
           <SectionLabel>Selected XI</SectionLabel>
           <span className="mono-label text-fg-mute">{best_team.length} players</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
           {best_team.map((p, i) => (
-            <div key={p.fantasy_key} className="reveal" style={{ animationDelay: `${150 + i * 55}ms` }}>
+            <div key={p.fantasy_key} className="reveal min-w-0" style={{ animationDelay: `${150 + i * 55}ms` }}>
               <PlayerCard
                 player={p}
                 rank={i + 1}
@@ -180,20 +191,20 @@ export default function AnalysisResult({ result }: Props) {
             <SectionLabel>Bench — Next Best</SectionLabel>
             <span className="mono-label text-fg-mute">{bench.length} reserves</span>
           </div>
-          <div className="well p-2">
+          <div className="well p-1.5 sm:p-2">
             {bench.slice(0, 6).map((p, i) => (
               <div
                 key={p.fantasy_key}
-                className={`flex justify-between items-center px-4 py-2.5 ${i > 0 ? "border-t border-line-soft" : ""}`}
+                className={`flex justify-between items-center gap-2 px-3 sm:px-4 py-2.5 ${i > 0 ? "border-t border-line-soft" : ""}`}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="mono-value text-xs text-fg-mute">{String(i + 12).padStart(2, "0")}</span>
-                  <span className="text-sm text-fg-dim truncate">{p.display_name}</span>
-                  <span className="mono-label !text-[9px] text-fg-mute hidden sm:inline">{ROLE_LABELS[p.role]}</span>
+                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                  <span className="mono-value text-xs text-fg-mute shrink-0">{String(i + 12).padStart(2, "0")}</span>
+                  <span className="text-xs sm:text-sm text-fg-dim truncate">{p.display_name}</span>
+                  <span className="mono-label !text-[9px] text-fg-mute hidden sm:inline shrink-0">{ROLE_LABELS[p.role]}</span>
                 </div>
-                <div className="flex items-center gap-4 shrink-0">
-                  <span className="mono-value text-xs text-fg-mute hidden md:inline">{p.team}</span>
-                  <span className="mono-value text-sm text-fg-dim w-14 text-right">{p.adjusted_score.toFixed(1)}</span>
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                  <span className="mono-value text-xs text-fg-mute hidden md:inline truncate max-w-[140px]">{p.team}</span>
+                  <span className="mono-value text-xs sm:text-sm text-fg-dim w-12 sm:w-14 text-right">{p.adjusted_score.toFixed(1)}</span>
                 </div>
               </div>
             ))}
@@ -202,30 +213,30 @@ export default function AnalysisResult({ result }: Props) {
       )}
 
       {/* ── AI Analyst Report ────────────────────────────────────────── */}
-      <Panel className="p-6 reveal" >
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-5">
-          <div className="flex items-center gap-3">
-            <span className="text-accent">
+      <Panel className="p-4 sm:p-6 reveal">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between sm:items-center gap-3 sm:gap-4 mb-5">
+          <div className="flex items-start sm:items-center gap-3 min-w-0">
+            <span className="text-accent shrink-0 mt-0.5 sm:mt-0">
               <IconTerminal size={18} />
             </span>
-            <div>
+            <div className="min-w-0">
               <SectionLabel accent>AI Analyst Report</SectionLabel>
-              <p className="text-[11px] text-fg-mute mt-1">
+              <p className="text-[11px] text-fg-mute mt-1 leading-relaxed">
                 SHAP attributions + local llama3.2 narrative — fully offline
               </p>
             </div>
           </div>
           {!report && (
-            <Button variant="outline" onClick={loadReport} disabled={reportLoading}>
+            <Button variant="outline" onClick={loadReport} disabled={reportLoading} className="w-full sm:w-auto">
               {reportLoading ? "Analyzing…" : "Generate Report"}
             </Button>
           )}
         </div>
 
         {reportError && (
-          <div className="flex items-center gap-2.5 text-sm text-danger bg-danger/5 border border-danger/25 rounded-md p-3.5">
-            <IconAlert size={15} className="shrink-0" />
-            {reportError}
+          <div className="flex items-start gap-2.5 text-xs sm:text-sm text-danger bg-danger/5 border border-danger/25 rounded-md p-3.5">
+            <IconAlert size={15} className="shrink-0 mt-0.5" />
+            <span className="min-w-0 break-words">{reportError}</span>
           </div>
         )}
 
@@ -238,8 +249,8 @@ export default function AnalysisResult({ result }: Props) {
         )}
 
         {report && (
-          <div className="space-y-5">
-            <div className="flex items-center gap-2">
+          <div className="space-y-4 sm:space-y-5">
+            <div className="flex flex-wrap items-center gap-2">
               <Chip tone={report.generated_with === "ollama" ? "accent" : "neutral"}>
                 {report.generated_with === "ollama" ? "Generated · llama3.2 local" : "Heuristic fallback"}
               </Chip>
@@ -248,7 +259,7 @@ export default function AnalysisResult({ result }: Props) {
               </Chip>
             </div>
 
-            <p className="text-sm text-fg-dim leading-relaxed border-l-2 border-accent/70 pl-4">
+            <p className="text-xs sm:text-sm text-fg-dim leading-relaxed border-l-2 border-accent/70 pl-3.5 sm:pl-4 break-words">
               {report.team_report}
             </p>
 
@@ -256,12 +267,12 @@ export default function AnalysisResult({ result }: Props) {
               {report.players
                 .filter((p) => p.selected)
                 .map((p) => (
-                  <div key={p.display_name} className="plate-flat p-4">
-                    <div className="flex justify-between items-baseline mb-2 gap-4">
-                      <span className="font-medium text-fg text-sm">{p.display_name}</span>
+                  <div key={p.display_name} className="plate-flat p-3.5 sm:p-4">
+                    <div className="flex justify-between items-baseline mb-2 gap-3">
+                      <span className="font-medium text-fg text-sm truncate">{p.display_name}</span>
                       <span className="mono-value text-xs text-accent shrink-0">{p.adjusted_score.toFixed(1)} pts</span>
                     </div>
-                    <p className="text-xs text-fg-dim leading-relaxed">{p.explanation}</p>
+                    <p className="text-xs text-fg-dim leading-relaxed break-words">{p.explanation}</p>
                     {p.drivers.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-2.5">
                         {p.drivers.map((d) => (
@@ -285,9 +296,9 @@ export default function AnalysisResult({ result }: Props) {
 
       {/* ── Data coverage note ───────────────────────────────────────── */}
       {name_resolution.unresolved.length > 0 && (
-        <div className="flex items-start gap-2.5 text-xs text-fg-mute plate-flat p-4 reveal">
+        <div className="flex items-start gap-2.5 text-xs text-fg-mute plate-flat p-3.5 sm:p-4 reveal">
           <IconAlert size={14} className="shrink-0 mt-px text-warn" />
-          <p className="leading-relaxed">
+          <p className="leading-relaxed min-w-0 break-words">
             <span className="text-fg-dim font-medium">Data coverage:</span>{" "}
             {name_resolution.unresolved.length} squad player
             {name_resolution.unresolved.length > 1 ? "s" : ""} without {request.format.toUpperCase()} history
@@ -300,14 +311,24 @@ export default function AnalysisResult({ result }: Props) {
   );
 }
 
-function Metric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Metric({
+  icon,
+  label,
+  value,
+  className = "",
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  className?: string;
+}) {
   return (
-    <div className="bg-panel px-4 py-3">
+    <div className={`bg-panel px-3.5 sm:px-4 py-3 min-w-0 ${className}`}>
       <div className="flex items-center gap-1.5 text-fg-mute mb-1">
         {icon}
         <span className="mono-label !text-[9px]">{label}</span>
       </div>
-      <div className="text-xs text-fg-dim truncate">{value}</div>
+      <div className="text-xs text-fg-dim truncate" title={value}>{value}</div>
     </div>
   );
 }
@@ -319,25 +340,25 @@ interface Props {
 // Re-exported for pages that need a loading skeleton matching this view
 export function AnalysisSkeleton({ label }: { label: string }) {
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-2">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="flex flex-wrap items-center gap-3 mb-2">
         <Progress />
         <span className="mono-label text-accent shrink-0">{label}</span>
       </div>
-      <Panel className="p-6">
-        <Skeleton className="h-3 w-28 mb-4" />
-        <Skeleton className="h-6 w-72 mb-3" />
-        <Skeleton className="h-3 w-96" />
+      <Panel className="p-4 sm:p-6">
+        <Skeleton className="h-3 w-28 max-w-full mb-4" />
+        <Skeleton className="h-6 w-72 max-w-full mb-3" />
+        <Skeleton className="h-3 w-96 max-w-full" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px mt-6 border border-line-soft rounded-md overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-panel px-4 py-3.5">
-              <Skeleton className="h-2.5 w-16 mb-2" />
-              <Skeleton className="h-3 w-24" />
+            <div key={i} className="bg-panel px-3.5 sm:px-4 py-3.5">
+              <Skeleton className="h-2.5 w-16 max-w-full mb-2" />
+              <Skeleton className="h-3 w-24 max-w-full" />
             </div>
           ))}
         </div>
       </Panel>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
         {Array.from({ length: 6 }).map((_, i) => (
           <Skeleton key={i} className="h-44 rounded-md" />
         ))}
