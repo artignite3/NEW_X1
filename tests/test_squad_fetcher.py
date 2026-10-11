@@ -35,6 +35,28 @@ class SquadFetcherTests(unittest.TestCase):
         refresh, _ = self.run_fetcher(["squad_fetcher.py", "--ids", "1"])
         self.assertEqual([call.args[0]["match_id"] for call in refresh.call_args_list], [1])
 
+    def test_missing_opponent_roster_uses_no_player_detail_calls(self):
+        match = {"match_id": 3, "series_id": 4, "match_type": "T20",
+                 "team1": "Sydney Thunder Women", "team2": "Melbourne Stars Women"}
+        series = {"squads": [{"squadId": 10, "squadType": "Sydney Thunder Women"}]}
+        with patch.object(squad_fetcher, "get_series_squads", return_value=series), \
+             patch.object(squad_fetcher, "get_squad_players") as players:
+            self.assertIsNone(squad_fetcher.refresh_match(match, None))
+        players.assert_not_called()
+
+    def test_available_both_rosters_fetches_each_once(self):
+        match = {"match_id": 3, "series_id": 4, "match_type": "T20",
+                 "team1": "Sydney Sixers Women", "team2": "ACT Women"}
+        series = {"squads": [{"squadId": 10, "squadType": "Sydney Sixers Women"},
+                              {"squadId": 11, "squadType": "ACT Women"}]}
+        detail = {"player": [{"id": i, "name": f"Player {i}", "role": "Batter"}
+                              for i in range(11)]}
+        with patch.object(squad_fetcher, "get_series_squads", return_value=series), \
+             patch.object(squad_fetcher, "get_squad_players", return_value=detail) as players:
+            entry = squad_fetcher.refresh_match(match, None)
+        self.assertIsNotNone(entry)
+        self.assertEqual([call.args[1] for call in players.call_args_list], [10, 11])
+
 
 if __name__ == "__main__":
     unittest.main()

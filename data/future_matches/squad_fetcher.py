@@ -58,18 +58,23 @@ def normalize_role(role):
 
 
 def refresh_match(match, existing):
-    from model.team_generator import _teams_match, has_usable_match_squads
+    from model.team_generator import _pick_squad_for_team, has_usable_match_squads
     series = match.get("series_id")
     if not series:
         return None
     data = get_series_squads(series)
+    available = [{**block, "team_name": block.get("squadType", "")}
+                 for block in data.get("squads", [])
+                 if isinstance(block, dict) and not block.get("isHeader") and block.get("squadId")]
+    fmt = str(match["match_type"]).lower()
+    picked = [_pick_squad_for_team(available, team, fmt)
+              for team in (match["team1"], match["team2"])]
+    # Do not spend player-detail calls if a series has no roster for either side.
+    if any(block is None for block in picked) or picked[0]["squadId"] == picked[1]["squadId"]:
+        return None
     blocks = []
-    for block in data.get("squads", []):
+    for block in picked:
         label = block.get("squadType", "")
-        if block.get("isHeader") or not block.get("squadId"):
-            continue
-        if not any(_teams_match(label, team) for team in (match["team1"], match["team2"])):
-            continue
         response = get_squad_players(series, block["squadId"])
         players = [{"player_id": str(p.get("id", "")), "player_name": p.get("name", ""),
                     "role": normalize_role(p.get("role", "")), "batting_style": p.get("battingStyle", ""),
