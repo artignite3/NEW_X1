@@ -2,6 +2,8 @@
 
 The Next.js 16 interface provides upcoming fixtures, a custom T20/ODI/Test simulator, an account page, and backend settings. The public static build is hosted at [new-x1.pages.dev](https://new-x1.pages.dev/). Supabase powers sign-in; match analysis comes from the separate Python API and ML models.
 
+Source navigation: [`src/app`](src/app/README.md) defines routes, [`src/components`](src/components/README.md) renders the fixture/analysis/account panels, [`src/lib`](src/lib/README.md) holds browser API/auth clients and types, and [`scripts`](scripts/README.md) contains build helpers. `public/brand` contains deployed image assets; its source notes are in [`design/brand`](../design/brand/README.md).
+
 ## Run locally
 
 From this directory, run `npm ci` and `npm run dev`, then open `http://localhost:3000`. Copy `.env.example` to `.env.local` and add the public Supabase URL and publishable key if using sign-in. `NEXT_PUBLIC_API_BASE` can point to a reachable backend; local development defaults to `http://localhost:8000`. Never put service-role credentials in `NEXT_PUBLIC_*` variables.

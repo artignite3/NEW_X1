@@ -10,5 +10,6 @@ Start with the [project README](../README.md) for setup and the current deployme
 | [API reference](API_REFERENCE.md) | Endpoints, error behavior and fallback contract |
 | [Authentication setup](AUTH_SETUP.md) | Supabase configuration and account checks |
 | [Pitch Control report](PITCH_CONTROL_REPORT_PLAN.md) | Venue evidence, fallback and open validation work |
+| [Current audit](audit/README.md) | Verification evidence, issue register, folder inventory and release verdict |
 
 The [archive](archive/) contains dated audits, an old issue register, implementation notes and a proposed Render/AWS deployment. Those files record earlier decisions and must not be used as instructions for the current Cloudflare deployment.

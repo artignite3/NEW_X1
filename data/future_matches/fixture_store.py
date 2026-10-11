@@ -20,7 +20,11 @@ def validate_feed(payload: dict) -> dict:
     if not all(isinstance(payload.get(k), str) and payload[k].strip()
                for k in ("fetched_at", "source")):
         raise ValueError("Fixture feed requires fetched_at and source")
-    datetime.fromisoformat(payload["fetched_at"].replace("Z", "+00:00"))
+    fetched = datetime.fromisoformat(payload["fetched_at"].replace("Z", "+00:00"))
+    if fetched.tzinfo is None:
+        fetched = fetched.replace(tzinfo=timezone.utc)
+    if fetched.astimezone(timezone.utc) > datetime.now(timezone.utc) + timedelta(minutes=5):
+        raise ValueError("Fixture feed fetched_at cannot be in the future")
     ids = set()
     for match in payload["matches"]:
         if not isinstance(match, dict):

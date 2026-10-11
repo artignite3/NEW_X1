@@ -77,6 +77,18 @@ class FeedRecoveryTests(unittest.TestCase):
                 self.assertTrue(result["fallback_used"])
                 self.assertEqual(result["matches"], good["matches"])
 
+    def test_future_fetch_timestamp_uses_verified_backup(self):
+        from datetime import datetime, timedelta, timezone
+        good = feed([fixture()])
+        self.backup.write_text(json.dumps(good), encoding="utf-8")
+        future = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        self.primary.write_text(json.dumps({**good, "fetched_at": future}), encoding="utf-8")
+        result = load(self.primary, self.backup, today=__import__("datetime").date(2026, 10, 7))
+        self.assertTrue(result["fallback_used"])
+        self.assertEqual(result["matches"], good["matches"])
+        with self.assertRaises(ValueError):
+            publish({**good, "fetched_at": future}, self.primary, self.backup)
+
     def test_invalid_metadata_in_both_copies_is_unavailable(self):
         broken = {**feed([fixture()]), "fetched_at": 123}
         for path in (self.primary, self.backup):
@@ -125,6 +137,20 @@ class FeedRecoveryTests(unittest.TestCase):
         result = squad_store.load(primary, backup)
         self.assertEqual(list(result["squads"]), ["fixed-1"])
         self.assertTrue(result["fallback_used"])
+
+    def test_future_squad_timestamp_uses_verified_backup(self):
+        from datetime import datetime, timedelta, timezone
+        primary = Path(self.temp.name) / "squads.json"
+        backup = Path(self.temp.name) / "squads.last_good.json"
+        good = {"fetched_at": "2026-10-07T12:00:00+00:00", "squads": {"fixed-1": {}}}
+        backup.write_text(json.dumps(good), encoding="utf-8")
+        future = (datetime.now(timezone.utc) + timedelta(days=2)).isoformat()
+        primary.write_text(json.dumps({**good, "fetched_at": future}), encoding="utf-8")
+        result = squad_store.load(primary, backup)
+        self.assertTrue(result["fallback_used"])
+        self.assertEqual(result["squads"], good["squads"])
+        with self.assertRaises(ValueError):
+            squad_store.publish({**good, "fetched_at": future}, primary, backup)
 
     def test_safe_promotion_keeps_last_verified_data(self):
         destination = Path(self.temp.name) / "history.json"

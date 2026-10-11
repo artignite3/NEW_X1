@@ -2,7 +2,7 @@
 
 This folder contains the earlier CricketStats-based, manual preprocessing scripts. The active daily pipeline now runs `data_processing/cricsheet_ingestor.py`, `data_processing/incremental_feature_append.py`, and `intelligence/build_venue_history.py` through `run_daily_sync.py`. See the [root README](../README.md) and [Pitch Control report](../docs/PITCH_CONTROL_REPORT_PLAN.md). The legacy scripts below are retained for reference; their outputs and date ranges are not the source of truth for the live API.
 
-## 1. Aggregate Points Processing (`aggregate_points.py`)
+## 1. Aggregate Points Processing (`Aggregate_Points.py`)
 Extracts career-level performance statistics from the CricketStats library for T20, ODI, and Test formats. Generates aggregated metrics for the legacy fantasy calculations. Career aggregates are not copied into the active match-level model features.
 
 ## 2. Data Extraction (`Data_Extracter.py`)
@@ -17,14 +17,14 @@ Includes a second squad generation based on players from the last ten matches of
 ## 4. Data Formatting for Fantasy (`Json_Formatter.py`)
 Transforms raw CSV data into hierarchical JSON structure for the legacy fantasy points calculation: `{Player: {MatchID: {stat: value, ...}}}`. For Test matches, computes aggregate batting strike rate and bowling average across innings. Encodes dismissal types and innings-wise runs and wickets.
 
-## 5. Fantasy Points Calculation (`testing.py`)
+## 5. Fantasy Points Calculation (`Testing.py`)
 Computes fantasy points for player performances across all formats (T20, ODI, Test). Utilizes processed JSON data from Json_Formatter.py and aggregate statistics. Applies format-specific scoring rules covering batting (runs, strike rate, boundaries), bowling (wickets, economy, maidens), and fielding (catches, stumpings). Generates three output files:
 - `player_fantasy_points_t20.json`
 - `player_fantasy_points_odi.json`
 - `player_fantasy_points_test.json`
 This is the older manual calculation path; the active scoring pipeline uses the format-specific model calculators and Cricsheet ingestor.
 
-## 6. Player Role Classification (`player_roles.py` / `executed_player_roles.py`)
+## 6. Player Role Classification (`player_roles.py`)
 Assigns categorical roles to players based on career statistical thresholds:
 - **Wicketkeeper (WK)**: Minimum 5 career stumpings
 - **Batter (BAT)**: 200+ matches, 5000+ runs, <150 wickets

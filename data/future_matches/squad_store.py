@@ -2,7 +2,7 @@
 import json
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from project_paths import data_root
@@ -13,7 +13,11 @@ BACKUP = PRIMARY.with_name("upcoming_squads.last_good.json")
 def validate(payload):
     if not isinstance(payload, dict) or not isinstance(payload.get("squads"), dict):
         raise ValueError("Squad feed must contain a squads object")
-    datetime.fromisoformat(str(payload.get("fetched_at", "")).replace("Z", "+00:00"))
+    fetched = datetime.fromisoformat(str(payload.get("fetched_at", "")).replace("Z", "+00:00"))
+    if fetched.tzinfo is None:
+        fetched = fetched.replace(tzinfo=timezone.utc)
+    if fetched.astimezone(timezone.utc) > datetime.now(timezone.utc) + timedelta(minutes=5):
+        raise ValueError("Squad feed fetched_at cannot be in the future")
     for key, entry in payload["squads"].items():
         if not str(key).strip() or not isinstance(entry, dict):
             raise ValueError("Invalid squad entry")
