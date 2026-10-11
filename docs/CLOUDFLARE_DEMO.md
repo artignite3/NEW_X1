@@ -66,6 +66,6 @@ The API reads the updated file on the next `/matches` or `/health` request. If t
 .\env\Scripts\python.exe data/future_matches/squad_fetcher.py --max-requests 3
 ```
 
-Check `/health` afterward. A partial squad refresh can still leave matches without usable squads. This laptop setup has no automatic daily sync, so rerun the refresh while the laptop is online.
+Check `/matches` afterward: `has_squad: true` means both teams have a usable player pool. A successful `/health` does not imply every fixture has squads. The refresh skips fixtures that already have usable squads and limits provider calls; its exit code 3 means some fixtures remain pending. To retry one fixture, pass its match ID, for example `--ids 174093 --max-requests 3`. An explicit ID also refreshes an existing squad. Some upcoming teams may have no published provider squad yet, so repeated fetches cannot guarantee coverage. The Custom Simulator uses historical team rosters without requiring an upcoming match squad. This laptop setup has no automatic daily sync, so rerun the refresh while the laptop is online.
 
 Sources: [Cloudflare static Next.js guide](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/), [Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/), [cloudflared downloads](https://developers.cloudflare.com/tunnel/downloads/).

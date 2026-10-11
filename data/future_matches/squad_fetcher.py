@@ -85,6 +85,8 @@ def refresh_match(match, existing):
 
 def main():
     global _REQUESTS, _MAX_REQUESTS
+    from model.team_generator import has_usable_match_squads
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--ids", default="")
     parser.add_argument("--max-requests", type=int, default=3)
@@ -98,9 +100,15 @@ def main():
     output = {"squads": dict(prior["squads"]), "fetched_at": prior["fetched_at"]}
     incomplete = False
     changed = False
+    already_ready = 0
     for match in sorted(matches, key=lambda m: m["date"]):
         identity = str(match["match_id"])
         if selected and identity not in selected: continue
+        # A normal refresh should spend its bounded provider budget on missing
+        # squads. Explicit --ids remains a way to refresh a known fixture.
+        if not selected and has_usable_match_squads(match, output["squads"].get(identity, {})):
+            already_ready += 1
+            continue
         try:
             entry = refresh_match(match, output["squads"].get(identity))
             if entry:
@@ -109,15 +117,17 @@ def main():
                 changed = True
             else:
                 incomplete = True
+                print(f"[WARN] No usable squads for match {identity}; both teams must be verified")
         except RequestBudgetExceeded:
             incomplete = True
-            print("[WARN] Squad request budget reached; remaining entries retained")
+            print(f"[WARN] Squad request budget reached at match {identity}; remaining entries retained")
             break
         except (requests.RequestException, ValueError, TypeError, KeyError):
             incomplete = True
             print(f"[WARN] Squad provider unavailable for {identity}; existing entry retained")
     if changed: publish(output)
-    print(f"Squad refresh: {_REQUESTS} provider calls, {len(output['squads'])} retained match entries")
+    print(f"Squad refresh: {_REQUESTS} provider calls, {already_ready} already ready, "
+          f"{len(output['squads'])} retained match entries")
     if incomplete: raise SystemExit(3)
 
 
