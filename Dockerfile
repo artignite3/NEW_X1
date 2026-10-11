@@ -19,7 +19,7 @@ COPY data_processing ./data_processing
 COPY data ./data
 COPY pipeline ./pipeline
 COPY tests ./tests
-COPY project_paths.py run_daily_sync.py ./
+COPY project_paths.py run_daily_sync.py run_all.py ./
 RUN useradd --create-home --uid 10001 appuser \
     && mkdir -p /app/outputs /app/data/processed \
     && chown -R appuser:appuser /app
