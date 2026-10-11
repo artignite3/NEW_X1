@@ -1,5 +1,5 @@
 # Creates paid resources when activated. Review the displayed Render quote first.
-# No credentials are committed. Complete docs/DEPLOYMENT_GUIDE.md before activation.
+# Optional managed-hosting blueprint. See docs/archive/RENDER_DEPLOYMENT_GUIDE_2026-10-08.md before activation.
 services:
   - type: web
     name: new-x1-api

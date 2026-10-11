@@ -11,7 +11,7 @@ The static website is published at [new-x1.pages.dev](https://new-x1.pages.dev/)
 
 For the current no-card hosting steps, tunnel restart, fixture refresh, and Pages deployment, see [Cloudflare demo](docs/CLOUDFLARE_DEMO.md). The existing Direct Upload project cannot be converted to native Git integration. A GitHub Actions workflow now builds and uploads the site after pushes to `main` once its two Cloudflare secrets and two public Supabase variables are configured; until then, manual upload remains available. The [Pitch Control report](docs/PITCH_CONTROL_REPORT_PLAN.md) is merged into `main`: qualifying venues show dated last-five/last-ten historical evidence; unsupported venues fall back to curated T20 priors or neutral values. Historical reports do not change prediction multipliers until their benefit is backtested.
 
-To request that the laptop analysis service be started, [email riddhu.work@gmail.com](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message +91 8982094147](https://wa.me/918982094147).
+To request that the laptop analysis service be started, [email riddhu.work@gmail.com](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message +91 8982094147](https://wa.me/918982094147). The [documentation index](docs/README.md) separates current operating guides from historical audits and hosting proposals.
 
 ## 🚀 Quick Start
 

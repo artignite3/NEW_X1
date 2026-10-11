@@ -1,6 +1,6 @@
 # NEW_X1 — updated verdict and remaining work
 
-**Paused audit recorded 8 October 2026; deployment implementation subsequently resumed at the user's request.** This document retains the audit findings at that checkpoint. See [current progress](IMPLEMENTATION_PROGRESS.md) and the [deployment guide](DEPLOYMENT_GUIDE.md) for subsequent work. The filename is retained so existing links continue to work. The original report is preserved in [the 7 October historical audit](archive/VERDICT_2026-10-07.md).
+**Historical audit recorded 8 October 2026.** This document retains findings at that checkpoint. See the [current documentation index](../README.md) for the live deployment. The original report is preserved in [the 7 October audit](VERDICT_2026-10-07.md).
 
 **Subsequent verified change:** commit `47041e4` fixes both deployment defects recorded below, implements tested release/recovery code, passes 111 local tests, and restores/boots actual artifacts with valid strict generation in all formats. Updated installed Python dependencies report no known vulnerabilities. This does not establish a live deployment, real Supabase activation, completed remote AWS recovery or a successful hosted CI run. The remaining scientific/data gates below stay open.
 
@@ -72,7 +72,7 @@ Backend checks include asymmetric JWT signatures, issuer, audience, expiry and i
 
 The SQL migration defines user-owned history/explanation tables, RLS and an atomic **20 generation attempts per user per UTC day** quota. Queries additionally filter by owner. Explanation snapshots expire after one hour; saved analyses retain results. SQLite is explicit local development storage, not a production fallback when Supabase fails.
 
-**Still pending:** actual migration execution, real RLS/quota behavior, Google callback, SMTP/SMS delivery, OTP abuse controls, linking/recovery and cross-user access against a real project. Self-service account deletion and additional linked email/phone management are not implemented. See [account activation instructions](AUTH_SETUP.md).
+**At the time of this audit:** migration execution, RLS/quota behavior, Google callback, SMTP/SMS delivery, OTP abuse controls, linking/recovery and cross-user access against a real project were pending. See [account activation instructions](../AUTH_SETUP.md) for the current setup.
 
 ## Model-quality verdict
 
@@ -139,7 +139,7 @@ Supabase is selected. The proposed beta layout remains Next.js hosting + dedicat
 6. **Activate staging first.** Set backend auth/CORS/storage/provider values and frontend API/Supabase values; rebuild when public frontend variables change. Test all formats and the account/save journey, an actual scheduled run and a failed-refresh/restore drill.
 7. **Open a bounded beta.** Configure domain/HTTPS, alerts, budgets, recovery/support and privacy/retention rules. Record measured limits and remaining forecast limitations. Public activation remains pending; zero issues cannot be guaranteed.
 
-[AUTH_SETUP.md](AUTH_SETUP.md) already contains detailed account configuration. A complete end-to-end deployment guide remains an implementation deliverable after this pause.
+[AUTH_SETUP.md](../AUTH_SETUP.md) contains detailed account configuration. This paragraph records the state at the audit date; see the [current documentation index](../README.md) for deployment status.
 
 ## Resume point
 

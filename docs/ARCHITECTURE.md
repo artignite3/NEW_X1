@@ -1,93 +1,16 @@
-# NEW_X1 — Architecture & Technical Design
+# NEW_X1 architecture
 
-## 1. System Overview
-NEW_X1 is an expert Cricket Performance Intelligence Platform designed to predict individual player performance for upcoming matches across all three formats (T20, ODI, Test) and assemble optimal 11-player lineups.
+The public [website](https://new-x1.pages.dev/) is a static Next.js export. GitHub Actions builds `frontend/out` from `main` and uploads it to the existing Cloudflare Pages project. The site remains available when the analysis service is down.
 
-```
-+-------------------------------------------------------------------------+
-|                               DATA TIER                                 |
-|  Cricsheet Historical Ball-by-Ball Data -> 140 Features per Player-Match|
-|  Strict Time-Shift: .shift(1) with Training Cap <= 2025-06-30           |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-|                              MODEL TIER                                 |
-|  - T20 Format: CatBoostRegressor (MAE loss, Native Categoricals)        |
-|  - ODI Format: TriBE Stacking Ensemble (CatBoost + LightGBM -> Meta LR) |
-|  - Test Format: TriBE Multi-Innings Ensemble (5-day hauled models)      |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-|                          INTELLIGENCE TIER                              |
-|  - Real-time News & Injury Detection (Google News RSS + Local Ollama)   |
-|  - Pitch Adjustment Factor (PAF for Flat, Seaming, Turning Surfaces)    |
-|  - Open-Meteo Environmental Weather (Dew Risk, Overcast Swing Index)     |
-|  - 80% Confidence Interval Estimation & Captaincy Upside Metric         |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-|                         OPTIMIZATION TIER                               |
-|  PuLP Integer Linear Programming (CBC Solver)                           |
-|  Max: sum(Score[i] - lambda * Var[i]) * x[i]                            |
-|  Subject to: 11 Players, 1-5 WK, 1-6 BAT, 2-5 BOWL, 0-5 AR, Team Limits |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-|                         PRESENTATION TIER                               |
-|  - Product UI (Port 8501): Tactical SVG Pitch, Cards, AI Insights       |
-|  - Model Evaluation UI (Port 8502): Out-of-Sample Diagnostics, CSVs     |
-|  - FastAPI Backend (Port 8000): Modular REST Endpoints                  |
-+-------------------------------------------------------------------------+
-```
+| Component | Current role | Source |
+|---|---|---|
+| Next.js frontend | Fixtures, simulator, account and settings pages; shows API availability and offline contact notice | `frontend/src/` |
+| Supabase | Browser sign-in and user-owned account data; the API verifies sessions on protected routes | `frontend/src/lib/auth.ts`, `model/auth.py`, `supabase/migrations/` |
+| FastAPI backend | Match, squad and venue data; model inference, team generation and explanations | `model/model_fastapi.py` |
+| Cricket data pipeline | Cricsheet ingestion, incremental features, fixtures and squads | `run_daily_sync.py`, `data_processing/`, `data/future_matches/` |
+| Venue intelligence | Last-five/last-ten historical reports with curated or neutral fallback | `intelligence/venue_history.py`, `intelligence/venue_registry.py` |
+| Local recovery | Validated last-good feeds, model and data copies; reports degraded state instead of inventing data | `data_processing/safe_publish.py`, `data_processing/seed_backups.py` |
 
----
+The full Python API and ML models currently run on a laptop. A temporary HTTPS tunnel makes the API reachable while that laptop and tunnel are running; visitors can save the current tunnel address on the website's Settings page. The API's `/health` endpoint reports model and feed state, and the frontend checks it with a timeout. Cloudflare Pages does **not** host the Python models or run the daily pipeline.
 
-## 2. Directory Hierarchy
-
-```
-NEW_X1/
-|-- data/
-|   |-- raw/                    # Cricsheet JSON archives and raw ball-by-ball data
-|   |-- interim/                # Intermediate match records and player stats
-|   `-- processed/              # 140-feature datasets (.csv and .parquet)
-|
-|-- data_processing/            # Core feature engineering & data download pipelines
-|   |-- data_download.py        # Cricsheet bulk download & people.csv registry
-|   `-- feature_engineering.py  # Vectorized time-series & context feature engine
-|
-|-- model/                      # ML models, training, prediction & solvers
-|   |-- train_model.py          # Unified model trainer (CatBoost & TriBE)
-|   |-- predict_model.py        # Sub-second squad predictor & evaluator
-|   |-- heuristic_solver.py     # PuLP ILP team optimizer with role constraints
-|   |-- model_fastapi.py        # REST API endpoints (Port 8000)
-|   |-- squads_fastapi.py       # Squad retrieval endpoint (Port 3001)
-|   `-- aggregate_stats_fastapi.py # Career analytics & LLM explanation endpoint
-|
-|-- model_artifacts/            # Saved trained model binaries
-|   |-- ProductUI_Model         # T20 CatBoost binary (exact name required)
-|   |-- ProductUI_Model_meta.pkl# Feature metadata mapping
-|   |-- tribe_odi.pkl           # ODI Stacking Ensemble binary
-|   `-- tribe_test.pkl          # Test Stacking Ensemble binary
-|
-|-- intelligence/               # Contextual intelligence differentiators
-|   |-- injury_detector.py      # RSS news scanner, LLM status & availability
-|   |-- weather_fetcher.py      # Open-Meteo weather client & swing index
-|   `-- pitch_analyzer.py       # Venue PAF score & surface classification
-|
-|-- UI/                         # User interfaces
-|   |-- product_ui.py           # Streamlit Product UI (Port 8501)
-|   |-- model_ui.py             # Streamlit Model Evaluation UI (Port 8502)
-|   `-- components/
-|       `-- cricket_field.py    # Tactical SVG pitch visualizer
-|
-|-- outputs/                    # Exported evaluation CSVs & diagnostic artifacts
-|-- out_of_sample_data/         # Drop directory for external test match evaluations
-|-- run_all.py                  # Universal single-terminal service launcher
-|-- run_all.bat                 # Windows one-click batch launcher
-|-- requirements.txt            # Pinned production dependencies
-`-- README.md                   # Quickstart and usage manual
-```
+The repository also retains a Render/AWS design in [the archive](archive/RENDER_DEPLOYMENT_GUIDE_2026-10-08.md). It is a future hosting option, not the active public deployment. Model archives, tracked evaluation evidence and generated-data manifests are retained for rollback and reproducibility. See the [runbook](RUNBOOK.md) for operations and [Cloudflare guide](CLOUDFLARE_DEMO.md) for deployment.

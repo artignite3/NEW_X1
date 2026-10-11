@@ -19,7 +19,7 @@ The publishable Supabase key is designed for browser use; never add a Supabase s
 
 ## Publish the website manually
 
-1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open **Workers & Pages → Create → Pages → Direct Upload**. The current project name is `new-x1`, giving `https://new-x1.pages.dev`.
+1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open the existing **Workers & Pages → new-x1** project at `https://new-x1.pages.dev`.
 2. In `frontend/.env.local`, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's public values. You may set `NEXT_PUBLIC_API_BASE` to the current tunnel origin to make the API work for all visitors immediately. Set `NEXT_PUBLIC_PHONE_AUTH_ENABLED=false` until phone login is ready. This file is ignored by Git.
 3. For a manual deployment, run `npm ci` once, then `npm run build:static` in `frontend`. Zip the *contents* of `frontend/out`, with `index.html` at the zip root. Upload that zip to the Pages project and select **Save and deploy**. Once the GitHub workflow above is configured, pushes to `main` deploy automatically instead.
 4. Check `/`, `/simulator`, `/account`, and `/settings` on `https://new-x1.pages.dev`. Supabase Auth's Site URL is set to this Pages URL, with `https://new-x1.pages.dev/account` allowed as a redirect; the localhost account redirect remains for development. A fresh Google sign-in on the deployed site completed on 10 October 2026. Reused OAuth callbacks can report `flow_state_already_used`; start a new sign-in from `/account` instead of reopening the old callback.
@@ -31,7 +31,7 @@ The publishable Supabase key is designed for browser use; never add a Supabase s
 3. From this repository, start the API and tunnel together:
 
    ```powershell
-   .\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot 'D:\Personal Coding\Data Science and ML\NEW_X1' -SiteOrigin 'https://YOUR-PROJECT.pages.dev'
+   .\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot '<absolute path to artifact-holding checkout>' -SiteOrigin 'https://new-x1.pages.dev'
    ```
 
 4. The terminal prints a temporary HTTPS address. If the current Pages build has no `NEXT_PUBLIC_API_BASE`, open the website's **Settings**, paste the tunnel origin, and select **Save and test connection**. Refresh Fixtures after a successful test. Each browser saves this override separately. To serve the same address automatically to all visitors, put it in `frontend/.env.local` as `NEXT_PUBLIC_API_BASE`, rebuild and redeploy the static site.
@@ -40,7 +40,7 @@ The publishable Supabase key is designed for browser use; never add a Supabase s
 If this network blocks `api.trycloudflare.com`, use the same static Cloudflare Pages site with the account-free [localhost.run](https://localhost.run/) tunnel:
 
 ```powershell
-.\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot 'D:\Personal Coding\Data Science and ML\NEW_X1' -SiteOrigin 'https://YOUR-PROJECT.pages.dev' -TunnelProvider LocalhostRun
+.\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot '<absolute path to artifact-holding checkout>' -SiteOrigin 'https://new-x1.pages.dev' -TunnelProvider LocalhostRun
 ```
 
 OpenSSH remembers the SSH server key on first use; a changed key stops the connection. This fallback URL may end in `.lhr.life` or another hostname shown by the tunnel and changes over time. If a browser security interstitial appears, do not bypass it; use the Cloudflare tunnel after your DNS administrator allows it.
@@ -52,7 +52,7 @@ The API process binds only to `127.0.0.1`; the selected tunnel makes it reachabl
 The launcher starts the API and tunnel; it does not fetch new cricket data. From the checkout that holds your `.env` and `data` directory, run the fixture fetcher when the feed is stale:
 
 ```powershell
-Set-Location 'D:\Personal Coding\Data Science and ML\NEW_X1'
+Set-Location '<absolute path to artifact-holding checkout>'
 .\env\Scripts\python.exe data/future_matches/schedule_fetcher.py
 ```
 

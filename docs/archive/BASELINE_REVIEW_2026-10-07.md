@@ -1,7 +1,9 @@
 # M0 — Baseline Review (2026-10-07)
 
+Historical baseline snapshot. See the [current documentation index](../README.md) for live deployment and operating guides.
+
 Status: **GATE PASSED** — verified working tree, green correctness suite, artifact
-archive, documented runbook. No model is labelled "validated" — see ISSUES.md #2.
+archive, documented runbook. No model is labelled "validated" — see ISSUES_2026-10-07.md #2.
 
 ## 1. Process state at review time
 

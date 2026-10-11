@@ -1,6 +1,6 @@
 # NEW_X1 — first deployment, step by step
 
-Prepared 8 October 2026. **The project is not live yet.** These instructions connect the prepared code to accounts you create. Do one numbered step at a time. You can create Supabase before deploying the website; its production redirect address is added after Render assigns the website URL.
+Prepared 8 October 2026. **Historical Render/AWS proposal; the current website is hosted on Cloudflare Pages.** These instructions are retained for a future managed deployment, not for the current live site. See the [current Cloudflare guide](../CLOUDFLARE_DEMO.md).
 
 Verification boundary: the local Windows suite, real artifact restore/API boot, all-format strict generation, frontend build and standalone web/icon serving have passed. The Render Blueprint passes its published JSON schema. A local Linux backend build installed dependencies and passed `pip check`, then Docker failed to commit the layer because C: ran out of space and its filesystem became read-only. Container completion/tests, real AWS access, hosted CI, Supabase integration and public activation remain required checks; no live URL is claimed.
 
@@ -134,7 +134,7 @@ The API intentionally uses one inference process and bounded analysis capacity f
 7. Configure Google OAuth and enable the Google provider using [Supabase's Google guide](https://supabase.com/docs/guides/auth/social-login/auth-google). Google's redirect URI is the **Supabase callback URL**, while Supabase's allowed frontend redirect is your website's `/account` address. Enable manual identity linking if using the Link Google button.
 8. For email code entry, configure SMTP and put `{{ .Token }}` in both the **Confirm signup** and **Magic link or OTP** templates. First-time and returning users can use different templates; changing only the magic-link template can leave new users with a confirmation link while the UI waits for a code. Supabase currently sends eight-digit email OTPs (the UI also accepts six-digit legacy codes). Supabase's default SMTP has restricted delivery; use [production SMTP](https://supabase.com/docs/guides/auth/auth-smtp) before public email OTP. Optional phone login needs a configured/tested SMS provider and both frontend/backend flags enabled. Enroll TOTP from Account and verify after a fresh sign-in.
 
-Public frontend variables are bundled at build time. **Rebuild the website** when changing public API/Supabase values or the phone flag. Follow [AUTH_SETUP.md](AUTH_SETUP.md) for detailed MFA, OTP and account checks.
+Public frontend variables are bundled at build time. **Rebuild the website** when changing public API/Supabase values or the phone flag. Follow [AUTH_SETUP.md](../AUTH_SETUP.md) for detailed MFA, OTP and account checks.
 
 **Checkpoint:** Google/email login completes and returns to Account; a signed-in user can generate, explain, save and reload an analysis. Use two accounts to verify isolation. No such real-provider journey is claimed verified before this step.
 
