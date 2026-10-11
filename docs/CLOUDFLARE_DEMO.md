@@ -60,12 +60,12 @@ Set-Location '<absolute path to artifact-holding checkout>'
 .\env\Scripts\python.exe data/future_matches/schedule_fetcher.py
 ```
 
-The API reads the updated file on the next `/matches` or `/health` request. If the provider fails, the API keeps serving only still-future matches from the verified last-good snapshot and reports the warning. Squads have a separate feed; refreshing fixtures does not refresh squads. The squad fetcher uses a bounded provider-request budget:
+The API reads the updated file on the next `/matches` or `/health` request. If the provider fails, the API keeps serving only still-future matches from the verified last-good snapshot and reports the warning. Squads have a separate feed; refreshing fixtures does not refresh squads. Run the current squad fetcher from this source checkout; the wrapper uses the sibling artifact checkout's data, Python environment, and private API key with a bounded provider-request budget:
 
 ```powershell
-.\env\Scripts\python.exe data/future_matches/squad_fetcher.py --max-requests 3
+.\refresh_squads.bat --max-requests 3
 ```
 
-Check `/matches` afterward: `has_squad: true` means both teams have a usable player pool. A successful `/health` does not imply every fixture has squads. The refresh skips fixtures that already have usable squads and limits provider calls; its exit code 3 means some fixtures remain pending. To retry one fixture, pass its match ID, for example `--ids 174093 --max-requests 3`. An explicit ID also refreshes an existing squad. Some upcoming teams may have no published provider squad yet, so repeated fetches cannot guarantee coverage. The Custom Simulator uses historical team rosters without requiring an upcoming match squad. This laptop setup has no automatic daily sync, so rerun the refresh while the laptop is online.
+Check `/matches` afterward: `has_squad: true` means both teams have a usable player pool. A successful `/health` does not imply every fixture has squads. The refresh skips fixtures that already have usable squads and limits provider calls; its exit code 3 means some fixtures remain pending. To retry one fixture, run `.\refresh_squads.bat --ids 174093 --max-requests 3`. An explicit ID also refreshes an existing squad. Some upcoming teams may have no published provider squad yet, so repeated fetches cannot guarantee coverage. The Custom Simulator uses historical team rosters without requiring an upcoming match squad. This laptop setup has no automatic daily sync, so rerun the refresh while the laptop is online.
 
 Sources: [Cloudflare static Next.js guide](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/), [Quick Tunnels](https://developers.cloudflare.com/tunnel/get-started/quick-tunnels/), [cloudflared downloads](https://developers.cloudflare.com/tunnel/downloads/).
