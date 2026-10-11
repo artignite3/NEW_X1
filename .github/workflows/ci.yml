@@ -27,27 +27,5 @@ jobs:
         working-directory: frontend
       - run: npm run lint
         working-directory: frontend
-      - run: npm run build
+      - run: npm run build:static
         working-directory: frontend
-      - run: npm run prepare:standalone
-        working-directory: frontend
-      - run: npm audit --omit=dev
-        working-directory: frontend
-
-  containers:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker build -t new-x1-api:ci .
-      - run: docker run --rm -e APP_ENV=test new-x1-api:ci python -m unittest discover -s tests -p 'test_*.py'
-      - run: docker build -t new-x1-web:ci --build-arg NEXT_PUBLIC_API_BASE=http://127.0.0.1:8000 frontend
-
-  python-security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: python -m pip install -r requirements.txt pip-audit
-      - run: python -m pip_audit

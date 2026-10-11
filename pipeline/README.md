@@ -1,5 +1,0 @@
-# Release pipeline and serving path
-
-[`worker.py`](worker.py) prepares isolated data/model releases, [`validate_release.py`](validate_release.py) checks them, [`releases.py`](releases.py) manages version pointers and rollback, and [`object_store.py`](object_store.py) accesses local/S3-like storage. [`runtime.py`](runtime.py) holds locks, atomic JSON writes and log redaction. [`serving.py`](serving.py) swaps a verified snapshot behind a request lock; [`serve.py`](serve.py) starts the API for the container route.
-
-This is an optional release-worker/container architecture. The current public Cloudflare Pages setup uses [`run_all.py`](../run_all.py) and local artifacts, not an always-on release worker. Production object storage would require `RELEASE_BUCKET`, region and narrowly scoped credentials; do not expose them in the website. Run `python -m unittest tests.test_pipeline tests.test_releases -v` and inspect [CI](../.github/workflows/README.md) before adopting this path. See [architecture](../docs/ARCHITECTURE.md) and [archived hosting proposal](../docs/archive/RENDER_DEPLOYMENT_GUIDE_2026-10-08.md).

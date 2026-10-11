@@ -14,4 +14,4 @@ The public [website](https://new-x1.pages.dev/) is a static Next.js export. GitH
 
 The full Python API and ML models currently run on a laptop. A temporary HTTPS tunnel makes the API reachable while that laptop and tunnel are running; visitors can save the current tunnel address on the website's Settings page. The API's `/health` endpoint reports model and feed state, and the frontend checks it with a timeout. Cloudflare Pages does **not** host the Python models or run the daily pipeline.
 
-The repository also retains a Render/AWS design in [the archive](archive/RENDER_DEPLOYMENT_GUIDE_2026-10-08.md). It is a future hosting option, not the active public deployment. Model archives, tracked evaluation evidence and generated-data manifests are retained for rollback and reproducibility. See the [runbook](RUNBOOK.md) for operations and [Cloudflare guide](CLOUDFLARE_DEMO.md) for deployment.
+Validated feed backups and local model archives support recovery when a refresh fails. See the [runbook](RUNBOOK.md) for operation and recovery.

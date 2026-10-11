@@ -1,6 +1,6 @@
 # NEW_X1 runbook
 
-This is the current Cloudflare Pages and laptop-backend workflow. Run commands from the repository root. Use the [Cloudflare guide](CLOUDFLARE_DEMO.md) for the one-time GitHub/Supabase settings and tunnel details.
+This is the current Cloudflare Pages and laptop-backend workflow. Run commands from the repository root.
 
 ## Local setup
 
@@ -46,4 +46,4 @@ The API reports a feed warning or unavailable state when both current and backup
 
 ## Recovery
 
-Use `git log` and the GitHub deployment history to identify a known-good revision. Restore model binaries from `model_artifacts/archive/` or another verified backup, then check `/health` and all three formats. For a data failure, refresh the affected feed or restore its validated last-good copy. The historical Render/AWS plan is retained [in the archive](archive/RENDER_DEPLOYMENT_GUIDE_2026-10-08.md).
+Use `git log` and the GitHub deployment history to identify a known-good revision. Restore model binaries from `model_artifacts/archive/` or another verified backup, then check `/health` and all three formats. For a data failure, refresh the affected feed or restore its validated last-good copy.
