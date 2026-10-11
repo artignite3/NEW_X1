@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import StatusBadge from "./StatusBadge";
+import { getHealth } from "@/lib/api";
+import StatusBadge, { type BackendAvailability } from "./StatusBadge";
 
 const LINKS = [
   { href: "/", label: "Fixtures" },
@@ -14,6 +16,33 @@ const LINKS = [
 
 export default function AppNav() {
   const pathname = usePathname();
+  const [availability, setAvailability] = useState<BackendAvailability>({ state: "checking", ollama: null });
+
+  useEffect(() => {
+    let active = true;
+    const check = async () => {
+      try {
+        const health = await getHealth();
+        const models = Object.values(health.models ?? {});
+        if (active) setAvailability({
+          state: models.length > 0 && models.every(Boolean) ? "online" : models.some(Boolean) ? "partial_models" : "no_models",
+          ollama: health.ollama,
+        });
+      } catch {
+        if (active) setAvailability({ state: "offline", ollama: null });
+      }
+    };
+    void check();
+    const timer = window.setInterval(check, 60_000);
+    window.addEventListener("focus", check);
+    window.addEventListener("new_x1_api_base_changed", check);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", check);
+      window.removeEventListener("new_x1_api_base_changed", check);
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/85 backdrop-blur-sm">
@@ -53,9 +82,21 @@ export default function AppNav() {
             );
           })}
           <span className="w-px h-4 bg-line mx-2" />
-          <StatusBadge />
+          <StatusBadge availability={availability} />
         </nav>
       </div>
+      {availability.state !== "checking" && availability.state !== "online" && (
+        <div role="status" className="border-t border-warn/30 bg-[#241b10] px-5 py-3 text-sm text-fg-dim">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-semibold text-warn">Analysis temporarily unavailable.</span>
+            <span>{availability.state === "no_models" ? "The backend is online, but its ML models are not ready." : availability.state === "partial_models" ? "The backend is online, but some ML formats are unavailable." : "The website is online, but the laptop backend is offline or disconnected."}</span>
+            <span>To request that we start the backend and ML engine,</span>
+            <a className="text-fg underline underline-offset-2 hover:text-accent" href="mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request">email riddhu.work@gmail.com</a>
+            <span>or</span>
+            <a className="text-fg underline underline-offset-2 hover:text-accent" href="https://wa.me/918982094147?text=Please%20start%20the%20NEW_X1%20backend%20and%20ML%20engine" target="_blank" rel="noopener noreferrer">message +91 8982094147</a>.
+          </div>
+        </div>
+      )}
     </header>
   );
 }

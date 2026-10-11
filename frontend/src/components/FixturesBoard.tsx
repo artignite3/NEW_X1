@@ -152,9 +152,9 @@ export default function FixturesBoard({ matches, feedWarning }: Props) {
 
           {upcoming.length === 0 && recentPast.length === 0 && (
             <div className="px-6 py-14 text-center">
-              <div className="mono-label text-fg-mute mb-2">No fixtures in local feed</div>
+              <div className="mono-label text-fg-mute mb-2">{feedWarning ? "Fixtures unavailable" : "No fixtures in local feed"}</div>
               <p className="text-xs text-fg-mute/70">
-                Run the data sync pipeline to populate the schedule.
+                Fixtures will appear here when the analysis backend is available.
               </p>
             </div>
           )}

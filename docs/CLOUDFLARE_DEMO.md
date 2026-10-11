@@ -2,6 +2,8 @@
 
 This no-card setup publishes the Next.js interface on Cloudflare Pages and serves the ML API from this laptop through a temporary HTTPS tunnel. The website stays online; ML features work while the laptop and tunnel are running. Tunnel URLs change on restart.
 
+When the API is offline, times out, or has no usable ML models, every website page shows a contact notice. Visitors can request that the backend be started by [email](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message](https://wa.me/918982094147). The notice clears after a successful health check; a Git push alone does not change the deployed static site.
+
 ## Publish the website
 
 1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open **Workers & Pages → Create → Pages → Direct Upload**. The current project name is `new-x1`, giving `https://new-x1.pages.dev`.

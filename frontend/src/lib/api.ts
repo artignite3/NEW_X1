@@ -34,6 +34,7 @@ export function saveApiBase(value: string): string {
   }
   const origin = parsed.origin;
   window.localStorage.setItem(SAVED_API_BASE, origin);
+  window.dispatchEvent(new Event("new_x1_api_base_changed"));
   return origin;
 }
 
@@ -56,7 +57,7 @@ async function handle<T>(res: Response): Promise<T> {
 }
 
 export async function getHealth(): Promise<HealthStatus> {
-  const res = await fetch(`${getApiBase()}/health`, { cache: "no-store" });
+  const res = await fetch(`${getApiBase()}/health`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
   return handle<HealthStatus>(res);
 }
 

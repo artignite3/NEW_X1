@@ -12,7 +12,7 @@ Created 8 October 2026 with the built-in image generation tool. The crossed cric
 - `frontend/src/app/icon.png`: 512 × 512 PNG icon.
 - `frontend/src/app/apple-icon.png`: 180 × 180 Apple touch icon.
 
-Next.js discovers the app-directory icons and inserts the appropriate metadata links automatically. The dark icon background keeps the off-white bat visible in both light and dark browser chrome. Artwork generation and creative editing used image_gen; Pillow was used only to export output sizes and ICO/PNG formats. No deployment code was resumed for this branding change.
+Next.js discovers the app-directory icons and inserts the appropriate metadata links automatically. The dark icon background keeps the off-white bat visible in both light and dark browser chrome. Artwork generation and creative editing used image_gen; Pillow was used only to export output sizes and ICO/PNG formats. The static website is currently served from [Cloudflare Pages](https://new-x1.pages.dev/); favicon updates require a new static build and Direct Upload deployment after the Git push. See the [deployment instructions](../../docs/CLOUDFLARE_DEMO.md).
 
 ## Generation prompt
 

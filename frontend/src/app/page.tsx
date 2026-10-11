@@ -16,8 +16,8 @@ export default function Home() {
       if (!active) return;
       setMatches(Array.isArray(feed.matches) ? feed.matches : []);
       setWarning(feed.warning ?? null);
-    }).catch((error) => {
-      if (active) setWarning(error instanceof Error ? error.message : "Fixtures are temporarily unavailable.");
+    }).catch(() => {
+      if (active) setWarning("Fixtures are temporarily unavailable while the analysis backend is disconnected.");
     });
     return () => { active = false; };
   }, []);
