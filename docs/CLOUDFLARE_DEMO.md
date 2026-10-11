@@ -2,13 +2,26 @@
 
 This no-card setup publishes the Next.js interface on Cloudflare Pages and serves the ML API from this laptop through a temporary HTTPS tunnel. The website stays online; ML features work while the laptop and tunnel are running. Tunnel URLs change on restart.
 
-When the API is offline, times out, or has no usable ML models, every website page shows a contact notice. Visitors can request that the backend be started by [email](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message](https://wa.me/918982094147). The notice clears after a successful health check; a Git push alone does not change the deployed static site.
+When the API is offline, times out, or has no usable ML models, every website page shows a contact notice. Visitors can request that the backend be started by [email](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message](https://wa.me/918982094147). The notice clears after a successful health check.
 
-## Publish the website
+## Connect GitHub pushes to the existing Pages site
+
+Cloudflare does not allow converting this `new-x1` Direct Upload project to its native Git integration. The repository's [deployment workflow](../.github/workflows/deploy-cloudflare-pages.yml) instead uses GitHub Actions and Wrangler to publish a static build to the **same** `new-x1.pages.dev` site whenever frontend files are pushed to `main`. The workflow can also be started manually from GitHub's **Actions** tab.
+
+One-time setup in the GitHub repository `artignite3/NEW_X1`:
+
+1. In Cloudflare, create a scoped API token with **Account → Cloudflare Pages → Edit** permission for the account containing `new-x1`. Copy the account ID from your Cloudflare account dashboard. Keep the token out of the repository and chat.
+2. In GitHub, open **Settings → Secrets and variables → Actions → Secrets**. Add `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` as repository secrets.
+3. In the adjacent **Variables** tab, add `NEXT_PUBLIC_SUPABASE_URL` (the project's public Supabase URL) and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (its public publishable key). Optionally add `NEXT_PUBLIC_API_BASE` only when there is a stable HTTPS backend URL; for a changing laptop tunnel, leave it unset and use the site's **Settings** page per browser.
+4. Open **Actions → Deploy website to Cloudflare Pages → Run workflow**, choose `main`, and wait for the build and deployment to pass. Verify the contact notice on the live site while the backend is offline. Later frontend pushes to `main` trigger this workflow automatically. Missing settings stop the workflow before deployment with a named error.
+
+The publishable Supabase key is designed for browser use; never add a Supabase service-role key to these public variables. This workflow publishes the website only; it does not start the laptop backend or refresh fixture feeds.
+
+## Publish the website manually
 
 1. Sign in to [Cloudflare Dashboard](https://dash.cloudflare.com/) and open **Workers & Pages → Create → Pages → Direct Upload**. The current project name is `new-x1`, giving `https://new-x1.pages.dev`.
 2. In `frontend/.env.local`, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to the project's public values. You may set `NEXT_PUBLIC_API_BASE` to the current tunnel origin to make the API work for all visitors immediately. Set `NEXT_PUBLIC_PHONE_AUTH_ENABLED=false` until phone login is ready. This file is ignored by Git.
-3. Run `npm ci` once, then `npm run build:static` in `frontend`. Zip the *contents* of `frontend/out`, with `index.html` at the zip root. Upload that zip to the Pages project and select **Save and deploy**. A Git push alone does not update a Direct Upload project.
+3. For a manual deployment, run `npm ci` once, then `npm run build:static` in `frontend`. Zip the *contents* of `frontend/out`, with `index.html` at the zip root. Upload that zip to the Pages project and select **Save and deploy**. Once the GitHub workflow above is configured, pushes to `main` deploy automatically instead.
 4. Check `/`, `/simulator`, `/account`, and `/settings` on `https://new-x1.pages.dev`. Supabase Auth's Site URL is set to this Pages URL, with `https://new-x1.pages.dev/account` allowed as a redirect; the localhost account redirect remains for development. A fresh Google sign-in on the deployed site completed on 10 October 2026. Reused OAuth callbacks can report `flow_state_already_used`; start a new sign-in from `/account` instead of reopening the old callback.
 
 ## Start the laptop API and tunnel
