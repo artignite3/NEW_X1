@@ -24,7 +24,9 @@ class LauncherTests(unittest.TestCase):
                 run_all.find_artifacts(root)
             for name in ("ProductUI_Model", "ProductUI_Model_meta.pkl", "tribe_odi.pkl", "tribe_test.pkl"):
                 (root / "model_artifacts" / name).touch()
-            self.assertEqual(run_all.find_artifacts(root), (root, python))
+            resolved = root.resolve()
+            self.assertEqual(run_all.find_artifacts(root),
+                             (resolved, resolved / "env" / "Scripts" / "python.exe"))
 
     def test_only_accepted_tunnel_urls_are_reported(self):
         self.assertEqual(
