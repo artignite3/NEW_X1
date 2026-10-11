@@ -7,6 +7,7 @@ The public [website](https://new-x1.pages.dev/) is a static Next.js export. GitH
 | Next.js frontend | Fixtures, simulator, account and settings pages; shows API availability and offline contact notice | `frontend/src/` |
 | Supabase | Browser sign-in and user-owned account data; the API verifies sessions on protected routes | `frontend/src/lib/auth.ts`, `model/auth.py`, `supabase/migrations/` |
 | FastAPI backend | Match, squad and venue data; model inference, team generation and explanations | `model/model_fastapi.py` |
+| Laptop launcher | Starts one inference API, checks all three models, and maintains a temporary tunnel for Pages | `run_all.py`, `run_all.bat` |
 | Cricket data pipeline | Cricsheet ingestion, incremental features, fixtures and squads | `run_daily_sync.py`, `data_processing/`, `data/future_matches/` |
 | Venue intelligence | Last-five/last-ten historical reports with curated or neutral fallback | `intelligence/venue_history.py`, `intelligence/venue_registry.py` |
 | Local recovery | Validated last-good feeds, model and data copies; reports degraded state instead of inventing data | `data_processing/safe_publish.py`, `data_processing/seed_backups.py` |

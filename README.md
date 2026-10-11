@@ -9,13 +9,13 @@
 
 The static website is published at [new-x1.pages.dev](https://new-x1.pages.dev/). GitHub Actions deploys pushes to `main` to this Cloudflare Pages project. The Python API and ML models run on a laptop; the website can reach them only while the API and an HTTPS tunnel are running. The site checks `/health` and shows an availability notice when analysis is unreachable or no models are loaded. Account sign-in uses Supabase separately from the laptop API.
 
-From the production checkout, start the backend and Cloudflare quick tunnel with:
+From the production checkout, start the API, all three ML formats, and a temporary HTTPS tunnel with one command:
 
 ```powershell
-.\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot '<absolute path to the checkout with data, models, env and .env>' -SiteOrigin 'https://new-x1.pages.dev'
+.\run_all.bat
 ```
 
-Keep the terminal open. Copy the HTTPS tunnel origin into [website Settings](https://new-x1.pages.dev/settings) and select **Save and test connection**. This setting is saved in each browser separately and must be updated when the temporary tunnel URL changes. Check `http://127.0.0.1:8000/health` for model and feed status. If the network blocks both tunnel providers, `-LocalOnly` keeps the API running for local verification; it does **not** make the Cloudflare site reach your laptop. See the [runbook](docs/RUNBOOK.md) and [Cloudflare guide](docs/CLOUDFLARE_DEMO.md) for setup, recovery and data refresh.
+The launcher finds the sibling artifact checkout automatically on this laptop. Elsewhere, run `python run_all.py --artifacts-root '<absolute path to the checkout with env, data, and models>'`. It checks `/health`, tries Cloudflare Tunnel, falls back to localhost.run, and keeps the API local while retrying if both are unavailable. Keep the terminal open. When it prints **PUBLIC API**, copy that HTTPS origin into [website Settings](https://new-x1.pages.dev/settings) and select **Save and test connection**. The temporary address is saved in each browser separately and changes after a tunnel restart. `run_all.bat --local-only` verifies the models without a public tunnel. See the [runbook](docs/RUNBOOK.md) and [Cloudflare guide](docs/CLOUDFLARE_DEMO.md) for recovery and data refresh.
 
 The [Pitch Control report](docs/PITCH_CONTROL_REPORT_PLAN.md) is merged into `main`: qualifying venues show dated last-five/last-ten historical evidence; unsupported venues fall back to curated T20 priors or neutral values. Historical reports do not change prediction multipliers until their benefit is backtested.
 
@@ -62,17 +62,9 @@ python model/train_model.py
 #          model_artifacts/tribe_test.pkl
 ```
 
-### 5. Run the full local development platform
-The universal launcher starts the local UI and analysis services; use the Cloudflare command above for the published website:
-```bash
-run_all.bat
-```
-This automatically boots:
-1. **Next.js Product UI** (`http://localhost:3000`)
-2. **FastAPI Backend** (`http://localhost:8000`)
-3. **Model Evaluation Streamlit** (`http://localhost:8502`)
+### 5. Run analysis
 
-Press `Ctrl+C` in the terminal to gracefully shut down all services.
+Use `run_all.bat` above for the published website. FastAPI loads the T20, ODI, and Test models in one inference process; it does not retrain them on each launch. The local Next.js dev server and Streamlit evaluation UI are optional development tools; they are not required for `new-x1.pages.dev`. Press Ctrl+C (then Y if Windows asks to terminate the batch job) to stop the API and tunnel.
 
 ---
 
@@ -86,15 +78,15 @@ flowchart TD
     D -->|train_model.py| E[TriBE ML Ensembles]
     
     E --> F[FastAPI Backend - Port 8000]
-    F -->|/generate_best_team| G[Next.js Product UI - Port 3000]
-    D -->|Evaluation Data| H[Streamlit Model UI - Port 8502]
+    F -->|HTTPS tunnel| G[Cloudflare Pages website]
+    D -->|Optional evaluation| H[Streamlit Model UI - Port 8502]
 ```
 
 ## 🔌 Port Map
 
 | Service | Technology | Port | Purpose |
 |---|---|---|---|
-| **Product UI** | Next.js / React | `3000` | End-user custom simulator and upcoming fixtures. |
+| **Product UI** | Next.js / React on Cloudflare Pages | HTTPS | End-user simulator and upcoming fixtures. Port `3000` is for optional local development. |
 | **Main API** | FastAPI / Python | `8000` | ML Predictions, Optimization Solver, LLM calls. |
 | **Model UI** | Streamlit | `8502` | Internal MAE benchmark evaluation dashboard. |
 | **Ollama** | Local LLM Engine | `11434` | RAG/Context-aware explanations. |

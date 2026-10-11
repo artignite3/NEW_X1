@@ -1,0 +1,61 @@
+"""Checks for the single-command laptop inference launcher."""
+
+import socket
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import Mock, patch
+
+import run_all
+
+
+class LauncherTests(unittest.TestCase):
+    def test_artifact_checkout_requires_python_models_and_processed_data(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            python = root / "env" / "Scripts" / "python.exe"
+            python.parent.mkdir(parents=True)
+            python.touch()
+            (root / "model_artifacts").mkdir()
+            with self.assertRaises(run_all.StartupError):
+                run_all.find_artifacts(root)
+            (root / "data" / "processed").mkdir(parents=True)
+            with self.assertRaises(run_all.StartupError):
+                run_all.find_artifacts(root)
+            for name in ("ProductUI_Model", "ProductUI_Model_meta.pkl", "tribe_odi.pkl", "tribe_test.pkl"):
+                (root / "model_artifacts" / name).touch()
+            self.assertEqual(run_all.find_artifacts(root), (root, python))
+
+    def test_only_accepted_tunnel_urls_are_reported(self):
+        self.assertEqual(
+            run_all.tunnel_url("Visit https://developers.cloudflare.com then https://abc.trycloudflare.com"),
+            "https://abc.trycloudflare.com",
+        )
+        self.assertEqual(run_all.tunnel_url("Forwarding HTTPS: https://demo.lhr.life."),
+                         "https://demo.lhr.life")
+        self.assertIsNone(run_all.tunnel_url('Post "https://api.trycloudflare.com/tunnel": DNS failed'))
+        self.assertIsNone(run_all.tunnel_url("https://example.invalid"))
+
+    def test_invalid_website_origins_rejected(self):
+        for value in ("http://new-x1.pages.dev", "https://new-x1.pages.dev/account",
+                      "https://name:secret@new-x1.pages.dev", "https://new-x1.pages.dev/?x=1"):
+            with self.subTest(value=value), self.assertRaises(run_all.StartupError):
+                run_all.validate_origin(value)
+
+    def test_missing_format_blocks_ready_message(self):
+        process = Mock()
+        process.poll.return_value = None
+        with patch.object(run_all, "get_health", return_value={"models": {"t20": True, "odi": False, "test": True}}):
+            with self.assertRaisesRegex(run_all.StartupError, "odi"):
+                run_all.wait_for_api(process, 8001)
+
+    def test_occupied_port_is_not_reused(self):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            listener.listen()
+            with self.assertRaisesRegex(run_all.StartupError, "already in use"):
+                run_all.check_port(listener.getsockname()[1])
+
+
+if __name__ == "__main__":
+    unittest.main()

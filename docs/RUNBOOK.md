@@ -31,12 +31,12 @@ The [deployment workflow](../.github/workflows/deploy-cloudflare-pages.yml) runs
 ## Start or stop the API
 
 ```powershell
-.\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot '<absolute path to artifact-holding checkout>' -SiteOrigin 'https://new-x1.pages.dev'
+.\run_all.bat
 ```
 
-Keep the launcher open. Copy the HTTPS tunnel origin it prints into the website's **Settings** page. Stopping the launcher stops the backend and tunnel. A new tunnel session can have a new URL; refresh Settings in each browser. Check `http://127.0.0.1:8000/health` locally before testing the public site.
+The launcher finds a sibling `NEW_X1` artifact checkout on this laptop. For another layout, use `python run_all.py --artifacts-root '<absolute artifact checkout path>'`. It starts only the inference API; the published website is already running and Streamlit is optional. Keep the launcher open. Copy the **PUBLIC API** address it prints into the website's **Settings** page. Stopping the launcher stops the backend and tunnel. A new tunnel session can have a new URL; refresh Settings in each browser. Check `http://127.0.0.1:8000/health` locally before testing the public site.
 
-If the network blocks the tunnel but you need to verify the API and models locally, run the same command with `-LocalOnly`. This runs Uvicorn in the foreground until Ctrl+C; it does not give the Cloudflare website a public API address. Restore tunnel connectivity before considering the public ML experience online.
+If the network blocks both tunnels, the runner keeps the API local and retries every 60 seconds. Run `run_all.bat --local-only` to skip tunnel attempts. Local-only operation does not give the Cloudflare website a public API address. Restore tunnel connectivity before considering the public ML experience online.
 
 ## Refresh data and backups
 
