@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$ArtifactsRoot,
     [Parameter(Mandatory = $true)][string]$SiteOrigin,
     [ValidateSet('Cloudflare', 'LocalhostRun')][string]$TunnelProvider = 'Cloudflare',
+    [switch]$LocalOnly,
     [int]$Port = 8000
 )
 
@@ -12,11 +13,11 @@ $python = Join-Path $artifacts 'env\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $python)) { throw "Python environment missing: $python" }
 if (-not (Test-Path -LiteralPath (Join-Path $artifacts 'model_artifacts'))) { throw 'Model artifacts are missing.' }
 if (-not (Test-Path -LiteralPath (Join-Path $artifacts 'data\processed'))) { throw 'Processed data is missing.' }
-if ($TunnelProvider -eq 'Cloudflare') {
+if (-not $LocalOnly -and $TunnelProvider -eq 'Cloudflare') {
     $cloudflared = Get-Command cloudflared -ErrorAction SilentlyContinue
     $cloudflaredPath = if ($cloudflared) { $cloudflared.Source } else { 'C:\Program Files (x86)\cloudflared\cloudflared.exe' }
     if (-not (Test-Path -LiteralPath $cloudflaredPath)) { throw 'Install cloudflared before starting this demo.' }
-} elseif (-not (Get-Command ssh -ErrorAction SilentlyContinue)) {
+} elseif (-not $LocalOnly -and -not (Get-Command ssh -ErrorAction SilentlyContinue)) {
     throw 'OpenSSH is required for the localhost.run tunnel.'
 }
 $siteUri = [Uri]$SiteOrigin
@@ -31,6 +32,15 @@ $env:NEW_X1_MODEL_ROOT = Join-Path $artifacts 'model_artifacts'
 $envFile = Join-Path $artifacts '.env'
 $arguments = '-m uvicorn model.model_fastapi:app --host 127.0.0.1 --port ' + $Port
 if (Test-Path -LiteralPath $envFile) { $arguments += ' --env-file "' + $envFile + '"' }
+if ($LocalOnly) {
+    Write-Host "Starting local API on http://127.0.0.1:$Port (Ctrl+C to stop)."
+    if (Test-Path -LiteralPath $envFile) {
+        & $python -m uvicorn model.model_fastapi:app --host 127.0.0.1 --port $Port --env-file $envFile
+    } else {
+        & $python -m uvicorn model.model_fastapi:app --host 127.0.0.1 --port $Port
+    }
+    exit $LASTEXITCODE
+}
 $logDir = Join-Path $projectRoot 'outputs'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $api = Start-Process -FilePath $python -ArgumentList $arguments -WorkingDirectory $projectRoot `

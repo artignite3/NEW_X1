@@ -36,6 +36,8 @@ The [deployment workflow](../.github/workflows/deploy-cloudflare-pages.yml) runs
 
 Keep the launcher open. Copy the HTTPS tunnel origin it prints into the website's **Settings** page. Stopping the launcher stops the backend and tunnel. A new tunnel session can have a new URL; refresh Settings in each browser. Check `http://127.0.0.1:8000/health` locally before testing the public site.
 
+If the network blocks the tunnel but you need to verify the API and models locally, run the same command with `-LocalOnly`. This runs Uvicorn in the foreground until Ctrl+C; it does not give the Cloudflare website a public API address. Restore tunnel connectivity before considering the public ML experience online.
+
 ## Refresh data and backups
 
 The launcher does not refresh fixtures or squads. On the artifact-holding checkout, run `data/future_matches/schedule_fetcher.py` for fixtures and `data/future_matches/squad_fetcher.py --max-requests 3` for a quota-bounded squad refresh. Run `run_daily_sync.py` when historical features and venue evidence need a full update. After a healthy install, `data_processing/seed_backups.py` can create missing validated last-good copies.

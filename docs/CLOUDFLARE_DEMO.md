@@ -45,6 +45,8 @@ If this network blocks `api.trycloudflare.com`, use the same static Cloudflare P
 
 OpenSSH remembers the SSH server key on first use; a changed key stops the connection. This fallback URL may end in `.lhr.life` or another hostname shown by the tunnel and changes over time. If a browser security interstitial appears, do not bypass it; use the Cloudflare tunnel after your DNS administrator allows it.
 
+If both tunnel hosts fail DNS resolution, inspect the network's DNS filter or ask its administrator to allow `api.trycloudflare.com` and `localhost.run`. An address of `0.0.0.0` for either host indicates a blocked lookup. You can still verify the models locally with `-LocalOnly` added to the launcher command; check `http://127.0.0.1:8000/health`. Do not put `127.0.0.1` or `localhost` in the deployed website's Settings: visitors' browsers would point to their own computers.
+
 The API process binds only to `127.0.0.1`; the selected tunnel makes it reachable externally. Anyone who learns the tunnel address can request public API routes. Supabase authentication remains required for account-protected operations. This temporary setup is unsuitable as an always-on production service.
 
 ## Keep fixture data current

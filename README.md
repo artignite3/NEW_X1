@@ -7,18 +7,26 @@
 
 ## Current deployment
 
-The static website is published at [new-x1.pages.dev](https://new-x1.pages.dev/). The Python API and ML models run on a laptop through a temporary HTTPS tunnel, so analysis is available only while that laptop, API, and tunnel are running. The site checks `/health` and shows an availability notice with contact links when analysis is unreachable or no models are loaded. Account sign-in uses the configured Supabase project separately from the laptop API.
+The static website is published at [new-x1.pages.dev](https://new-x1.pages.dev/). GitHub Actions deploys pushes to `main` to this Cloudflare Pages project. The Python API and ML models run on a laptop; the website can reach them only while the API and an HTTPS tunnel are running. The site checks `/health` and shows an availability notice when analysis is unreachable or no models are loaded. Account sign-in uses Supabase separately from the laptop API.
 
-For the current no-card hosting steps, tunnel restart, fixture refresh, and Pages deployment, see [Cloudflare demo](docs/CLOUDFLARE_DEMO.md). The existing Direct Upload project cannot be converted to native Git integration. A GitHub Actions workflow now builds and uploads the site after pushes to `main` once its two Cloudflare secrets and two public Supabase variables are configured; until then, manual upload remains available. The [Pitch Control report](docs/PITCH_CONTROL_REPORT_PLAN.md) is merged into `main`: qualifying venues show dated last-five/last-ten historical evidence; unsupported venues fall back to curated T20 priors or neutral values. Historical reports do not change prediction multipliers until their benefit is backtested.
+From the production checkout, start the backend and Cloudflare quick tunnel with:
+
+```powershell
+.\scripts\start_cloudflare_demo.ps1 -ArtifactsRoot '<absolute path to the checkout with data, models, env and .env>' -SiteOrigin 'https://new-x1.pages.dev'
+```
+
+Keep the terminal open. Copy the HTTPS tunnel origin into [website Settings](https://new-x1.pages.dev/settings) and select **Save and test connection**. This setting is saved in each browser separately and must be updated when the temporary tunnel URL changes. Check `http://127.0.0.1:8000/health` for model and feed status. If the network blocks both tunnel providers, `-LocalOnly` keeps the API running for local verification; it does **not** make the Cloudflare site reach your laptop. See the [runbook](docs/RUNBOOK.md) and [Cloudflare guide](docs/CLOUDFLARE_DEMO.md) for setup, recovery and data refresh.
+
+The [Pitch Control report](docs/PITCH_CONTROL_REPORT_PLAN.md) is merged into `main`: qualifying venues show dated last-five/last-ten historical evidence; unsupported venues fall back to curated T20 priors or neutral values. Historical reports do not change prediction multipliers until their benefit is backtested.
 
 To request that the laptop analysis service be started, [email riddhu.work@gmail.com](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message +91 8982094147](https://wa.me/918982094147). The [documentation index](docs/README.md) separates current operating guides from historical audits and hosting proposals.
 
-## 🚀 Quick Start
+## Local development and model training
 
 ### 1. Prerequisites
 - **Python 3.10 or 3.11**
-- **Node.js 20.9+ and npm** (for the Next.js frontend)
-- [Ollama](https://ollama.com) installed locally (for AI commentary)
+- **Node.js 22 and npm** (for the Next.js frontend)
+- [Ollama](https://ollama.com) only if local AI commentary is needed
 
 ### 2. Environment Setup
 
@@ -35,7 +43,7 @@ ollama pull llama3.2:3b
 **Next.js Frontend Setup:**
 ```bash
 cd frontend
-npm install
+npm ci
 cd ..
 ```
 
@@ -54,8 +62,8 @@ python model/train_model.py
 #          model_artifacts/tribe_test.pkl
 ```
 
-### 5. Run Platform (Universal Launcher)
-You no longer need to open multiple terminals. Simply run the universal script:
+### 5. Run the full local development platform
+The universal launcher starts the local UI and analysis services; use the Cloudflare command above for the published website:
 ```bash
 run_all.bat
 ```
