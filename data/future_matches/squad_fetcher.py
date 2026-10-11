@@ -15,7 +15,7 @@ load_dotenv()
 SERIES_SQUAD_CACHE = {}
 PLAYER_CACHE = {}
 _REQUESTS = 0
-_MAX_REQUESTS = 3
+_MAX_REQUESTS = 4
 
 
 class RequestBudgetExceeded(RuntimeError):
@@ -72,6 +72,10 @@ def refresh_match(match, existing):
     # Do not spend player-detail calls if a series has no roster for either side.
     if any(block is None for block in picked) or picked[0]["squadId"] == picked[1]["squadId"]:
         return None
+    needed = len({(str(series), str(block["squadId"])) for block in picked}
+                 - set(PLAYER_CACHE))
+    if _REQUESTS + needed > _MAX_REQUESTS:
+        raise RequestBudgetExceeded("Not enough calls remain to fetch both team rosters")
     blocks = []
     for block in picked:
         label = block.get("squadType", "")
@@ -90,11 +94,11 @@ def refresh_match(match, existing):
 
 def main():
     global _REQUESTS, _MAX_REQUESTS
-    from model.team_generator import has_usable_match_squads
+    from model.team_generator import resolve_match_squad_entry
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--ids", default="")
-    parser.add_argument("--max-requests", type=int, default=3)
+    parser.add_argument("--max-requests", type=int, default=4)
     args = parser.parse_args()
     if args.max_requests < 1: raise SystemExit("Request budget must be positive")
     _REQUESTS, _MAX_REQUESTS = 0, args.max_requests
@@ -111,7 +115,7 @@ def main():
         if selected and identity not in selected: continue
         # A normal refresh should spend its bounded provider budget on missing
         # squads. Explicit --ids remains a way to refresh a known fixture.
-        if not selected and has_usable_match_squads(match, output["squads"].get(identity, {})):
+        if not selected and resolve_match_squad_entry(match, output["squads"])[1] != "pending":
             already_ready += 1
             continue
         try:

@@ -26,9 +26,36 @@ def history(team, gender, day, source_id, count=11, available=None):
 class LastMatchSquadTests(unittest.TestCase):
     def setUp(self):
         generator._historical_team_index.cache_clear()
+        generator._DATEWISE_INDEX = None
 
     def tearDown(self):
         generator._historical_team_index.cache_clear()
+        generator._DATEWISE_INDEX = None
+
+    def test_datewise_fallback_keeps_womens_and_mens_leagues_separate(self):
+        first_xi = [f"Woman {i}" for i in range(11)]
+        male_xi = [f"Man {i}" for i in range(11)]
+        datewise = {
+            "2025-12-01": {"Women's Big Bash League": {"fixture": {
+                "Format": "T20", "Sydney Thunder": first_xi}}},
+            "2026-01-01": {"Big Bash League": {"fixture": {
+                "Format": "T20", "Sydney Thunder": male_xi}}},
+        }
+        with patch.object(generator, "get_fantasy", return_value={}), \
+             patch.object(generator, "_fantasy_history_stamp", return_value=("datewise-gender",)), \
+             patch.object(generator, "get_datewise_json", return_value=datewise):
+            female = generator.last_completed_team_squad("Sydney Thunder Women", "t20", "2026-10-12")
+            male = generator.last_completed_team_squad("Sydney Thunder", "t20", "2026-10-12")
+        self.assertEqual(female["players"], sorted(first_xi))
+        self.assertEqual(male["players"], sorted(male_xi))
+
+    def test_datewise_fallback_survives_missing_fantasy_file(self):
+        datewise = {"2025-12-01": {"Women's Big Bash League": {"fixture": {
+            "Format": "T20", "Sydney Thunder": [f"Player {i}" for i in range(11)]}}}}
+        with patch.object(generator, "_historical_team_index", side_effect=FileNotFoundError), \
+             patch.object(generator, "get_datewise_json", return_value=datewise):
+            squad = generator.last_completed_team_squad("Sydney Thunder Women", "t20", "2026-10-12")
+        self.assertEqual(squad["date"], "2025-12-01")
 
     def test_uses_latest_complete_match_available_before_fixture(self):
         fantasy = {

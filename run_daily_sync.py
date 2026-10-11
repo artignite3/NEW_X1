@@ -53,7 +53,7 @@ def run_sync(skip_download=False, historical_only=False, environment=None):
         if not historical_only:
             stages.extend([("data.future_matches.schedule_fetcher", (), 180, 1, False),
                 ("data.future_matches.cricapi_sync", ("--days", "2"), 120, 1, False),
-                ("data.future_matches.squad_fetcher", ("--max-requests", environment.get("SQUAD_REQUEST_BUDGET", "3")), 300, 1, False)])
+                ("data.future_matches.squad_fetcher", ("--max-requests", environment.get("SQUAD_REQUEST_BUDGET", "4")), 300, 1, False)])
         for module, arguments, timeout, attempts, required in stages:
             outcome = run_stage(module, arguments, timeout=timeout, attempts=attempts, required=required, environment=environment)
             report["stages"].append(outcome)

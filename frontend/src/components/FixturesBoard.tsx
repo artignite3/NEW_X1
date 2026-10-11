@@ -195,7 +195,8 @@ function FixtureRow({
 }) {
   const hasSquad = match.has_squad !== false;
   const projected = match.squad_source === "last_match";
-  const squadLabel = projected ? "Last-match estimate" : hasSquad ? "Squads ready" : "Squads pending";
+  const reused = match.squad_source === "series_squad";
+  const squadLabel = projected ? "Last-match estimate" : reused ? "Series squads" : hasSquad ? "Squads ready" : "Squads pending";
   const lastMatchDates = match.squad_match_dates
     ? Object.entries(match.squad_match_dates).map(([team, day]) => `${team}: ${day}`).join(" · ")
     : undefined;
@@ -212,8 +213,8 @@ function FixtureRow({
         <Rivets />
 
         <div className="flex items-center gap-2.5 w-32 shrink-0">
-          <StatusDot tone={projected ? "warn" : hasSquad ? "ok" : "mute"} pulse={hasSquad} />
-          <span className="mono-label !text-[9px] text-fg-mute leading-tight" title={lastMatchDates}>
+          <StatusDot tone={projected || reused ? "warn" : hasSquad ? "ok" : "mute"} pulse={hasSquad} />
+          <span className="mono-label !text-[9px] text-fg-mute leading-tight" title={reused ? "Provider series roster; playing XI unconfirmed" : lastMatchDates}>
             {squadLabel}
           </span>
         </div>

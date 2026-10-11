@@ -19,8 +19,8 @@ class SquadFetcherTests(unittest.TestCase):
         with patch("sys.argv", argv), \
              patch.object(squad_fetcher, "load_matches", return_value={"matches": self.matches}), \
              patch.object(squad_fetcher, "load_squads", return_value=self.prior), \
-             patch.object(team_generator, "has_usable_match_squads",
-                          side_effect=lambda match, entry: bool(entry.get("ready"))), \
+             patch.object(team_generator, "resolve_match_squad_entry",
+                          side_effect=lambda match, squads: ({}, "provider" if squads.get(str(match["match_id"]), {}).get("ready") else "pending", None)), \
              patch.object(squad_fetcher, "refresh_match", return_value={"ready": True}) as refresh, \
              patch.object(squad_fetcher, "publish") as publish:
             squad_fetcher.main()
@@ -56,6 +56,20 @@ class SquadFetcherTests(unittest.TestCase):
             entry = squad_fetcher.refresh_match(match, None)
         self.assertIsNotNone(entry)
         self.assertEqual([call.args[1] for call in players.call_args_list], [10, 11])
+
+    def test_budget_check_avoids_half_fetched_match(self):
+        match = {"match_id": 3, "series_id": 4, "match_type": "T20",
+                 "team1": "Sydney Sixers Women", "team2": "ACT Women"}
+        series = {"squads": [{"squadId": 10, "squadType": "Sydney Sixers Women"},
+                              {"squadId": 11, "squadType": "ACT Women"}]}
+        with patch.object(squad_fetcher, "get_series_squads", return_value=series), \
+             patch.object(squad_fetcher, "_REQUESTS", 2), \
+             patch.object(squad_fetcher, "_MAX_REQUESTS", 3), \
+             patch.dict(squad_fetcher.PLAYER_CACHE, {}, clear=True), \
+             patch.object(squad_fetcher, "get_squad_players") as players:
+            with self.assertRaises(squad_fetcher.RequestBudgetExceeded):
+                squad_fetcher.refresh_match(match, None)
+        players.assert_not_called()
 
 
 if __name__ == "__main__":

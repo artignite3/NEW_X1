@@ -42,7 +42,7 @@ class PipelineTests(unittest.TestCase):
             names = [call.args[0] for call in stage.call_args_list]
             self.assertIn("data.future_matches.schedule_fetcher", names)
             self.assertIn("data.future_matches.squad_fetcher", names)
-            self.assertEqual(stage.call_args_list[-1].args[1], ("--max-requests", "3"))
+        self.assertEqual(stage.call_args_list[-1].args[1], ("--max-requests", "3"))
 
     def test_production_sync_cannot_mutate_serving_directory_directly(self):
         with self.assertRaises(ValueError): run_sync(environment={"APP_ENV": "production"})

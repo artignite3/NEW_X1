@@ -52,7 +52,7 @@ _MATCHES_JSON: Optional[dict] = None
 _DATEWISE_JSON: Optional[dict] = None
 _DATEWISE_STAMP: object = None
 _DATEWISE_SOURCE: str = "unavailable"
-_DATEWISE_INDEX: Optional[dict] = None      # normalized team -> [(date, players, fmt)]
+_DATEWISE_INDEX: Optional[dict] = None      # (gender, team) -> [(date, players, fmt)]
 
 # Explainability cache: generation responses keep their feature rows here so
 # /explain_team can compute SHAP without re-loading parquet. LRU, capped.
@@ -152,15 +152,17 @@ def get_matches_json() -> list:
 
 
 def get_datewise_json() -> dict:
-    global _DATEWISE_JSON, _DATEWISE_STAMP, _DATEWISE_SOURCE
+    global _DATEWISE_JSON, _DATEWISE_STAMP, _DATEWISE_SOURCE, _DATEWISE_INDEX
     from data_processing.safe_publish import last_good
     primary = DATA_PROCESSED / "datewise_squad.json"
     backup = last_good(primary)
+    bundled = BASE / "data" / "processed" / "datewise_squad.json"
+    candidates = (("current", primary), ("last_good", backup), ("bundled", bundled))
     stamp = tuple((p.stat().st_mtime_ns, p.stat().st_ctime_ns, p.stat().st_size)
-                  if p.exists() else None for p in (primary, backup))
+                  if p.exists() else None for _, p in candidates)
     if _DATEWISE_JSON is None or _DATEWISE_STAMP != stamp:
         errors = []
-        for source, candidate in (("current", primary), ("last_good", backup)):
+        for source, candidate in candidates:
             try:
                 value = json.loads(candidate.read_text(encoding="utf-8"))
                 if not isinstance(value, dict) or not value:
@@ -168,6 +170,7 @@ def get_datewise_json() -> dict:
                 _DATEWISE_JSON = value
                 _DATEWISE_SOURCE = source
                 _DATEWISE_STAMP = stamp
+                _DATEWISE_INDEX = None
                 break
             except (OSError, ValueError, TypeError) as error:
                 errors.append(f"{candidate.name}: {type(error).__name__}")
@@ -246,7 +249,19 @@ def _map_role(raw: Optional[str]) -> Optional[str]:
 
 def _pick_squad_for_team(available_squads: List[dict], team: str, fmt: str) -> Optional[dict]:
     """Chooses the right squad block for a team, preferring format-matching ones."""
-    candidates = [s for s in available_squads if _teams_match(s.get("team_name", ""), team)]
+    def label_format(name: str) -> Optional[str]:
+        name = name.lower()
+        if "t20" in name:
+            return "t20"
+        if "odi" in name or "one day" in name:
+            return "odi"
+        if "test" in name:
+            return "test"
+        return None
+
+    candidates = [s for s in available_squads
+                  if _teams_match(s.get("team_name", ""), team)
+                  and label_format(s.get("team_name", "")) in (None, fmt)]
     if not candidates:
         return None
 
@@ -290,6 +305,51 @@ def has_usable_match_squads(match: dict, entry: dict) -> bool:
     return all(names) and len(names[0] | names[1]) >= 11
 
 
+def resolve_match_squad_entry(match: dict, squads_json: dict) -> tuple:
+    """Use the fixture roster, then two matching rosters from its series.
+
+    Series rosters are published once and may have been saved under older match IDs.
+    Reuse is limited to the same series and format and remains explicitly labeled.
+    """
+    identity = str(match.get("match_id"))
+    direct = squads_json.get(identity, {})
+    if has_usable_match_squads(match, direct):
+        return direct, "provider", None
+    series_id = match.get("series_id")
+    if not series_id:
+        return {}, "pending", None
+    try:
+        fmt = normalize_format(match.get("match_type", ""))
+    except ValueError:
+        return {}, "pending", None
+    candidates = []
+    for source_id, entry in squads_json.items():
+        if not isinstance(entry, dict) or str(entry.get("series_id")) != str(series_id):
+            continue
+        try:
+            if normalize_format(entry.get("format", "")) != fmt:
+                continue
+        except ValueError:
+            continue
+        for block in entry.get("available_squads") or []:
+            if isinstance(block, dict) and isinstance(block.get("players"), list):
+                candidates.append({**block, "_source_match_id": str(source_id)})
+    picked = [_pick_squad_for_team(candidates, match.get(team, ""), fmt)
+              for team in ("team1", "team2")]
+    if any(block is None or len({p.get("player_name") or p.get("name")
+                                  for p in block["players"] if isinstance(p, dict)}) < 11
+           for block in picked):
+        return {}, "pending", None
+    if picked[0] is picked[1]:
+        return {}, "pending", None
+    entry = {"match_id": match["match_id"], "series_id": series_id,
+             "format": match["match_type"], "available_squads": picked}
+    if not has_usable_match_squads(match, entry):
+        return {}, "pending", None
+    source_ids = sorted({block["_source_match_id"] for block in picked})
+    return entry, "series_squad", source_ids
+
+
 def get_match_info(match_id) -> Optional[dict]:
     for m in get_matches_json():
         if str(m.get("match_id")) == str(match_id):
@@ -327,13 +387,31 @@ def last_completed_team_squad(team: str, fmt: str, match_date: str) -> Optional[
     """Latest complete XI that was available before the requested fixture."""
     gender = "female" if "women" in team.lower() else "male"
     team_key = (gender, _norm_team(team).removesuffix(" women"))
-    for (day, _source_id), players in _historical_team_index(fmt, _fantasy_history_stamp(fmt)).get(team_key, []):
-        if day >= match_date:
+    best = None
+    try:
+        fantasy_fixtures = _historical_team_index(fmt, _fantasy_history_stamp(fmt)).get(team_key, [])
+    except FileNotFoundError:
+        fantasy_fixtures = []
+    for (day, _source_id), players in fantasy_fixtures:
+        if day < match_date:
+            names = sorted({name for name, available in players if available < match_date})
+            if len(names) >= 11:
+                best = {"date": day, "players": names}
+                break
+    # Datewise scorecard history includes domestic competitions absent from
+    # the fantasy feature archive. Only a completed, same-gender/format XI is
+    # eligible, and the fixture date still bounds the lookup.
+    try:
+        index = _build_datewise_index()
+    except (OSError, ValueError, TypeError):
+        return best
+    for day, players, source_fmt in index.get(team_key, []):
+        if day >= match_date or source_fmt != fmt or (best and day <= best["date"]):
             continue
-        names = sorted({name for name, available in players if available < match_date})
+        names = sorted({str(name).strip() for name in players if str(name).strip()})
         if len(names) >= 11:
             return {"date": day, "players": names}
-    return None
+    return best
 
 
 def last_match_squads_for_fixture(match: dict, fmt: str) -> Optional[dict]:
@@ -354,10 +432,11 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
       - direct:           {team1: {team_name, players}, team2: {...}}
     """
     squads_json = get_squads_json()
-    entry = squads_json.get(str(match_id), {})
-    match = get_match_info(match_id) or entry
+    direct = squads_json.get(str(match_id), {})
+    match = get_match_info(match_id) or direct
     if not match:
         raise ValueError(f"Match {match_id} not found")
+    entry, squad_source, source_ids = resolve_match_squad_entry(match, squads_json)
     team1, team2 = match.get("team1") or entry.get("team1"), match.get("team2") or entry.get("team2")
     team1_label = team1.get("team_name") if isinstance(team1, dict) else team1
     team2_label = team2.get("team_name") if isinstance(team2, dict) else team2
@@ -365,7 +444,7 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
     date = match.get("date", "")
     fmt = normalize_format(fmt or match.get("match_type", "t20"))
 
-    if not has_usable_match_squads(match, entry):
+    if squad_source == "pending":
         historical = last_match_squads_for_fixture(match, fmt)
         if not historical:
             raise ValueError(f"No verified or complete same-format historical squads for match {match_id}")
@@ -422,24 +501,30 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
             "Re-run data/future_matches/squad_fetcher.py to refresh squads."
         )
     return pool, {"match": match, "venue": venue, "date": date,
-                  "squads": squads_out, "squad_source": "provider"}
+                  "squads": squads_out, "squad_source": squad_source,
+                  "squad_source_match_ids": source_ids}
 
 
 def _build_datewise_index() -> dict:
-    """Reverse index: normalized team name -> [(date, [players], format)] newest-first."""
+    """Reverse index of completed first XIs, isolated by team and gender."""
     global _DATEWISE_INDEX
+    history = get_datewise_json()
     if _DATEWISE_INDEX is not None:
         return _DATEWISE_INDEX
     index: Dict[str, List[tuple]] = {}
-    for date, leagues in sorted(get_datewise_json().items(), reverse=True):
-        for _league, fixtures in leagues.items():
+    for date, leagues in sorted(history.items(), reverse=True):
+        for league, fixtures in leagues.items():
             for _fixture_key, info in fixtures.items():
-                fmt = normalize_format(info.get("Format", "t20"))
+                try:
+                    fmt = normalize_format(info.get("Format", "t20"))
+                except ValueError:
+                    continue
                 for field, players in info.items():
-                    if field == "Format" or not isinstance(players, list):
+                    if field == "Format" or field.endswith("_Second_Squad") or not isinstance(players, list):
                         continue
-                    team_name = field.replace("_Second_Squad", "")
-                    index.setdefault(_norm_team(team_name), []).append((date, players, fmt))
+                    gender = "female" if "women" in league.lower() or "women" in field.lower() else "male"
+                    team_name = _norm_team(field).removesuffix(" women")
+                    index.setdefault((gender, team_name), []).append((date, players, fmt))
     _DATEWISE_INDEX = index
     return index
 
@@ -955,6 +1040,7 @@ def generate_best_team(payload: dict) -> dict:
         "fantasy": _FANTASY_SOURCES.get(fmt, "unavailable"),
         "fixtures": "last_good" if fixtures and fixtures["fallback_used"] else ("current" if fixtures else "not_used"),
         "squads": ("last_match" if meta.get("squad_source") == "last_match" else
+                   "series_squad" if meta.get("squad_source") == "series_squad" else
                    "last_good" if squads and squads["fallback_used"] else
                    "current" if squads else "not_used"),
         "warnings": ([value["warning"] for value in (fixtures, squads) if value and value["warning"]]
@@ -962,6 +1048,10 @@ def generate_best_team(payload: dict) -> dict:
                          + ", ".join(f"{team} ({day})" for team, day in meta["squad_match_dates"].items())
                          + ". Current selection and availability are unconfirmed."]
                         if meta.get("squad_source") == "last_match" else [])
+                     + (["Using provider series rosters saved under match IDs "
+                         + ", ".join(meta["squad_source_match_ids"])
+                         + ". The playing XI and current availability are unconfirmed."]
+                        if meta.get("squad_source") == "series_squad" else [])
                      + (["No players have model history; using recent-form fallback" if model_failure.startswith("No players")
                          else "Saved ML model unavailable; using recent-form fallback"] if model_failure else [])
                      + intelligence_warnings),

@@ -33,10 +33,10 @@ from model.team_generator import (  # noqa: E402
     get_match_info,
     get_matches_json,
     get_resolver,
-    has_usable_match_squads,
     last_match_squads_for_fixture,
     normalize_format,
     pool_from_match_squads,
+    resolve_match_squad_entry,
     validate_date,
 )
 
@@ -162,9 +162,11 @@ def matches():
     out = []
     for m in feed["matches"]:
         m = dict(m)
-        entry = squads_json.get(str(m.get("match_id")), {})
-        if has_usable_match_squads(m, entry):
-            m["squad_source"] = "provider"
+        _entry, squad_source, source_ids = resolve_match_squad_entry(m, squads_json)
+        if squad_source != "pending":
+            m["squad_source"] = squad_source
+            if source_ids:
+                m["squad_source_match_ids"] = source_ids
         else:
             try:
                 historical = last_match_squads_for_fixture(m, normalize_format(m["match_type"]))
@@ -215,6 +217,7 @@ def match_squads(match_id: str):
         "date": meta["date"],
         "format": fmt,
         "squad_source": meta["squad_source"],
+        "squad_source_match_ids": meta.get("squad_source_match_ids"),
         "squad_match_dates": meta.get("squad_match_dates"),
         "team1_squad": [player_out(p) for p in squads["team1"]],
         "team2_squad": [player_out(p) for p in squads["team2"]],

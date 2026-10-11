@@ -40,7 +40,7 @@ If the network blocks both tunnels, the runner keeps the API local and retries e
 
 ## Refresh data and backups
 
-The launcher does not refresh fixtures or squads. On the artifact-holding checkout, run `data/future_matches/schedule_fetcher.py` for fixtures and `data/future_matches/squad_fetcher.py --max-requests 3` for a quota-bounded squad refresh. Run `run_daily_sync.py` when historical features and venue evidence need a full update. After a healthy install, `data_processing/seed_backups.py` can create missing validated last-good copies.
+The launcher does not refresh fixtures or squads. On the artifact-holding checkout, run `data/future_matches/schedule_fetcher.py` for fixtures and `data/future_matches/squad_fetcher.py --max-requests 4` for a quota-bounded squad refresh. Run `run_daily_sync.py` when historical features and venue evidence need a full update. After a healthy install, `data_processing/seed_backups.py` can create missing validated last-good copies.
 
 The API reports a feed warning or unavailable state when both current and backup data fail validation. Keep model archives, ingestion manifests and evaluation evidence; deleting them is not a routine cleanup step. See the [API reference](API_REFERENCE.md) for the fallback contract.
 
