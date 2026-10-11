@@ -10,6 +10,8 @@ export interface Match {
   date: string;
   status: string;
   has_squad?: boolean;
+  squad_source?: "provider" | "last_match" | "pending";
+  squad_match_dates?: Record<string, string>;
   match_ended?: boolean;
 }
 
@@ -145,6 +147,8 @@ export interface MatchSquads {
   venue: string;
   date: string;
   format: string;
+  squad_source?: "provider" | "last_match";
+  squad_match_dates?: Record<string, string> | null;
   team1_squad: SquadPlayer[];
   team2_squad: SquadPlayer[];
 }

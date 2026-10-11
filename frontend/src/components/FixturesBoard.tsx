@@ -194,6 +194,11 @@ function FixtureRow({
   onAnalyze: () => void;
 }) {
   const hasSquad = match.has_squad !== false;
+  const projected = match.squad_source === "last_match";
+  const squadLabel = projected ? "Last-match estimate" : hasSquad ? "Squads ready" : "Squads pending";
+  const lastMatchDates = match.squad_match_dates
+    ? Object.entries(match.squad_match_dates).map(([team, day]) => `${team}: ${day}`).join(" · ")
+    : undefined;
   return (
     <div
       className={`reveal ${index > 0 ? "mt-2" : ""}`}
@@ -207,9 +212,9 @@ function FixtureRow({
         <Rivets />
 
         <div className="flex items-center gap-2.5 w-32 shrink-0">
-          <StatusDot tone={hasSquad ? "ok" : "mute"} pulse={hasSquad} />
-          <span className="mono-label !text-[9px] text-fg-mute leading-tight">
-            {hasSquad ? "Squads ready" : "Squads pending"}
+          <StatusDot tone={projected ? "warn" : hasSquad ? "ok" : "mute"} pulse={hasSquad} />
+          <span className="mono-label !text-[9px] text-fg-mute leading-tight" title={lastMatchDates}>
+            {squadLabel}
           </span>
         </div>
 

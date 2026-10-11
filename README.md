@@ -19,6 +19,8 @@ The launcher finds the sibling artifact checkout automatically on this laptop. E
 
 The [Pitch Control report](docs/PITCH_CONTROL_REPORT_PLAN.md) is merged into `main`: qualifying venues show dated last-five/last-ten historical evidence; unsupported venues fall back to curated T20 priors or neutral values. Historical reports do not change prediction multipliers until their benefit is backtested.
 
+Upcoming fixtures use provider squads when both teams are available. Otherwise, if the historical ML data contains a complete XI from each team's last completed match in the same format and gender before the fixture, the site enables analysis with a clearly labeled **Last-match estimate**. The response includes each source match date and warns that current selection and availability are unconfirmed. Fixtures without either a provider pool or two complete historical XIs remain pending; the Custom Simulator is a separate option.
+
 To request that the laptop analysis service be started, [email riddhu.work@gmail.com](mailto:riddhu.work@gmail.com?subject=NEW_X1%20backend%20request) or [message +91 8982094147](https://wa.me/918982094147). The [documentation index](docs/README.md) separates current operating guides from historical audits and hosting proposals.
 
 ## Local development and model training

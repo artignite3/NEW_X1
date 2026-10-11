@@ -34,6 +34,7 @@ from model.team_generator import (  # noqa: E402
     get_matches_json,
     get_resolver,
     has_usable_match_squads,
+    last_match_squads_for_fixture,
     normalize_format,
     pool_from_match_squads,
     validate_date,
@@ -147,8 +148,7 @@ def ready():
 def matches():
     """All known upcoming fixtures (client filters by date).
 
-    has_squad is re-derived from the actual squads file — the schedule fetcher
-    cannot know it at schedule time, and the UI status dot must be truthful.
+    Distinguish provider squads from provisional last-match XIs.
     """
     from model.team_generator import get_squads_json
 
@@ -163,7 +163,18 @@ def matches():
     for m in feed["matches"]:
         m = dict(m)
         entry = squads_json.get(str(m.get("match_id")), {})
-        m["has_squad"] = has_usable_match_squads(m, entry)
+        if has_usable_match_squads(m, entry):
+            m["squad_source"] = "provider"
+        else:
+            try:
+                historical = last_match_squads_for_fixture(m, normalize_format(m["match_type"]))
+            except (OSError, ValueError, TypeError):
+                historical = None
+            m["squad_source"] = "last_match" if historical else "pending"
+            if historical:
+                m["squad_match_dates"] = {m["team1"]: historical["team1"]["date"],
+                                          m["team2"]: historical["team2"]["date"]}
+        m["has_squad"] = m["squad_source"] != "pending"
         out.append(m)
     return {**feed, "matches": out}
 
@@ -203,6 +214,8 @@ def match_squads(match_id: str):
         "venue": meta["venue"],
         "date": meta["date"],
         "format": fmt,
+        "squad_source": meta["squad_source"],
+        "squad_match_dates": meta.get("squad_match_dates"),
         "team1_squad": [player_out(p) for p in squads["team1"]],
         "team2_squad": [player_out(p) for p in squads["team2"]],
     }

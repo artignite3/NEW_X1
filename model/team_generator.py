@@ -22,6 +22,7 @@ import json
 import re
 from collections import OrderedDict
 from datetime import datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -296,6 +297,55 @@ def get_match_info(match_id) -> Optional[dict]:
     return None
 
 
+def _fantasy_history_stamp(fmt: str) -> tuple:
+    from data_processing.safe_publish import last_good
+    primary = DATA_PROCESSED / f"player_fantasy_points_{fmt}.json"
+    return tuple((path.stat().st_mtime_ns, path.stat().st_size) if path.exists() else None
+                 for path in (primary, last_good(primary)))
+
+
+@lru_cache(maxsize=3)
+def _historical_team_index(fmt: str, stamp: tuple) -> dict:
+    """Completed match XIs by team and gender; rebuilt when fantasy data changes."""
+    grouped: dict = {}
+    for player, matches in get_fantasy(fmt).items():
+        for match_key, stats in matches.items():
+            day = stats.get("match_date")
+            available = stats.get("available_date", day)
+            team = stats.get("team")
+            gender = stats.get("gender")
+            if not all(isinstance(value, str) and value for value in (day, available, team, gender)):
+                continue
+            team_key = (gender, _norm_team(team).removesuffix(" women"))
+            fixture_key = (day, str(stats.get("source_id") or match_key))
+            grouped.setdefault(team_key, {}).setdefault(fixture_key, []).append((player, available))
+    return {team: sorted(fixtures.items(), reverse=True)
+            for team, fixtures in grouped.items()}
+
+
+def last_completed_team_squad(team: str, fmt: str, match_date: str) -> Optional[dict]:
+    """Latest complete XI that was available before the requested fixture."""
+    gender = "female" if "women" in team.lower() else "male"
+    team_key = (gender, _norm_team(team).removesuffix(" women"))
+    for (day, _source_id), players in _historical_team_index(fmt, _fantasy_history_stamp(fmt)).get(team_key, []):
+        if day >= match_date:
+            continue
+        names = sorted({name for name, available in players if available < match_date})
+        if len(names) >= 11:
+            return {"date": day, "players": names}
+    return None
+
+
+def last_match_squads_for_fixture(match: dict, fmt: str) -> Optional[dict]:
+    """A provisional two-team pool, never presented as a confirmed squad."""
+    date = validate_date(match["date"])
+    first = last_completed_team_squad(match["team1"], fmt, date)
+    second = last_completed_team_squad(match["team2"], fmt, date)
+    if not first or not second or set(first["players"]) & set(second["players"]):
+        return None
+    return {"team1": first, "team2": second}
+
+
 def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
     """
     Builds the player pool from Cricbuzz squads for an upcoming fixture.
@@ -304,17 +354,35 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
       - direct:           {team1: {team_name, players}, team2: {...}}
     """
     squads_json = get_squads_json()
-    entry = squads_json.get(str(match_id))
-    if not entry:
-        raise ValueError(f"No squad data available for match {match_id}")
-
+    entry = squads_json.get(str(match_id), {})
     match = get_match_info(match_id) or entry
+    if not match:
+        raise ValueError(f"Match {match_id} not found")
     team1, team2 = match.get("team1") or entry.get("team1"), match.get("team2") or entry.get("team2")
     team1_label = team1.get("team_name") if isinstance(team1, dict) else team1
     team2_label = team2.get("team_name") if isinstance(team2, dict) else team2
     venue = match.get("venue", "")
     date = match.get("date", "")
     fmt = normalize_format(fmt or match.get("match_type", "t20"))
+
+    if not has_usable_match_squads(match, entry):
+        historical = last_match_squads_for_fixture(match, fmt)
+        if not historical:
+            raise ValueError(f"No verified or complete same-format historical squads for match {match_id}")
+        pool = []
+        squads_out = {"team1_name": team1_label, "team2_name": team2_label,
+                      "team1": [], "team2": []}
+        for key, label in (("team1", team1_label), ("team2", team2_label)):
+            for name in historical[key]["players"]:
+                player = {"display_name": name, "role": None, "team": label,
+                          "injury_status": "UNKNOWN", "source": "last_completed_match",
+                          "bowling_style": ""}
+                pool.append(player)
+                squads_out[key].append(player)
+        return pool, {"match": match, "venue": venue, "date": date,
+                      "squads": squads_out, "squad_source": "last_match",
+                      "squad_match_dates": {team1_label: historical["team1"]["date"],
+                                            team2_label: historical["team2"]["date"]}}
 
     # Flatten the two schemas into per-team player lists
     per_team: Dict[str, List[dict]] = {team1_label: [], team2_label: []}
@@ -353,7 +421,8 @@ def pool_from_match_squads(match_id, fmt: str) -> Tuple[List[dict], dict]:
             f"Squad data for match {match_id} is incomplete ({len(pool)} players). "
             "Re-run data/future_matches/squad_fetcher.py to refresh squads."
         )
-    return pool, {"match": match, "venue": venue, "date": date, "squads": squads_out}
+    return pool, {"match": match, "venue": venue, "date": date,
+                  "squads": squads_out, "squad_source": "provider"}
 
 
 def _build_datewise_index() -> dict:
@@ -885,8 +954,14 @@ def generate_best_team(payload: dict) -> dict:
         "features": _DF_SOURCES.get(fmt, "unavailable") if model_used else "not_used",
         "fantasy": _FANTASY_SOURCES.get(fmt, "unavailable"),
         "fixtures": "last_good" if fixtures and fixtures["fallback_used"] else ("current" if fixtures else "not_used"),
-        "squads": "last_good" if squads and squads["fallback_used"] else ("current" if squads else "not_used"),
+        "squads": ("last_match" if meta.get("squad_source") == "last_match" else
+                   "last_good" if squads and squads["fallback_used"] else
+                   "current" if squads else "not_used"),
         "warnings": ([value["warning"] for value in (fixtures, squads) if value and value["warning"]]
+                     + (["Projected player pool from the last completed same-format match: "
+                         + ", ".join(f"{team} ({day})" for team, day in meta["squad_match_dates"].items())
+                         + ". Current selection and availability are unconfirmed."]
+                        if meta.get("squad_source") == "last_match" else [])
                      + (["No players have model history; using recent-form fallback" if model_failure.startswith("No players")
                          else "Saved ML model unavailable; using recent-form fallback"] if model_failure else [])
                      + intelligence_warnings),
