@@ -20,7 +20,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -80,6 +80,52 @@ def tunnel_url(line: str) -> str | None:
         if host != "api.trycloudflare.com" and host.endswith(TUNNEL_HOST_SUFFIXES):
             return value
     return None
+
+
+def read_env_file(path: Path) -> dict[str, str]:
+    """Minimal KEY=VALUE reader so the launcher needs no extra packages."""
+    values: dict[str, str] = {}
+    if not path.is_file():
+        return values
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
+
+
+class EndpointPublisher:
+    """Publishes the current tunnel address to Supabase so the website finds it.
+
+    Needs SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY and NEW_X1_PUBLISH_TOKEN; the
+    token's SHA-256 hash is registered once in the database (see the README).
+    """
+
+    def __init__(self, settings: dict[str, str]):
+        self.url = settings.get("SUPABASE_URL", "").strip().rstrip("/")
+        self.key = settings.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+        self.token = settings.get("NEW_X1_PUBLISH_TOKEN", "").strip()
+        self.enabled = self.url.startswith("https://") and bool(self.key) and len(self.token) >= 32
+        self.published = False
+
+    def publish(self, address: str | None) -> bool:
+        if not self.enabled:
+            return False
+        request = Request(
+            f"{self.url}/rest/v1/rpc/publish_backend_endpoint",
+            data=json.dumps({"p_url": address, "p_token": self.token}).encode("utf-8"),
+            method="POST",
+            headers={"apikey": self.key, "Content-Type": "application/json"},
+        )
+        try:
+            with urlopen(request, timeout=10) as response:
+                accepted = json.loads(response.read() or b"false") is True
+        except (OSError, ValueError):
+            return False
+        self.published = accepted and address is not None
+        return accepted
 
 
 def get_health(url: str, timeout: float = 3) -> dict:
@@ -253,11 +299,14 @@ def main() -> int:
     args = options()
     api: subprocess.Popen | None = None
     tunnel: Tunnel | None = None
+    publisher: EndpointPublisher | None = None
     try:
         if not 1 <= args.port <= 65535 or args.retry_seconds < 1:
             raise StartupError("--port must be 1-65535 and --retry-seconds must be positive")
         origin = validate_origin(args.site_origin)
         artifacts, python = find_artifacts(args.artifacts_root)
+        publisher = EndpointPublisher({**read_env_file(artifacts / ".env"),
+                                       **read_env_file(PROJECT_ROOT / ".env"), **os.environ})
         check_port(args.port)
         print(f"Website: {origin} (already hosted on Cloudflare Pages)", flush=True)
         print(f"Models and data: {artifacts}", flush=True)
@@ -290,7 +339,12 @@ def main() -> int:
                         public_health = wait_for_public_api(candidate)
                         tunnel = candidate
                         print(f"PUBLIC API: {tunnel.url}", flush=True)
-                        print(f"Open {origin}/settings and paste this URL, then Save and test connection.", flush=True)
+                        if publisher and publisher.publish(tunnel.url):
+                            print(f"Published to the website; {origin} will connect automatically.", flush=True)
+                        else:
+                            reason = "not configured" if not (publisher and publisher.enabled) else "failed"
+                            print(f"Automatic address publishing {reason}. Open {origin}/settings and paste this URL.",
+                                  flush=True)
                         print(f"Public API check: {public_health['status']}", flush=True)
                         break
                     except StartupError as exc:
@@ -307,6 +361,8 @@ def main() -> int:
         print(f"ERROR: {exc}", file=sys.stderr, flush=True)
         return 1
     finally:
+        if publisher and publisher.published:
+            publisher.publish(None)  # the website shows "offline" at once instead of trying a dead address
         stop_process(tunnel.process if tunnel else None)
         stop_process(api)
 

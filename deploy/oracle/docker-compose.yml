@@ -1,0 +1,50 @@
+# NEW_X1 backend on one VM: the API behind Caddy, which obtains and renews
+# the HTTPS certificate. The refresh worker runs on demand or from cron.
+name: new-x1
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: new-x1-api:latest
+    env_file: ./server.env
+    environment:
+      RELEASE_CACHE_DIR: /app/outputs/releases
+    volumes:
+      - releases:/app/outputs
+    expose:
+      - "8000"
+    mem_limit: 12g
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2.8
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file: ./server.env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+  # Publishes a fresh data release to the bucket; the API picks it up within
+  # RELEASE_POLL_SECONDS. Uses separate, write-capable credentials.
+  worker:
+    image: new-x1-api:latest
+    profiles: ["worker"]
+    env_file: ./worker.env
+    volumes:
+      - worker_scratch:/app/outputs
+    command: ["python", "-m", "pipeline.worker"]
+    mem_limit: 16g
+
+volumes:
+  releases:
+  caddy_data:
+  caddy_config:
+  worker_scratch:

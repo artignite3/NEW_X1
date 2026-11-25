@@ -61,3 +61,8 @@ model_artifacts/*.last_good
 video_launch_data/*.last_good
 .history
 video_launch
+
+
+# ── Server secrets for deploy bundles ─────────────────────────────────────
+deploy/**/*.env
+!deploy/**/*.env.example
