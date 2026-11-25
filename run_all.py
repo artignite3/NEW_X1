@@ -294,7 +294,23 @@ def options() -> argparse.Namespace:
     parser.add_argument("--tunnel", choices=("auto", "cloudflare", "localhost-run"), default="auto")
     parser.add_argument("--local-only", action="store_true", help="run API without a public tunnel")
     parser.add_argument("--retry-seconds", type=int, default=60, help="wait before retrying failed tunnels")
+    parser.add_argument("--unpublish", action="store_true",
+                        help="clear the published address (the website shows offline) and exit")
     return parser.parse_args()
+
+
+def unpublish(artifacts_root: Path | None) -> int:
+    artifacts, _ = find_artifacts(artifacts_root)
+    publisher = EndpointPublisher({**read_env_file(artifacts / ".env"),
+                                   **read_env_file(PROJECT_ROOT / ".env"), **os.environ})
+    if not publisher.enabled:
+        print("Address publishing is not configured; nothing to clear.", flush=True)
+        return 0
+    if publisher.publish(None):
+        print("Published address cleared; the website shows the server as offline.", flush=True)
+        return 0
+    print("Could not clear the published address (network or token problem).", file=sys.stderr, flush=True)
+    return 1
 
 
 def main() -> int:
@@ -302,6 +318,12 @@ def main() -> int:
     api: subprocess.Popen | None = None
     tunnel: Tunnel | None = None
     publisher: EndpointPublisher | None = None
+    if args.unpublish:
+        try:
+            return unpublish(args.artifacts_root)
+        except (OSError, StartupError) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr, flush=True)
+            return 1
     try:
         if not 1 <= args.port <= 65535 or args.retry_seconds < 1:
             raise StartupError("--port must be 1-65535 and --retry-seconds must be positive")

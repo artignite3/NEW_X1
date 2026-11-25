@@ -53,6 +53,17 @@ powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1 -Remove  
 
 The task runs the launcher hidden whenever you are signed in, restarts it after a crash and writes status to `outputs/launcher.log` and server logs to `outputs/launcher.err.log`, both fresh at each sign-in. After changing the installer, run it again to update the task.
 
+### Turn analysis on or off
+
+```powershell
+.\scriptsackend.ps1 start     # start now
+.\scriptsackend.ps1 stop      # stop the API and tunnel and clear the published address
+.\scriptsackend.ps1 status    # task state, local health, published address
+.\scriptsackend.ps1 restart
+```
+
+`Stop-ScheduledTask` alone does not stop the backend, because Windows leaves the launcher's child processes running; use `backend.ps1 stop`.
+
 ### One-time address publishing setup
 
 1. In the Supabase SQL editor, run `supabase/migrations/202611250001_backend_endpoint.sql`.
