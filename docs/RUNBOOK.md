@@ -31,7 +31,8 @@ The [deployment workflow](../.github/workflows/deploy-cloudflare-pages.yml) runs
 ## Start or stop the API
 
 ```powershell
-.un_all.bat
+.
+un_all.bat
 ```
 
 The launcher finds a sibling `NEW_X1` artifact checkout on this laptop. For another layout, use `python run_all.py --artifacts-root '<absolute artifact checkout path>'`. It starts the inference API, opens a public tunnel and publishes the tunnel address to Supabase, so the website connects on its own. A restarted tunnel publishes its new address, and visitors' pages pick it up at their next health check. Stopping the launcher clears the address, so the site shows the server as offline straight away. Check `http://127.0.0.1:8000/health` locally before testing the public site.
@@ -45,11 +46,12 @@ If the network blocks both tunnels, the runner keeps the API local and retries e
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1          # install
 Start-ScheduledTask -TaskName "NEW_X1 backend"                                   # start now
-Get-Content outputs\launcher.log -Wait -Tail 20                                 # watch
+Get-Content outputs\launcher.log -Wait -Tail 20                                 # status and tunnel address
+Get-Content outputs\launcher.err.log -Wait -Tail 20                             # server request log
 powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1 -Remove  # uninstall
 ```
 
-The task runs the launcher hidden whenever you are signed in, restarts it after a crash and writes its output to `outputs/launcher.log`.
+The task runs the launcher hidden whenever you are signed in, restarts it after a crash and writes status to `outputs/launcher.log` and server logs to `outputs/launcher.err.log`, both fresh at each sign-in. After changing the installer, run it again to update the task.
 
 ### One-time address publishing setup
 
