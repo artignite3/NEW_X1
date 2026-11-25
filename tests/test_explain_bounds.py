@@ -30,7 +30,9 @@ class ExplainBoundsTest(unittest.TestCase):
         crafted = {"id": token, "payload": {"snapshot": snapshot([f"p{i}" for i in range(500)])}}
         app.dependency_overrides[require_user] = lambda: Principal("00000000-0000-0000-0000-000000000002", "test-token")
         try:
-            with TestClient(app) as client, patch("model.user_store.UserStore.get", return_value=crafted), \
+            with patch.dict("os.environ", {"APP_ENV": "production", "SUPABASE_URL": "https://test.supabase.co",
+                                           "SUPABASE_PUBLISHABLE_KEY": "public"}), \
+                 TestClient(app) as client, patch("model.user_store.UserStore.get", return_value=crafted), \
                  patch("intelligence.llm_analyst.generate_team_report") as report:
                 response = client.post("/explain_team", json={"explain_token": token})
             self.assertEqual(response.status_code, 400)
