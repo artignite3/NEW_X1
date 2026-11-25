@@ -1,22 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { AnalystReport, GenerateResponse } from "@/lib/types";
+import type { AnalystReport, GenerateResponse, PlayerEntry } from "@/lib/types";
 import { explainTeam, saveAnalysis } from "@/lib/api";
-import PlayerCard from "./PlayerCard";
 import { PitchPanel, WeatherPanel } from "./IntelligencePanels";
-import { ROLE_LABELS } from "./RoleBadge";
-import { IconAlert, IconCalendar, IconPin, IconShield, IconTarget, IconTerminal, IconUsers } from "./icons";
-import { Button, Chip, Panel, Progress, SectionLabel, Skeleton } from "./ui";
+import { ENGINE_LABELS, ROLE_LABELS, ROLE_SHORT } from "./RoleBadge";
+import { IconCalendar, IconPin } from "./icons";
+import { Button, Notice, Panel, Skeleton } from "./ui";
 
-// Count-up for the headline projection — restrained, respects reduced motion
-function useCountUp(target: number, duration = 700): number {
+// Tween for the team total: a changed number counts to its new value
+function useCountUp(target: number, duration = 600): number {
   const [value, setValue] = useState(target);
   const prev = useRef(target);
   useEffect(() => {
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced || Math.abs(target - prev.current) < 0.5) {
       prev.current = target;
       setValue(target);
@@ -27,8 +24,7 @@ function useCountUp(target: number, duration = 700): number {
     let raf = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(from + (target - from) * eased);
+      setValue(from + (target - from) * (1 - Math.pow(1 - t, 3)));
       if (t < 1) raf = requestAnimationFrame(tick);
       else prev.current = target;
     };
@@ -38,16 +34,20 @@ function useCountUp(target: number, duration = 700): number {
   return value;
 }
 
+const pad = (n: number) => String(n).padStart(2, "0");
+
 export default function AnalysisResult({ result }: Props) {
   const [report, setReport] = useState<AnalystReport | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [saveError, setSaveError] = useState("");
 
   const { request, best_team, bench, summary, intelligence, name_resolution } = result;
   const total = useCountUp(summary.expected_total_points);
-  const engineLabel = summary.engine.replace(/\s*\(.*\)$/, ""); // "TriBE Ensemble (…)" -> "TriBE Ensemble"
+  const engineLabel = summary.engine.replace(/\s*\(.*\)$/, "");
+  const format = request.format.toUpperCase() === "TEST" ? "Test" : request.format.toUpperCase();
+  const usingBackup = Object.values(result.data_provenance).some((value) => value === "last_good");
 
   const loadReport = async () => {
     setReportLoading(true);
@@ -55,193 +55,156 @@ export default function AnalysisResult({ result }: Props) {
     try {
       setReport(await explainTeam(result.explain_token));
     } catch (e) {
-      setReportError(e instanceof Error ? e.message : "Failed to generate report");
+      setReportError(e instanceof Error ? e.message : "The report could not be generated");
     } finally {
       setReportLoading(false);
     }
   };
 
+  const save = async () => {
+    setSaveState("saving");
+    setSaveError("");
+    try {
+      await saveAnalysis(result.explain_token, `${request.team1} vs ${request.team2}, ${request.date}`.slice(0, 120));
+      setSaveState("saved");
+    } catch (error) {
+      setSaveState("idle");
+      setSaveError(error instanceof Error ? error.message : "Could not save. Try again");
+    }
+  };
+
+  const facts: [string, string][] = [
+    ["Format", format],
+    ["Model", engineLabel],
+    ["Team split", Object.entries(summary.team_split).map(([t, n]) => `${n} ${t}`).join(", ")],
+    ["Role mix", (["WK", "BAT", "AR", "BOWL"] as const).filter((r) => summary.role_counts[r] > 0).map((r) => `${summary.role_counts[r]} ${ROLE_SHORT[r]}`).join(", ")],
+    ["Constraints", `${summary.constraint_mode.replaceAll("_", " ")}, ${result.validation.valid ? "verified" : "not met"}`],
+    ["Solver", `${summary.solver_status}, squad of ${summary.squad_size}`],
+    ["Names matched", `${name_resolution.resolved} of ${summary.squad_size}`],
+  ];
+
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button
-          className="w-full sm:w-auto"
-          disabled={saving || saveMessage === "Saved to your account."}
-          onClick={async () => {
-            setSaving(true);
-            try {
-              await saveAnalysis(result.explain_token, `${request.team1} vs ${request.team2} · ${request.date}`.slice(0, 120));
-              setSaveMessage("Saved to your account.");
-            } catch (error) {
-              setSaveMessage(error instanceof Error ? error.message : "Unable to save. Please retry.");
-            } finally {
-              setSaving(false);
-            }
-          }}
-        >
-          {saving ? "Saving…" : "Save analysis"}
-        </Button>
-        {saveMessage && <span className="text-xs sm:text-sm text-fg-dim" role="status">{saveMessage}</span>}
-      </div>
+    <div className="space-y-6 reveal">
       {/* ── Match header ─────────────────────────────────────────────── */}
-      <Panel className="p-4 sm:p-6 reveal">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between gap-x-8 gap-y-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <SectionLabel accent>Optimal XI</SectionLabel>
-              <Chip>{request.format.toUpperCase()}</Chip>
-              <Chip tone="accent">{engineLabel}</Chip>
-            </div>
-            <h2 className="text-lg sm:text-[22px] font-semibold text-fg leading-snug break-words">
+      <Panel className="p-6">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-medium text-fg break-words">
               {request.team1}
-              <span className="text-fg-mute font-normal mx-2">vs</span>
+              <span className="text-fg-mute font-normal mx-2">v</span>
               {request.team2}
             </h2>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-fg-mute">
-              <span className="inline-flex items-center gap-1.5 text-xs min-w-0 max-w-full">
-                <IconPin size={13} className="shrink-0" />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-fg-mute">
+              <span className="inline-flex items-center gap-1 min-w-0">
+                <IconPin size={14} className="shrink-0" />
                 <span className="truncate">{request.venue}</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 text-xs shrink-0">
-                <IconCalendar size={13} />
+              <span className="inline-flex items-center gap-1">
+                <IconCalendar size={14} />
                 <span className="mono-value">{request.date}</span>
               </span>
             </div>
           </div>
 
-          <div className="w-full sm:w-auto sm:text-right border-t sm:border-t-0 border-line-soft pt-3.5 sm:pt-0">
-            <div className="flex sm:block items-baseline justify-between gap-3">
-              <div className="mono-label text-fg-mute sm:hidden">Projected Team Points</div>
-              <div className="mono-value text-3xl sm:text-4xl leading-none font-medium text-accent tabular-nums">
-                {total.toFixed(0)}
-              </div>
-            </div>
-            <div className="mono-label text-fg-mute mt-1.5 hidden sm:block">Projected Team Points</div>
-            <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center sm:justify-end gap-x-2.5 gap-y-1 text-xs">
-              <span className="text-fg-mute">Captain</span>
-              <span className="text-fg font-medium truncate max-w-[160px] sm:max-w-none">{summary.captain}</span>
-              <span className="w-px h-3.5 bg-line" />
-              <span className="text-fg-mute">VC</span>
-              <span className="text-fg-dim truncate max-w-[160px] sm:max-w-none">{summary.vice_captain}</span>
-            </div>
+          <div className="md:text-right shrink-0">
+            <div className="mono-value text-[40px] leading-none font-medium text-accent">{total.toFixed(0)}</div>
+            <div className="text-sm text-fg-mute mt-2">Projected team points</div>
+            <dl className="text-sm mt-2 space-y-1">
+              <div><dt className="inline text-fg-mute">Captain </dt><dd className="inline text-fg">{summary.captain}</dd></div>
+              <div><dt className="inline text-fg-mute">Vice-captain </dt><dd className="inline text-fg-dim">{summary.vice_captain}</dd></div>
+            </dl>
           </div>
         </div>
 
-        {/* Instrumentation strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-px bg-line-soft border border-line-soft rounded-md overflow-hidden mt-5">
-          <Metric icon={<IconUsers size={13} />} label="Team Split" value={Object.entries(summary.team_split).map(([t, n]) => `${n} ${t}`).join(" / ")} />
-          <Metric icon={<IconShield size={13} />} label="Role Mix" value={(["WK", "BAT", "AR", "BOWL"] as const).filter((r) => summary.role_counts[r] > 0).map((r) => `${summary.role_counts[r]} ${r}`).join(" · ")} />
-          <Metric icon={<IconTarget size={13} />} label="Solver" value={`${summary.solver_status} · squad ${summary.squad_size}`} />
-          <Metric icon={<IconShield size={13} />} label="Constraints" value={`${summary.constraint_mode.replaceAll("_", " ")} · ${result.validation.valid ? "verified" : "invalid"}`} />
-          <Metric icon={<IconTerminal size={13} />} label="Resolution" value={`${name_resolution.resolved}/${summary.squad_size} matched`} className="sm:col-span-2 md:col-span-2 xl:col-span-1" />
+        <dl className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-x-6 gap-y-4 mt-6 pt-6 border-t border-line-soft">
+          {facts.map(([label, value]) => (
+            <div key={label} className="min-w-0">
+              <dt className="text-xs text-fg-mute">{label}</dt>
+              <dd className="text-sm text-fg-dim mt-1 truncate" title={value}>{value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div className="flex flex-wrap items-center gap-3 mt-6">
+          <Button variant="outline" disabled={saveState !== "idle"} onClick={save}>
+            {saveState === "saving" ? "Saving" : saveState === "saved" ? "Saved to your account" : "Save analysis"}
+          </Button>
+          {saveError && <span className="text-sm text-danger" role="status">{saveError}</span>}
         </div>
       </Panel>
 
-      {(result.data_provenance.warnings.length > 0 ||
-        Object.values(result.data_provenance).some((value) => value === "last_good")) && (
-        <div className="flex items-start gap-2.5 text-xs sm:text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-3.5 sm:px-4 py-3">
-          <IconAlert size={15} className="shrink-0 mt-0.5" />
-          <span className="min-w-0 break-words">
-            {Object.values(result.data_provenance).some((value) => value === "last_good") ? "Using verified backup data. " : "Data warning. "}
-            {result.data_provenance.warnings.join(" ")}
-          </span>
-        </div>
+      {(result.data_provenance.warnings.length > 0 || usingBackup) && (
+        <Notice>
+          {usingBackup ? "Using verified backup data. " : ""}
+          {result.data_provenance.warnings.join(" ")}
+        </Notice>
       )}
 
-      {/* ── Intelligence ─────────────────────────────────────────────── */}
-      {intelligence.enabled && (intelligence.weather || intelligence.pitch) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {intelligence.weather && (
-            <div className="reveal min-w-0" style={{ animationDelay: "80ms" }}>
-              <WeatherPanel weather={intelligence.weather} />
-            </div>
-          )}
-          {intelligence.pitch && (
-            <div className="reveal min-w-0" style={{ animationDelay: "140ms" }}>
-              <PitchPanel pitch={intelligence.pitch} />
-            </div>
-          )}
+      {/* ── Scorecard ────────────────────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between">
+          <h3 className="text-sm font-medium text-fg">Selected XI</h3>
+          <span className="text-xs text-fg-mute">Points are projected fantasy points with an estimated range</span>
         </div>
-      )}
-
-      {/* ── Selected XI ──────────────────────────────────────────────── */}
-      <section className="reveal" style={{ animationDelay: "120ms" }}>
-        <div className="flex items-center justify-between mb-3.5">
-          <SectionLabel>Selected XI</SectionLabel>
-          <span className="mono-label text-fg-mute">{best_team.length} players</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
-          {best_team.map((p, i) => (
-            <div key={p.fantasy_key} className="reveal min-w-0" style={{ animationDelay: `${150 + i * 55}ms` }}>
-              <PlayerCard
+        <div className="plate overflow-hidden">
+          <ScorecardHead />
+          <div className="divide-y divide-line-soft">
+            {best_team.map((p, i) => (
+              <ScorecardRow
+                key={p.fantasy_key}
                 player={p}
-                rank={i + 1}
-                isCaptain={p.display_name === summary.captain}
-                isViceCaptain={p.display_name === summary.vice_captain}
+                number={i + 1}
+                mark={p.display_name === summary.captain ? "C" : p.display_name === summary.vice_captain ? "VC" : undefined}
               />
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-line bg-well">
+            <span className="text-sm text-fg-dim">Projected total</span>
+            <span className="mono-value text-base font-medium text-accent">{summary.expected_total_points.toFixed(1)}</span>
+          </div>
         </div>
       </section>
 
-      {/* ── Bench ────────────────────────────────────────────────────── */}
       {bench.length > 0 && (
-        <section className="reveal" style={{ animationDelay: "160ms" }}>
-          <div className="flex items-center justify-between mb-3">
-            <SectionLabel>Bench — Next Best</SectionLabel>
-            <span className="mono-label text-fg-mute">{bench.length} reserves</span>
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h3 className="text-sm font-medium text-fg">Bench</h3>
+            <span className="mono-value text-xs text-fg-mute">next {Math.min(bench.length, 6)} of {bench.length}</span>
           </div>
-          <div className="well p-1.5 sm:p-2">
+          <div className="plate overflow-hidden divide-y divide-line-soft">
             {bench.slice(0, 6).map((p, i) => (
-              <div
-                key={p.fantasy_key}
-                className={`flex justify-between items-center gap-2 px-3 sm:px-4 py-2.5 ${i > 0 ? "border-t border-line-soft" : ""}`}
-              >
-                <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                  <span className="mono-value text-xs text-fg-mute shrink-0">{String(i + 12).padStart(2, "0")}</span>
-                  <span className="text-xs sm:text-sm text-fg-dim truncate">{p.display_name}</span>
-                  <span className="mono-label !text-[9px] text-fg-mute hidden sm:inline shrink-0">{ROLE_LABELS[p.role]}</span>
-                </div>
-                <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                  <span className="mono-value text-xs text-fg-mute hidden md:inline truncate max-w-[140px]">{p.team}</span>
-                  <span className="mono-value text-xs sm:text-sm text-fg-dim w-12 sm:w-14 text-right">{p.adjusted_score.toFixed(1)}</span>
-                </div>
-              </div>
+              <ScorecardRow key={p.fantasy_key} player={p} number={i + 12} muted />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── AI Analyst Report ────────────────────────────────────────── */}
-      <Panel className="p-4 sm:p-6 reveal">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap justify-between sm:items-center gap-3 sm:gap-4 mb-5">
-          <div className="flex items-start sm:items-center gap-3 min-w-0">
-            <span className="text-accent shrink-0 mt-0.5 sm:mt-0">
-              <IconTerminal size={18} />
-            </span>
-            <div className="min-w-0">
-              <SectionLabel accent>AI Analyst Report</SectionLabel>
-              <p className="text-[11px] text-fg-mute mt-1 leading-relaxed">
-                SHAP attributions + local llama3.2 narrative — fully offline
-              </p>
-            </div>
+      {/* ── Conditions ───────────────────────────────────────────────── */}
+      {intelligence.enabled && (intelligence.weather || intelligence.pitch) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          {intelligence.weather && <WeatherPanel weather={intelligence.weather} />}
+          {intelligence.pitch && <PitchPanel pitch={intelligence.pitch} />}
+        </div>
+      )}
+
+      {/* ── Analyst report ───────────────────────────────────────────── */}
+      <Panel className="p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-medium text-fg">Why these players</h3>
+            <p className="text-sm text-fg-mute mt-1">The main drivers behind each selection, with a written summary</p>
           </div>
           {!report && (
             <Button variant="outline" onClick={loadReport} disabled={reportLoading} className="w-full sm:w-auto">
-              {reportLoading ? "Analyzing…" : "Generate Report"}
+              {reportLoading ? "Writing report" : "Explain selection"}
             </Button>
           )}
         </div>
 
-        {reportError && (
-          <div className="flex items-start gap-2.5 text-xs sm:text-sm text-danger bg-danger/5 border border-danger/25 rounded-md p-3.5">
-            <IconAlert size={15} className="shrink-0 mt-0.5" />
-            <span className="min-w-0 break-words">{reportError}</span>
-          </div>
-        )}
+        {reportError && <div className="mt-4"><Notice tone="danger">{reportError}</Notice></div>}
 
         {reportLoading && (
-          <div className="space-y-3">
+          <div className="space-y-3 mt-6">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-2/3" />
             <Skeleton className="h-24 w-full" />
@@ -249,86 +212,112 @@ export default function AnalysisResult({ result }: Props) {
         )}
 
         {report && (
-          <div className="space-y-4 sm:space-y-5">
-            <div className="flex flex-wrap items-center gap-2">
-              <Chip tone={report.generated_with === "ollama" ? "accent" : "neutral"}>
-                {report.generated_with === "ollama" ? "Generated · llama3.2 local" : "Heuristic fallback"}
-              </Chip>
-              <Chip tone={report.attribution.covered_selected === report.attribution.selected_count ? "accent" : "neutral"}>
-                {report.attribution.available ? `${report.attribution.method.replaceAll("_", " ")} drivers ${report.attribution.covered_selected}/${report.attribution.selected_count}` : "Feature attribution unavailable"}
-              </Chip>
-            </div>
-
-            <p className="text-xs sm:text-sm text-fg-dim leading-relaxed border-l-2 border-accent/70 pl-3.5 sm:pl-4 break-words">
-              {report.team_report}
+          <div className="mt-6 space-y-6">
+            <p className="text-xs text-fg-mute">
+              {report.generated_with === "ollama" ? "Written by a local language model." : "Rule-based summary."}{" "}
+              {report.attribution.available
+                ? `${report.attribution.method.replaceAll("_", " ")} drivers for ${report.attribution.covered_selected} of ${report.attribution.selected_count} players.`
+                : "Feature drivers unavailable."}
             </p>
+            <p className="text-[15px] leading-relaxed text-fg max-w-3xl break-words">{report.team_report}</p>
 
-            <div className="space-y-2.5">
-              {report.players
-                .filter((p) => p.selected)
-                .map((p) => (
-                  <div key={p.display_name} className="plate-flat p-3.5 sm:p-4">
-                    <div className="flex justify-between items-baseline mb-2 gap-3">
-                      <span className="font-medium text-fg text-sm truncate">{p.display_name}</span>
-                      <span className="mono-value text-xs text-accent shrink-0">{p.adjusted_score.toFixed(1)} pts</span>
-                    </div>
-                    <p className="text-xs text-fg-dim leading-relaxed break-words">{p.explanation}</p>
+            <div className="divide-y divide-line-soft border-t border-line-soft">
+              {report.players.filter((p) => p.selected).map((p) => (
+                <div key={p.display_name} className="py-4 grid gap-2 md:grid-cols-[200px_1fr] md:gap-6">
+                  <div className="flex md:flex-col justify-between md:justify-start gap-1">
+                    <span className="text-sm font-medium text-fg truncate">{p.display_name}</span>
+                    <span className="mono-value text-sm text-fg-dim">{p.adjusted_score.toFixed(1)}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-fg-dim leading-relaxed break-words">{p.explanation}</p>
                     {p.drivers.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
                         {p.drivers.map((d) => (
-                          <span
-                            key={d.feature}
-                            className={`mono-label !text-[9px] border rounded-[3px] px-1.5 py-0.5 mono-value ${
-                              d.impact >= 0 ? "text-ok border-ok/35" : "text-danger border-danger/35"
-                            }`}
-                          >
-                            {d.label}
+                          <span key={d.feature} className={d.impact >= 0 ? "text-ok" : "text-danger"}>
+                            {d.impact >= 0 ? "+" : "−"} {d.label}
                           </span>
                         ))}
                       </div>
                     )}
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
           </div>
         )}
       </Panel>
 
-      {/* ── Data coverage note ───────────────────────────────────────── */}
       {name_resolution.unresolved.length > 0 && (
-        <div className="flex items-start gap-2.5 text-xs text-fg-mute plate-flat p-3.5 sm:p-4 reveal">
-          <IconAlert size={14} className="shrink-0 mt-px text-warn" />
-          <p className="leading-relaxed min-w-0 break-words">
-            <span className="text-fg-dim font-medium">Data coverage:</span>{" "}
-            {name_resolution.unresolved.length} squad player
-            {name_resolution.unresolved.length > 1 ? "s" : ""} without {request.format.toUpperCase()} history
-            {name_resolution.unresolved.length <= 8 ? ` (${name_resolution.unresolved.join(", ")})` : ""} — scored
-            with the format league prior ({summary.league_prior.toFixed(1)} pts).
-          </p>
-        </div>
+        <p className="text-sm text-fg-mute leading-relaxed">
+          {name_resolution.unresolved.length} squad player{name_resolution.unresolved.length > 1 ? "s have" : " has"} no {format} history
+          {name_resolution.unresolved.length <= 8 ? ` (${name_resolution.unresolved.join(", ")})` : ""} and{" "}
+          {name_resolution.unresolved.length > 1 ? "are" : "is"} scored at the format average of{" "}
+          <span className="mono-value">{summary.league_prior.toFixed(1)}</span> points.
+        </p>
       )}
     </div>
   );
 }
 
-function Metric({
-  icon,
-  label,
-  value,
-  className = "",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  className?: string;
-}) {
+const ROW_GRID = "grid grid-cols-[32px_1fr_auto] md:grid-cols-[40px_1fr_96px_160px_96px_72px] items-center gap-x-4";
+
+function ScorecardHead() {
   return (
-    <div className={`bg-panel px-3.5 sm:px-4 py-3 min-w-0 ${className}`}>
-      <div className="flex items-center gap-1.5 text-fg-mute mb-1">
-        {icon}
-        <span className="mono-label !text-[9px]">{label}</span>
+    <div className={`${ROW_GRID} hidden md:grid px-4 h-10 border-b border-line text-xs text-fg-mute`}>
+      <span>No</span>
+      <span>Player</span>
+      <span>Role</span>
+      <span>Team</span>
+      <span className="text-right">Range</span>
+      <span className="text-right">Points</span>
+    </div>
+  );
+}
+
+function ScorecardRow({ player, number, mark, muted = false }: { player: PlayerEntry; number: number; mark?: "C" | "VC"; muted?: boolean }) {
+  const out = ["INJURED", "RESTED", "SUSPENDED"].includes(player.injury_status);
+  const doubtful = player.injury_status === "DOUBTFUL";
+  const notes: { text: string; tone?: "warn" | "danger" }[] = [];
+  if (player.engine !== "ml") notes.push({ text: ENGINE_LABELS[player.engine] ?? ENGINE_LABELS.league_prior });
+  if (player.pitch_multiplier !== 1) notes.push({ text: `Pitch ×${player.pitch_multiplier.toFixed(2)}` });
+  if (doubtful) notes.push({ text: "Doubtful, XI unconfirmed", tone: "warn" });
+  if (out) notes.push({ text: player.injury_status.charAt(0) + player.injury_status.slice(1).toLowerCase(), tone: "danger" });
+  if (player.matches_played === 0) notes.push({ text: "No history" });
+  else notes.push({ text: `${player.matches_played} matches` }, { text: `Ceiling ${player.captain_upside.toFixed(0)}` });
+
+  return (
+    <div className={`${ROW_GRID} px-4 py-3 ${out ? "opacity-60" : ""}`}>
+      <span className={`mono-value text-sm ${muted ? "text-fg-mute" : "text-fg-dim"}`}>{pad(number)}</span>
+
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`text-sm font-medium truncate ${muted ? "text-fg-dim" : "text-fg"}`}>{player.display_name}</span>
+          {mark && (
+            <span
+              className={`mono-value text-[11px] leading-none px-1 py-0.5 rounded ${mark === "C" ? "bg-accent text-accent-ink" : "border border-line text-fg-dim"}`}
+              title={mark === "C" ? "Captain" : "Vice-captain"}
+            >
+              {mark}
+            </span>
+          )}
+        </div>
+        <ul className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-fg-mute mt-1">
+          <li className="md:hidden">{ROLE_LABELS[player.role]}</li>
+          <li className="md:hidden">{player.team}</li>
+          {notes.map((n) => (
+            <li key={n.text} className={n.tone === "warn" ? "text-warn" : n.tone === "danger" ? "text-danger" : ""}>
+              {n.text}
+            </li>
+          ))}
+        </ul>
       </div>
-      <div className="text-xs text-fg-dim truncate" title={value}>{value}</div>
+
+      <span className="hidden md:block text-sm text-fg-dim">{ROLE_LABELS[player.role]}</span>
+      <span className="hidden md:block text-sm text-fg-dim truncate">{player.team}</span>
+      <span className="hidden md:block mono-value text-sm text-fg-mute text-right" title="Historical spread estimate; coverage is not calibrated">
+        {player.ci_low.toFixed(0)} to {player.ci_high.toFixed(0)}
+      </span>
+      <span className={`mono-value text-sm text-right ${muted ? "text-fg-dim" : "text-fg"}`}>{player.adjusted_score.toFixed(1)}</span>
     </div>
   );
 }
@@ -337,30 +326,22 @@ interface Props {
   result: GenerateResponse;
 }
 
-// Re-exported for pages that need a loading skeleton matching this view
 export function AnalysisSkeleton({ label }: { label: string }) {
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <div className="flex flex-wrap items-center gap-3 mb-2">
-        <Progress />
-        <span className="mono-label text-accent shrink-0">{label}</span>
-      </div>
-      <Panel className="p-4 sm:p-6">
-        <Skeleton className="h-3 w-28 max-w-full mb-4" />
-        <Skeleton className="h-6 w-72 max-w-full mb-3" />
-        <Skeleton className="h-3 w-96 max-w-full" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-px mt-6 border border-line-soft rounded-md overflow-hidden">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-panel px-3.5 sm:px-4 py-3.5">
-              <Skeleton className="h-2.5 w-16 max-w-full mb-2" />
-              <Skeleton className="h-3 w-24 max-w-full" />
-            </div>
-          ))}
-        </div>
+    <div className="space-y-6" aria-busy>
+      <p className="text-sm text-fg-dim" role="status">{label}</p>
+      <Panel className="p-6">
+        <Skeleton className="h-4 w-32 max-w-full" />
+        <Skeleton className="h-7 w-72 max-w-full mt-3" />
+        <Skeleton className="h-4 w-96 max-w-full mt-3" />
       </Panel>
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-3.5">
+      <div className="plate divide-y divide-line-soft overflow-hidden">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-44 rounded-md" />
+          <div key={i} className="px-4 py-4 flex items-center gap-4">
+            <Skeleton className="h-4 w-6" />
+            <Skeleton className="h-4 w-48 max-w-full" />
+            <Skeleton className="h-4 w-12 ml-auto" />
+          </div>
         ))}
       </div>
     </div>

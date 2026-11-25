@@ -7,16 +7,16 @@ export const ROLE_LABELS: Record<Role, string> = {
   BOWL: "Bowler",
 };
 
-// Restrained supporting tones — role is informational, not decorative
-export const ROLE_TONES: Record<Role, string> = {
-  WK: "text-warn border-warn/40",
-  BAT: "text-accent border-accent/40",
-  AR: "text-ok border-ok/40",
-  BOWL: "text-[#6ea3d8] border-[#6ea3d8]/40",
+// Role is information, not decoration: shown as muted text, never a color
+export const ROLE_SHORT: Record<Role, string> = {
+  WK: "WK",
+  BAT: "Bat",
+  AR: "AR",
+  BOWL: "Bowl",
 };
 
-export const ENGINE_LABELS: Record<string, { label: string; tone: string }> = {
-  ml: { label: "TriBE ML", tone: "text-fg-dim border-line" },
-  recent_form: { label: "Recent Form", tone: "text-fg-dim border-line" },
-  league_prior: { label: "League Prior", tone: "text-fg-mute border-line-soft" },
+export const ENGINE_LABELS: Record<string, string> = {
+  ml: "Model",
+  recent_form: "Recent form",
+  league_prior: "League average",
 };

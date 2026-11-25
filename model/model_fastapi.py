@@ -15,11 +15,12 @@ Run:  uvicorn model.model_fastapi:app --host 0.0.0.0 --port 8000
 
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
 import pandas as pd
-from fastapi import Depends, FastAPI, HTTPException, Path as APIPath
+from fastapi import Depends, FastAPI, HTTPException, Path as APIPath, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -189,7 +190,8 @@ def matches():
 
 
 @app.get("/match_squads")
-def match_squads(match_id: str):
+def match_squads(match_id: str = Query(min_length=1, max_length=128), user: Principal = Depends(require_user)):
+    # Signed-in only: each call may load a full format history under the shared lock.
     """Normalized squads for a fixture, with roles and name-resolution preview."""
     match = get_match_info(match_id)
     if not match:
@@ -353,16 +355,37 @@ def explain_team(request_data: ExplainRequest, user: Principal = Depends(require
             detail="Explain token not found or expired. Re-run /generate_best_team.",
         )
 
-    cached = record["payload"]["snapshot"]
+    # Explanation rows are user-writable through the database API, so the
+    # snapshot is untrusted input: bound the work it can request.
+    cached = (record.get("payload") or {}).get("snapshot")
+    if not _valid_snapshot(cached):
+        raise HTTPException(status_code=400, detail="Explanation data is invalid. Generate the team again.")
     from intelligence.llm_analyst import generate_team_report
 
-    drivers_by_player = cached.get("drivers", {})
+    if not _EXPLAIN_SLOTS.acquire(blocking=False):
+        raise HTTPException(status_code=503, detail="Another report is being written. Please retry shortly.",
+                            headers={"Retry-After": "10"})
+    try:
+        return generate_team_report(cached=cached, drivers_by_player=cached.get("drivers", {}))
+    finally:
+        _EXPLAIN_SLOTS.release()
 
-    report = generate_team_report(
-        cached=cached,
-        drivers_by_player=drivers_by_player,
-    )
-    return report
+
+# One report at a time: each one makes up to twelve local language-model calls.
+_EXPLAIN_SLOTS = threading.BoundedSemaphore(1)
+_MAX_SELECTED = 11
+_MAX_PLAYERS = 100
+
+
+def _valid_snapshot(cached) -> bool:
+    if not isinstance(cached, dict):
+        return False
+    selected, players, drivers = cached.get("selected"), cached.get("players"), cached.get("drivers", {})
+    return (isinstance(selected, list) and 0 < len(selected) <= _MAX_SELECTED
+            and all(isinstance(key, str) for key in selected)
+            and isinstance(players, dict) and len(players) <= _MAX_PLAYERS
+            and all(key in players for key in selected)
+            and isinstance(drivers, dict) and len(drivers) <= _MAX_PLAYERS)
 
 
 @app.get("/auth/config")

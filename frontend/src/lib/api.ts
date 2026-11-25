@@ -1,4 +1,4 @@
-// NEW_X1 — FastAPI client
+// NEW_X1 FastAPI client
 import type {
   AnalystReport,
   GenerateResponse,
@@ -6,31 +6,101 @@ import type {
   MatchSquads,
   TeamsResponse,
 } from "./types";
-import { sessionHeaders } from "./auth";
+import { getAuthClient, sessionHeaders } from "./auth";
 
+// A manual address from Settings wins; otherwise the address the backend
+// launcher published to Supabase; otherwise the build-time address.
 const SAVED_API_BASE = "new_x1_api_base";
+const DISCOVERED_API_BASE = "new_x1_api_discovered";
+
+// The session token is sent to this address, so only the tunnel hosts the
+// launcher uses (run_all.py), the configured build address and localhost are accepted.
+const TUNNEL_HOST_SUFFIXES = [".trycloudflare.com", ".lhr.life", ".localhost.run"];
+
+function isAllowedBackend(parsed: URL): boolean {
+  const local = ["localhost", "127.0.0.1"].includes(parsed.hostname);
+  if (local) return parsed.protocol === "http:" || parsed.protocol === "https:";
+  if (parsed.protocol !== "https:") return false;
+  const configured = process.env.NEXT_PUBLIC_API_BASE?.trim();
+  if (configured) {
+    try { if (new URL(configured).host === parsed.host) return true; } catch { /* ignore a malformed build value */ }
+  }
+  return TUNNEL_HOST_SUFFIXES.some((suffix) => parsed.hostname.endsWith(suffix));
+}
+
+function readAllowed(key: string): string | null {
+  const value = window.localStorage.getItem(key);
+  if (!value) return null;
+  try {
+    const parsed = new URL(value);
+    if (isAllowedBackend(parsed) && parsed.pathname === "/") return parsed.origin;
+  } catch { /* drop an unreadable value below */ }
+  window.localStorage.removeItem(key);
+  return null;
+}
+
+export function getManualApiBase(): string | null {
+  return typeof window === "undefined" ? null : readAllowed(SAVED_API_BASE);
+}
+
+export function getDiscoveredApiBase(): string | null {
+  return typeof window === "undefined" ? null : readAllowed(DISCOVERED_API_BASE);
+}
 
 export function getApiBase(): string {
   if (typeof window !== "undefined") {
-    const saved = window.localStorage.getItem(SAVED_API_BASE);
-    if (saved) return saved;
+    const chosen = readAllowed(SAVED_API_BASE) ?? readAllowed(DISCOVERED_API_BASE);
+    if (chosen) return chosen;
   }
   const configured = process.env.NEXT_PUBLIC_API_BASE?.trim();
   if (configured) return configured.replace(/\/$/, "");
   if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
     return "http://localhost:8000";
   }
-  throw new Error("Backend address is missing. Open Settings and connect the local backend.");
+  throw new Error("The analysis server is offline.");
+}
+
+let discovery: Promise<void> | null = null;
+
+async function discover(): Promise<void> {
+  const client = getAuthClient();
+  if (!client) return;
+  const { data, error } = await client.from("backend_endpoint").select("url").eq("id", 1).maybeSingle();
+  if (error) return;
+  const before = window.localStorage.getItem(DISCOVERED_API_BASE);
+  let next: string | null = null;
+  if (typeof data?.url === "string") {
+    try {
+      const parsed = new URL(data.url);
+      if (isAllowedBackend(parsed) && parsed.pathname === "/") next = parsed.origin;
+    } catch { /* ignore an unreadable published value */ }
+  }
+  if (next) window.localStorage.setItem(DISCOVERED_API_BASE, next);
+  else window.localStorage.removeItem(DISCOVERED_API_BASE);
+  if (before !== next) window.dispatchEvent(new Event("new_x1_api_base_changed"));
+}
+
+/** Look up the published address once per page load, or again after `rediscoverApiBase`. */
+async function apiBase(): Promise<string> {
+  if (typeof window !== "undefined" && !getManualApiBase()) {
+    discovery ??= discover().catch(() => undefined);
+    await discovery;
+  }
+  return getApiBase();
+}
+
+/** Called when the backend stops answering, so a restarted laptop's new address is found. */
+export function rediscoverApiBase(): void {
+  discovery = null;
 }
 
 export function saveApiBase(value: string): string {
   const parsed = new URL(value.trim());
-  const local = ["localhost", "127.0.0.1"].includes(parsed.hostname);
-  if (parsed.protocol !== "https:" && !(local && parsed.protocol === "http:")) {
-    throw new Error("Use an HTTPS backend address, or HTTP on localhost.");
-  }
   if (parsed.username || parsed.password || parsed.search || parsed.hash || parsed.pathname !== "/") {
-    throw new Error("Enter only the backend origin, without a path or credentials.");
+    throw new Error("Enter only the server origin, without a path or credentials.");
+  }
+  if (!isAllowedBackend(parsed)) {
+    throw new Error("Use the HTTPS tunnel address printed by the backend launcher, or localhost.");
   }
   const origin = parsed.origin;
   window.localStorage.setItem(SAVED_API_BASE, origin);
@@ -38,8 +108,14 @@ export function saveApiBase(value: string): string {
   return origin;
 }
 
+export function clearManualApiBase(): void {
+  window.localStorage.removeItem(SAVED_API_BASE);
+  rediscoverApiBase();
+  window.dispatchEvent(new Event("new_x1_api_base_changed"));
+}
+
 export async function getMatches(): Promise<{ matches: import("./types").Match[]; warning: string | null }> {
-  return handle(await fetch(`${getApiBase()}/matches`, { cache: "no-store", signal: AbortSignal.timeout(8000) }));
+  return handle(await fetch(`${await apiBase()}/matches`, { cache: "no-store", signal: AbortSignal.timeout(8000) }));
 }
 
 async function handle<T>(res: Response): Promise<T> {
@@ -57,17 +133,17 @@ async function handle<T>(res: Response): Promise<T> {
 }
 
 export async function getHealth(): Promise<HealthStatus> {
-  const res = await fetch(`${getApiBase()}/health`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  const res = await fetch(`${await apiBase()}/health`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
   return handle<HealthStatus>(res);
 }
 
 export async function getMatchSquads(matchId: string | number): Promise<MatchSquads> {
-  const res = await fetch(`${getApiBase()}/match_squads?match_id=${matchId}`, { cache: "no-store" });
+  const res = await fetch(`${await apiBase()}/match_squads?match_id=${encodeURIComponent(String(matchId))}`, { cache: "no-store" });
   return handle<MatchSquads>(res);
 }
 
 export async function getTeams(): Promise<TeamsResponse> {
-  const res = await fetch(`${getApiBase()}/teams`, { cache: "no-store" });
+  const res = await fetch(`${await apiBase()}/teams`, { cache: "no-store" });
   return handle<TeamsResponse>(res);
 }
 
@@ -87,7 +163,7 @@ export interface GenerateRequest {
 }
 
 export async function generateBestTeam(req: GenerateRequest): Promise<GenerateResponse> {
-  const res = await fetch(`${getApiBase()}/generate_best_team`, {
+  const res = await fetch(`${await apiBase()}/generate_best_team`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...await sessionHeaders() },
     signal: AbortSignal.timeout(120000),
@@ -97,7 +173,7 @@ export async function generateBestTeam(req: GenerateRequest): Promise<GenerateRe
 }
 
 export async function explainTeam(explainToken: string): Promise<AnalystReport> {
-  const res = await fetch(`${getApiBase()}/explain_team`, {
+  const res = await fetch(`${await apiBase()}/explain_team`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...await sessionHeaders() },
     signal: AbortSignal.timeout(120000),
@@ -113,19 +189,19 @@ export interface SavedAnalysis {
 }
 
 export async function saveAnalysis(explainToken: string, title: string): Promise<SavedAnalysis> {
-  return handle<SavedAnalysis>(await fetch(`${getApiBase()}/analyses`, {
+  return handle<SavedAnalysis>(await fetch(`${await apiBase()}/analyses`, {
     method: "POST", headers: { "Content-Type": "application/json", ...await sessionHeaders() },
     signal: AbortSignal.timeout(15000), body: JSON.stringify({ explain_token: explainToken, title }),
   }));
 }
 
 export async function getSavedAnalyses(): Promise<{ analyses: SavedAnalysis[] }> {
-  return handle(await fetch(`${getApiBase()}/analyses`, { cache: "no-store",
+  return handle(await fetch(`${await apiBase()}/analyses`, { cache: "no-store",
     headers: await sessionHeaders(), signal: AbortSignal.timeout(15000) }));
 }
 
 export async function deleteSavedAnalysis(id: string): Promise<void> {
-  await handle(await fetch(`${getApiBase()}/analyses/${encodeURIComponent(id)}`, {
+  await handle(await fetch(`${await apiBase()}/analyses/${encodeURIComponent(id)}`, {
     method: "DELETE", headers: await sessionHeaders(), signal: AbortSignal.timeout(15000),
   }));
 }

@@ -1,5 +1,4 @@
 import streamlit as st
-import openai
 import json
 import os
 from dotenv import load_dotenv
@@ -297,7 +296,3 @@ def load_player_fantasy_points(json_file):
             sorted_data[player] = match_list_sorted
         return sorted_data
 
-# Initialize OpenAI client
-load_dotenv()
-KEY = os.getenv('OPENAI_KEY')
-client = openai.OpenAI(api_key=KEY)

@@ -1,20 +1,25 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { GenerateResponse, Match } from "@/lib/types";
 import { generateBestTeam } from "@/lib/api";
 import AnalysisResult, { AnalysisSkeleton } from "./AnalysisResult";
-import { IconAlert, IconArrowRight, IconCalendar, IconPin } from "./icons";
-import { Button, CheckRow, Chip, Rivets, SectionLabel, StatusDot } from "./ui";
+import OvalGraphic from "./OvalGraphic";
+import { IconPin } from "./icons";
+import { Button, CheckRow, Notice, PageHeader, Skeleton, StatusDot } from "./ui";
 
 interface Props {
   matches: Match[];
   feedWarning?: string | null;
+  offline?: boolean;
+  loading?: boolean;
 }
 
-export default function FixturesBoard({ matches, feedWarning }: Props) {
-  const router = useRouter();
+const DAY = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", timeZone: "UTC" });
+const WEEKDAY = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" });
+
+export default function FixturesBoard({ matches, feedWarning, offline = false, loading = false }: Props) {
   const [scanNews, setScanNews] = useState(false);
   const [useMl, setUseMl] = useState(true);
   const [useIntelligence, setUseIntelligence] = useState(true);
@@ -49,149 +54,124 @@ export default function FixturesBoard({ matches, feedWarning }: Props) {
       setResult(res);
       setTimeout(() => document.getElementById("analysis")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Team generation failed");
+      setError(e instanceof Error ? e.message : "Team selection could not be generated");
     } finally {
       setAnalyzing(null);
     }
   };
 
+  const showRecent = upcoming.length === 0 && recentPast.length > 0;
+  const rows = upcoming.length > 0 ? upcoming : recentPast;
+
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {feedWarning && (
-        <div className="flex items-start gap-3 text-xs sm:text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-3.5 sm:px-4 py-3 sm:py-3.5">
-          <IconAlert size={15} className="shrink-0 mt-0.5" />
-          <span className="min-w-0 break-words">{feedWarning}</span>
-        </div>
+    <div className="space-y-8">
+      <PageHeader
+        title="Upcoming fixtures"
+        subtitle="Pick a match to see the projected best XI, the captain and the reasons behind each selection"
+        action={
+          <Link
+            href="/simulator"
+            className="inline-flex items-center justify-center gap-2 h-9 px-4 rounded-lg border border-line text-sm font-medium text-fg hover:bg-panel-hi transition-colors shrink-0"
+          >
+            Custom match
+          </Link>
+        }
+      />
+
+      {feedWarning && <Notice>{feedWarning}</Notice>}
+
+      {upcoming.length === 0 && feedStaleDays > 7 && matches.length > 0 && (
+        <Notice>
+          The fixture feed is {feedStaleDays} days old. Recent completed matches below can still be analysed
+          retrospectively
+        </Notice>
       )}
-      {/* ── Page header ──────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-        <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-semibold text-fg tracking-tight">Upcoming fixtures</h1>
-          <p className="text-xs sm:text-sm text-fg-mute mt-1.5 leading-relaxed">
-            TriBE ensemble predictions, risk-adjusted XI optimization, live match intelligence.
-          </p>
-        </div>
-        <Button onClick={() => router.push("/simulator")} className="w-full sm:w-auto shrink-0">
-          Custom Simulator
-          <IconArrowRight size={13} />
-        </Button>
-      </div>
 
-      {/* ── Engine controls ──────────────────────────────────────────── */}
-      <div className="plate-flat px-3.5 py-3 sm:p-0 sm:bg-transparent sm:border-0 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-6 gap-y-2.5">
-        <span className="mono-label text-fg-mute">Analysis engine</span>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
-          <CheckRow checked={useMl} onChange={setUseMl} label="ML predictions" />
-          <CheckRow checked={useIntelligence} onChange={setUseIntelligence} label="Match intelligence" />
-          <CheckRow checked={scanNews} onChange={setScanNews} label="Scan injury news" />
-        </div>
-      </div>
-
-      {/* ── Banners ──────────────────────────────────────────────────── */}
       {todays.length > 0 && (
-        <div className="flex items-start sm:items-center gap-2.5 text-xs sm:text-sm text-fg-dim plate-flat px-3.5 sm:px-4 py-3">
-          <StatusDot tone="ok" pulse className="mt-1 sm:mt-0" />
-          <span className="min-w-0 break-words">
-            {todays.length} match{todays.length > 1 ? "es" : ""} today —{" "}
-            {todays.map((m) => `${m.team1} v ${m.team2}`).join(", ")}
-          </span>
-        </div>
+        <p className="flex items-center gap-2 text-sm text-fg-dim">
+          <StatusDot tone="ok" />
+          Today: {todays.map((m) => `${m.team1} v ${m.team2}`).join(", ")}
+        </p>
       )}
 
-      {upcoming.length === 0 && feedStaleDays > 7 && (
-        <div className="flex items-start gap-3 text-xs sm:text-sm text-warn border border-warn/25 bg-warn/5 rounded-md px-3.5 sm:px-4 py-3.5">
-          <IconAlert size={15} className="shrink-0 mt-0.5" />
-          <div className="min-w-0 break-words">
-            Fixture feed is {feedStaleDays} days old. Refresh it with{" "}
-            <code className="mono-value text-[11px] sm:text-[12px] text-warn break-all">python data/future_matches/cricapi_sync.py</code>{" "}
-            (free tier — imminent matches only) or{" "}
-            <code className="mono-value text-[11px] sm:text-[12px] text-warn break-all">schedule_fetcher.py</code> +{" "}
-            <code className="mono-value text-[11px] sm:text-[12px] text-warn break-all">squad_fetcher.py</code> (full window,
-            requires <span className="mono-value text-[11px] sm:text-[12px]">RAPID_API_KEY</span>). Recent fixtures
-            below still support retrospective analysis.
+      <section className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-sm font-medium text-fg">{showRecent ? "Recent matches" : "Schedule"}</h2>
+            {rows.length > 0 && <span className="mono-value text-xs text-fg-mute">
+              {showRecent ? `${recentPast.length} completed` : `${upcoming.length} upcoming`}
+            </span>}
           </div>
-        </div>
-      )}
-
-      {/* ── Fixture list ─────────────────────────────────────────────── */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <SectionLabel>Fixture Schedule</SectionLabel>
-          <span className="mono-label text-fg-mute">{upcoming.length} upcoming</span>
+          {(rows.length > 0 || loading) && <div className="flex flex-wrap items-center gap-x-5" aria-label="Analysis options">
+            <CheckRow checked={useMl} onChange={setUseMl} label="Model predictions" />
+            <CheckRow checked={useIntelligence} onChange={setUseIntelligence} label="Weather and pitch" />
+            <CheckRow checked={scanNews} onChange={setScanNews} label="Injury news" />
+          </div>}
         </div>
 
-        <div className="well p-2 sm:p-2.5">
-          {upcoming.map((match, i) => (
-            <FixtureRow
-              key={match.match_id}
-              match={match}
-              index={i}
-              analyzing={analyzing === String(match.match_id)}
-              disabled={analyzing !== null}
-              onAnalyze={() => analyze(match)}
-            />
-          ))}
-
-          {upcoming.length === 0 && recentPast.length > 0 && (
-            <div className="px-3 sm:px-4 py-3">
-              <span className="mono-label text-fg-mute">
-                No upcoming fixtures — recent completed matches below
-              </span>
-            </div>
-          )}
-
-          {upcoming.length === 0 &&
-            recentPast.map((match, i) => (
+        {loading ? (
+          <div className="plate divide-y divide-line-soft overflow-hidden" aria-busy aria-label="Loading fixtures">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="grid grid-cols-[56px_1fr] md:grid-cols-[72px_1fr_176px_auto] items-center gap-x-4 px-4 py-4">
+                <Skeleton className="h-8 w-12" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-56 max-w-full" />
+                  <Skeleton className="h-3 w-40 max-w-full" />
+                </div>
+                <Skeleton className="hidden md:block h-4 w-32" />
+                <Skeleton className="hidden md:block h-9 w-24" />
+              </div>
+            ))}
+          </div>
+        ) : rows.length > 0 ? (
+          <div className="plate divide-y divide-line-soft overflow-hidden">
+            {rows.map((match) => (
               <FixtureRow
                 key={match.match_id}
                 match={match}
-                index={i}
-                dim
+                past={showRecent}
                 analyzing={analyzing === String(match.match_id)}
                 disabled={analyzing !== null}
                 onAnalyze={() => analyze(match)}
               />
             ))}
-
-          {upcoming.length === 0 && recentPast.length === 0 && (
-            <div className="px-4 sm:px-6 py-12 sm:py-14 text-center">
-              <div className="mono-label text-fg-mute mb-2">{feedWarning ? "Fixtures unavailable" : "No fixtures in local feed"}</div>
-              <p className="text-xs text-fg-mute/70">
-                Fixtures will appear here when the analysis backend is available.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* ── Analysis ─────────────────────────────────────────────────── */}
-      <div id="analysis" className="scroll-mt-24">
-        {error && (
-          <div className="flex items-start gap-2.5 text-xs sm:text-sm text-danger bg-danger/5 border border-danger/25 rounded-md p-3.5 sm:p-4">
-            <IconAlert size={15} className="shrink-0 mt-0.5" />
-            <span className="min-w-0 break-words">{error}</span>
+          </div>
+        ) : (
+          <div className="plate px-6 py-12 flex flex-col items-center text-center">
+            <OvalGraphic />
+            <h3 className="text-base font-medium text-fg mt-6">
+              {offline ? "Fixtures are offline" : "No fixtures in the next seven days"}
+            </h3>
+            <p className="text-sm text-fg-dim mt-2 max-w-md">
+              {offline
+                ? "The schedule loads from the analysis server, which is not running right now. You can still set up a match in the simulator"
+                : "New fixtures appear once squads are announced. You can set up any match in the simulator"}
+            </p>
+            <Link href="/simulator" className="mt-6 inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-fg text-accent-ink text-sm font-medium hover:bg-white transition-colors">
+              Open simulator
+            </Link>
           </div>
         )}
-        {analyzing && <AnalysisSkeleton label="Running TriBE ensemble + optimizer" />}
+      </section>
+
+      <div id="analysis" className="scroll-mt-24 space-y-6">
+        {error && <Notice tone="danger">{error}</Notice>}
+        {analyzing && <AnalysisSkeleton label="Predicting players and solving for the best XI" />}
         {result && !analyzing && <AnalysisResult result={result} />}
       </div>
     </div>
   );
 }
 
-// ── Fixture row: responsive stacked card on mobile, horizontal strip on sm/md+ ──
-
 function FixtureRow({
   match,
-  index,
-  dim = false,
+  past,
   analyzing,
   disabled,
   onAnalyze,
 }: {
   match: Match;
-  index: number;
-  dim?: boolean;
+  past: boolean;
   analyzing: boolean;
   disabled: boolean;
   onAnalyze: () => void;
@@ -199,73 +179,46 @@ function FixtureRow({
   const hasSquad = match.has_squad !== false;
   const projected = match.squad_source === "last_match";
   const reused = match.squad_source === "series_squad";
-  const squadLabel = projected ? "Last-match estimate" : reused ? "Series squads" : hasSquad ? "Squads ready" : "Squads pending";
-  const lastMatchDates = match.squad_match_dates
-    ? Object.entries(match.squad_match_dates).map(([team, day]) => `${team}: ${day}`).join(" · ")
-    : undefined;
+  const squadLabel = projected ? "Last-match XIs" : reused ? "Series squads" : hasSquad ? "Squads announced" : "Squads pending";
+  const squadTitle = reused
+    ? "Provider series roster; playing XI unconfirmed"
+    : match.squad_match_dates
+      ? Object.entries(match.squad_match_dates).map(([team, day]) => `${team}: ${day}`).join(", ")
+      : undefined;
+  const when = new Date(`${match.date}T00:00:00Z`);
+  const valid = !Number.isNaN(when.getTime());
+
   return (
-    <div
-      className={`reveal ${index > 0 ? "mt-2" : ""}`}
-      style={{ animationDelay: `${index * 55}ms` }}
-    >
-      <div
-        className={`plate p-3.5 sm:px-4 sm:py-3.5 flex flex-col md:flex-row md:items-center gap-3 md:gap-5 transition-colors duration-150 hover:border-fg-mute/50 ${
-          dim ? "opacity-70" : ""
-        }`}
-      >
-        <Rivets />
+    <div className={`grid grid-cols-[56px_1fr] md:grid-cols-[72px_1fr_176px_auto] items-center gap-x-4 gap-y-3 px-4 py-4 ${past ? "text-fg-dim" : ""}`}>
+      <div className="mono-value leading-tight">
+        <div className="text-sm text-fg">{valid ? DAY.format(when) : match.date}</div>
+        <div className="text-xs text-fg-mute mt-1">{valid ? WEEKDAY.format(when) : ""}</div>
+      </div>
 
-        {/* Mobile/Tablet top bar: Status + Date (on md+, only Status sits on the left) */}
-        <div className="flex items-center justify-between md:justify-start gap-2.5 md:w-32 md:shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
-            <StatusDot tone={projected || reused ? "warn" : hasSquad ? "ok" : "mute"} pulse={hasSquad} />
-            <span
-              className="mono-label !text-[9px] text-fg-mute leading-tight truncate"
-              title={reused ? "Provider series roster; playing XI unconfirmed" : lastMatchDates}
-            >
-              {squadLabel}
-            </span>
-          </div>
-          <div className="flex md:hidden items-center gap-1.5 text-fg-mute shrink-0">
-            <IconCalendar size={12} />
-            <span className="mono-value text-[11px]">{match.date}</span>
-          </div>
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[15px] font-medium text-fg break-words">
+            {match.team1}
+            <span className="text-fg-mute font-normal mx-2">v</span>
+            {match.team2}
+          </span>
+          <span className="mono-value text-xs text-fg-mute">{match.match_type}</span>
         </div>
-
-        {/* Center: Teams + Format + Venue */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start sm:items-center gap-2 flex-wrap">
-            <span className={`font-semibold text-sm sm:text-[15px] leading-snug break-words ${dim ? "text-fg-dim" : "text-fg"}`}>
-              {match.team1}
-              <span className="text-fg-mute font-normal mx-1.5">vs</span>
-              {match.team2}
-            </span>
-            <Chip className="shrink-0">{match.match_type}</Chip>
-          </div>
-          <div className="field mt-2 px-2.5 py-1.5 inline-flex items-center gap-2 max-w-full">
-            <span className="text-fg-mute shrink-0">
-              <IconPin size={12} />
-            </span>
-            <span className="mono-value text-[11px] text-fg-dim truncate">{match.venue}</span>
-          </div>
+        <div className="flex items-center gap-1 mt-1 text-sm text-fg-mute min-w-0">
+          <IconPin size={14} className="shrink-0" />
+          <span className="truncate">{match.venue}</span>
         </div>
+      </div>
 
-        {/* Desktop date + Action button */}
-        <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-1 md:pt-0">
-          <div className="hidden md:flex items-center gap-1.5 text-fg-mute shrink-0">
-            <IconCalendar size={13} />
-            <span className="mono-value text-xs">{match.date}</span>
-          </div>
+      <div className="col-start-2 md:col-start-auto flex items-center gap-2 text-sm text-fg-dim" title={squadTitle}>
+        <StatusDot tone={projected || reused ? "warn" : hasSquad ? "ok" : "mute"} />
+        {squadLabel}
+      </div>
 
-          <Button
-            variant="outline"
-            onClick={onAnalyze}
-            disabled={disabled || !hasSquad}
-            className="w-full sm:w-auto shrink-0 !px-3.5 !py-2"
-          >
-            {analyzing ? "Analyzing" : dim ? "Retrospective" : "Analyze"}
-          </Button>
-        </div>
+      <div className="col-start-2 md:col-start-auto">
+        <Button variant="outline" onClick={onAnalyze} disabled={disabled || !hasSquad} className="w-full md:w-auto">
+          {analyzing ? "Analysing" : past ? "Review" : "Analyse"}
+        </Button>
       </div>
     </div>
   );
