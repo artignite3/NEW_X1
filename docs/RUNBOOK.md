@@ -56,10 +56,10 @@ The task runs the launcher hidden whenever you are signed in, restarts it after 
 ### Turn analysis on or off
 
 ```powershell
-.\scriptsackend.ps1 start     # start now
-.\scriptsackend.ps1 stop      # stop the API and tunnel and clear the published address
-.\scriptsackend.ps1 status    # task state, local health, published address
-.\scriptsackend.ps1 restart
+.\scripts\backend.ps1 start     # start now
+.\scripts\backend.ps1 stop      # stop the API and tunnel and clear the published address
+.\scripts\backend.ps1 status    # task state, local health, published address
+.\scripts\backend.ps1 restart
 ```
 
 `Stop-ScheduledTask` alone does not stop the backend, because Windows leaves the launcher's child processes running; use `backend.ps1 stop`.

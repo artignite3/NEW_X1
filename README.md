@@ -35,9 +35,9 @@ powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1
 Then turn analysis on or off, or check it, from the repository folder:
 
 ```powershell
-.\scriptsackend.ps1 start     # on (also automatic at sign-in)
-.\scriptsackend.ps1 stop      # off; the website shows analysis as offline
-.\scriptsackend.ps1 status    # task, models and published address
+.\scripts\backend.ps1 start     # on (also automatic at sign-in)
+.\scripts\backend.ps1 stop      # off; the website shows analysis as offline
+.\scripts\backend.ps1 status    # task, models and published address
 ```
 
 Address publishing needs a one-time Supabase setup; until then, paste the printed **PUBLIC API** address into the site's **Settings** page. For local checks without a tunnel, run `.\run_all.bat --local-only`. The [runbook](docs/RUNBOOK.md) covers setup, refresh and recovery. To run the backend on a cloud VM instead, see [deploy/oracle](deploy/oracle/README.md).
