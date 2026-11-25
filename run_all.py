@@ -233,8 +233,13 @@ def launch_tunnel(provider: str, port: int, timeout: int = 30) -> Tunnel:
     raise StartupError(f"{provider} tunnel unavailable: {detail}")
 
 
-def wait_for_public_api(tunnel: Tunnel, timeout: int = 30) -> dict:
-    """Announce a tunnel only after its public URL serves the loaded models."""
+def wait_for_public_api(tunnel: Tunnel, timeout: int = 120) -> dict:
+    """Announce a tunnel only after its public URL serves all three loaded models.
+
+    A new tunnel hostname can take 20 to 60 seconds to resolve, so the wait is
+    generous. A "degraded" status (for example a stale fixture feed) still goes
+    online: the website shows those warnings itself.
+    """
     deadline = time.monotonic() + timeout
     last_error = "no public response"
     while time.monotonic() < deadline:
@@ -242,21 +247,18 @@ def wait_for_public_api(tunnel: Tunnel, timeout: int = 30) -> dict:
             last_error = f"tunnel process exited (code {tunnel.process.returncode})"
             break
         try:
-            health = get_health(tunnel.url + "/health", timeout=4)
-            if (health.get("status") == "ok"
-                    and all(health.get("models", {}).get(name) for name in MODEL_FORMATS)):
+            health = get_health(tunnel.url + "/health", timeout=6)
+            if all(health.get("models", {}).get(name) for name in MODEL_FORMATS):
                 return health
             last_error = "public health response does not have all three models ready"
         except (OSError, ValueError, TimeoutError) as exc:
             last_error = str(exc)
-        time.sleep(1)
+        time.sleep(3)
     recent = []
     while not tunnel.lines.empty():
         recent.append(tunnel.lines.get_nowait())
-    diagnostic = next((line for line in reversed(recent)
-                       if any(word in line.lower() for word in ("failed", "error", "could not"))),
-                      "")
-    detail = (diagnostic or last_error)[-500:]
+    exit_line = next((line for line in reversed(recent) if "error" in line.lower() or "could not" in line.lower()), "")
+    detail = (last_error if "exited" not in last_error or not exit_line else f"{last_error}: {exit_line}")[-500:]
     raise StartupError(f"{tunnel.provider} public API did not become healthy: {detail}")
 
 

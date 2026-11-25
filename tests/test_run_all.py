@@ -63,6 +63,27 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(check.call_count, 2)
         self.assertEqual(check.call_args.args[0], tunnel.url + "/health")
 
+    def test_public_url_accepts_degraded_data_when_models_are_ready(self):
+        # A stale fixture feed reports "degraded"; the models still serve, so the tunnel goes online.
+        process = Mock()
+        process.poll.return_value = None
+        tunnel = run_all.Tunnel(process, Queue(), "cloudflare", "https://demo.trycloudflare.com")
+        degraded = {"status": "degraded", "models": {name: True for name in run_all.MODEL_FORMATS}}
+        with patch.object(run_all, "get_health", return_value=degraded), patch.object(run_all.time, "sleep"):
+            self.assertEqual(run_all.wait_for_public_api(tunnel), degraded)
+
+    def test_public_url_rejects_missing_models_with_the_real_reason(self):
+        process = Mock()
+        process.poll.return_value = None
+        lines = Queue()
+        lines.put("INF precheck component=\"UDP Connectivity\" details=\"QUIC connection failed\"")
+        tunnel = run_all.Tunnel(process, lines, "cloudflare", "https://demo.trycloudflare.com")
+        partial = {"status": "ok", "models": {"t20": True, "odi": False, "test": True}}
+        with patch.object(run_all, "get_health", return_value=partial), patch.object(run_all.time, "sleep"), \
+             patch.object(run_all.time, "monotonic", side_effect=[0, 0, 1000]):
+            with self.assertRaisesRegex(run_all.StartupError, "three models"):
+                run_all.wait_for_public_api(tunnel)
+
     def test_occupied_port_is_not_reused(self):
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0))
